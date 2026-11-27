@@ -2,7 +2,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, waitFor, act } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactNode } from 'react'
-import { useVehicleForm } from './useVehicleForm'
+import { NEW_VEHICLE_DEFAULTS, useVehicleForm, vehicleCapacityDefaults } from './useVehicleForm'
+import { manifestOf } from '@/test/moduleFixtures'
 import { Toaster } from '@green-ecolution/ui'
 import {
   VehicleType,
@@ -61,9 +62,14 @@ const defaultInitForm = {
   width: 2.0,
   length: 6.0,
   weight: 3.5,
-  waterCapacity: 1000,
+  capacities: { water: 1000 },
   description: '',
 }
+
+const offered = [
+  ...(manifestOf('irrigation').capacities ?? []),
+  ...(manifestOf('waste').capacities ?? []),
+]
 
 describe('useVehicleForm', () => {
   beforeEach(() => {
@@ -83,7 +89,7 @@ describe('useVehicleForm', () => {
     expect(result.current.form.getValues('numberPlate')).toBe('HH-AB-1234')
     expect(result.current.form.getValues('model')).toBe('Mercedes Sprinter')
     expect(result.current.form.getValues('type')).toBe(VehicleType.Transporter)
-    expect(result.current.form.getValues('waterCapacity')).toBe(1000)
+    expect(result.current.form.getValues('capacities.water')).toBe(1000)
   })
 
   it('returns form methods', () => {
@@ -122,7 +128,7 @@ describe('useVehicleForm', () => {
         width: 2.0,
         length: 6.0,
         weight: 3.5,
-        waterCapacity: 1000,
+        capacities: { water: 1000 },
         description: '',
       })
     })
@@ -171,7 +177,7 @@ describe('useVehicleForm', () => {
         width: 2.0,
         length: 6.0,
         weight: 3.5,
-        waterCapacity: 1000,
+        capacities: { water: 1000 },
         description: '',
       })
     })
@@ -208,7 +214,7 @@ describe('useVehicleForm', () => {
         width: 2.5,
         length: 7.0,
         weight: 4.0,
-        waterCapacity: 2000,
+        capacities: { water: 2000 },
       })
     })
 
@@ -227,31 +233,30 @@ describe('useVehicleForm', () => {
     })
   })
 
-  it('sends the kinds the form does not edit back unchanged', async () => {
+  it('sends a stored kind that is not offered back unchanged', async () => {
     const mockResponse = { id: 'vehicle-uuid-5', numberPlate: 'HH-AB-1234' } as unknown as Vehicle
     // eslint-disable-next-line @typescript-eslint/unbound-method
     const updateMock = vi.mocked(vehicleApi.updateVehicle)
     updateMock.mockResolvedValueOnce(mockResponse)
+    const initForm = {
+      ...defaultInitForm,
+      capacities: vehicleCapacityDefaults(offered, { water: 1000, sand: 12.5 }),
+    }
 
     const { result } = renderHook(
-      () =>
-        useVehicleForm('update', {
-          vehicleId: '5',
-          initForm: defaultInitForm,
-          capacities: { water: 1000, other_kind: 500 },
-        }),
+      () => useVehicleForm('update', { vehicleId: '5', initForm, offered }),
       { wrapper: createWrapper() },
     )
 
     act(() => {
-      result.current.mutate({ ...defaultInitForm, waterCapacity: 1500 })
+      result.current.mutate({ ...initForm, capacities: { ...initForm.capacities, water: 1500 } })
     })
 
     await waitFor(() => {
       expect(updateMock).toHaveBeenCalledWith(
         expect.objectContaining({
           vehicleUpdateRequest: expect.objectContaining({
-            capacities: { water: 1500, other_kind: 500 },
+            capacities: { water: 1500, sand: 12.5 },
           }) as unknown,
         }),
       )
@@ -263,15 +268,15 @@ describe('useVehicleForm', () => {
     const createMock = vi.mocked(vehicleApi.createVehicle)
     createMock.mockResolvedValueOnce({ id: 'vehicle-uuid-6' } as unknown as Vehicle)
 
-    const { result } = renderHook(() => useVehicleForm('create', { initForm: defaultInitForm }), {
-      wrapper: createWrapper(),
-    })
+    const { result } = renderHook(
+      () => useVehicleForm('create', { initForm: defaultInitForm, offered }),
+      { wrapper: createWrapper() },
+    )
 
     act(() => {
       result.current.mutate({
         ...defaultInitForm,
-        waterCapacity: undefined,
-        cargoVolumeCapacity: 6000,
+        capacities: { water: undefined, cargo_volume: 6000 },
       })
     })
 
@@ -282,6 +287,32 @@ describe('useVehicleForm', () => {
         }) as unknown,
       })
     })
+  })
+
+  it('creates a vehicle without capacities when no kind is offered', async () => {
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    const createMock = vi.mocked(vehicleApi.createVehicle)
+    createMock.mockResolvedValueOnce({ id: 'vehicle-uuid-7' } as unknown as Vehicle)
+
+    const { result } = renderHook(
+      () => useVehicleForm('create', { initForm: defaultInitForm, offered: [] }),
+      { wrapper: createWrapper() },
+    )
+
+    act(() => {
+      result.current.mutate({ ...defaultInitForm, capacities: {} })
+    })
+
+    await waitFor(() => {
+      expect(createMock).toHaveBeenCalledWith({
+        vehicleCreateRequest: expect.objectContaining({ capacities: {} }) as unknown,
+      })
+    })
+  })
+
+  it('starts with empty capacity fields', () => {
+    expect(NEW_VEHICLE_DEFAULTS).not.toHaveProperty('capacities')
+    expect(vehicleCapacityDefaults(offered)).toEqual({ water: undefined, cargo_volume: undefined })
   })
 
   describe('draft management', () => {

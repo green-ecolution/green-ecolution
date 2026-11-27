@@ -14,6 +14,23 @@ export function capacityKindOf(
   return manifests.flatMap((m) => m.capacities ?? []).find((c) => c.kind === kind)
 }
 
+export function capacityOwnerOf(
+  kind: string,
+  manifests: readonly ModuleManifest[] = moduleManifests,
+): ModuleManifest | undefined {
+  return manifests.find((m) => m.capacities?.some((c) => c.kind === kind))
+}
+
+/** The stored amounts among `offered`, in the order the modules declare them. */
+export function shownCapacities(
+  offered: readonly ModuleCapacityKind[],
+  stored: Record<string, number>,
+): { capacity: ModuleCapacityKind; amount: number }[] {
+  return offered.flatMap((capacity) =>
+    stored[capacity.kind] === undefined ? [] : [{ capacity, amount: stored[capacity.kind] }],
+  )
+}
+
 /** `organizationId` null: not yet known, so every reachable organization counts. */
 export function capacityKindsIn(
   manifests: readonly ModuleManifest[],

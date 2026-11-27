@@ -31,6 +31,17 @@ vi.mock('./useVehicleListSearch', async () => {
   }
 })
 
+vi.mock('@/modules/capacities', async (importOriginal) => {
+  const { manifestOf } = await import('@/test/moduleFixtures')
+  return {
+    ...(await importOriginal<typeof import('@/modules/capacities')>()),
+    useCapacityKinds: () => [
+      ...(manifestOf('irrigation').capacities ?? []),
+      ...(manifestOf('waste').capacities ?? []),
+    ],
+  }
+})
+
 const { default: VehicleListToolbar } = await import('./VehicleListToolbar')
 
 const renderToolbar = (props: Partial<ComponentProps<typeof VehicleListToolbar>> = {}) =>
@@ -40,6 +51,19 @@ describe('VehicleListToolbar', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     searchMock.current = {}
+  })
+
+  it('offers one sort entry per offered capacity kind', () => {
+    searchMock.current = { sort: 'capacity', capacityKind: 'cargo_volume' }
+    renderToolbar()
+
+    fireEvent.pointerDown(screen.getByRole('button', { name: /Laderaum/ }), {
+      button: 0,
+      ctrlKey: false,
+    })
+    fireEvent.click(screen.getByRole('menuitemradio', { name: 'Wassertank' }))
+
+    expect(setSort).toHaveBeenCalledExactlyOnceWith('capacity:water', 'asc')
   })
 
   it('picking a status option calls setFilter with the selected statuses', () => {

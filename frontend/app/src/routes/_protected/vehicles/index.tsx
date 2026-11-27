@@ -33,6 +33,7 @@ const vehicleFilterSchema = z.object({
   drivingLicenses: z.array(z.enum(DrivingLicense)).optional().catch(undefined),
   archive: z.enum(ListVehiclesArchiveEnum).optional().catch(undefined),
   sort: z.enum(ListVehiclesSortEnum).optional().catch(undefined),
+  capacityKind: z.string().optional().catch(undefined),
   order: z.enum(ListVehiclesOrderEnum).optional().catch(undefined),
 })
 
@@ -45,6 +46,7 @@ const listParams = (search: z.infer<typeof vehicleFilterSchema>) => ({
   drivingLicense: search.drivingLicenses,
   archive: search.archive,
   sort: search.sort,
+  capacityKind: search.capacityKind,
   order: search.order,
 })
 
@@ -132,6 +134,7 @@ export const Route = createFileRoute('/_protected/vehicles/')({
     drivingLicenses: search.drivingLicenses,
     archive: search.archive,
     sort: search.sort,
+    capacityKind: search.capacityKind,
     order: search.order,
   }),
   loader: ({ deps, context: { queryClient } }) => {

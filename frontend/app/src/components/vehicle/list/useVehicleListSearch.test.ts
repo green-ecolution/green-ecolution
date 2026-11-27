@@ -26,7 +26,7 @@ vi.mock('@tanstack/react-router', () => ({
   }),
 }))
 
-import { useVehicleListSearch } from './useVehicleListSearch'
+import { sortOptionOf, useVehicleListSearch } from './useVehicleListSearch'
 
 const appliedSearch = () => {
   const calls = navigate.mock.calls
@@ -46,7 +46,7 @@ describe('useVehicleListSearch', () => {
     result.current.setFilter('types', ['trailer'])
     expect(appliedSearch().page).toBe(1)
 
-    result.current.setSort('water_capacity', 'desc')
+    result.current.setSort('capacity:water', 'desc')
     expect(appliedSearch().page).toBe(1)
 
     result.current.setArchive('only')
@@ -74,9 +74,14 @@ describe('useVehicleListSearch', () => {
     result.current.setFilter('drivingLicenses', ['BE'])
     expect(appliedSearch().drivingLicenses).toEqual(['BE'])
 
-    result.current.setSort('water_capacity', 'desc')
-    expect(appliedSearch().sort).toBe('water_capacity')
+    result.current.setSort('capacity:water', 'desc')
+    expect(appliedSearch().sort).toBe('capacity')
+    expect(appliedSearch().capacityKind).toBe('water')
     expect(appliedSearch().order).toBe('desc')
+
+    result.current.setSort('model', 'asc')
+    expect(appliedSearch().sort).toBe('model')
+    expect(appliedSearch().capacityKind).toBeUndefined()
 
     result.current.setArchive('only')
     expect(appliedSearch().archive).toBe('only')
@@ -117,5 +122,17 @@ describe('useVehicleListSearch', () => {
     } finally {
       search.archive = undefined
     }
+  })
+})
+
+describe('sortOptionOf', () => {
+  it('names a capacity sort by its kind', () => {
+    expect(sortOptionOf({ sort: 'capacity', capacityKind: 'water' })).toBe('capacity:water')
+  })
+
+  it('falls back to the number plate without a usable sort', () => {
+    expect(sortOptionOf({})).toBe('number_plate')
+    expect(sortOptionOf({ sort: 'capacity' })).toBe('number_plate')
+    expect(sortOptionOf({ sort: 'model' })).toBe('model')
   })
 })
