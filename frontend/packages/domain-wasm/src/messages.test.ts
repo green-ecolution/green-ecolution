@@ -19,6 +19,8 @@ describe('translateIssue', () => {
   it('exports every key the validators can emit', () => {
     expect(VALIDATION_KEYS).toContain('vehicle.number_plate.empty')
     expect(VALIDATION_KEYS).toContain('user.phone_number.invalidFormat')
+    expect(VALIDATION_KEYS).toContain('capacity.amount.outOfRange')
+    expect(VALIDATION_KEYS).toContain('vehicle.capacity.invalidFormat')
     expect(new Set(VALIDATION_KEYS).size).toBe(VALIDATION_KEYS.length)
   })
 

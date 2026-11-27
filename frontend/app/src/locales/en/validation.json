@@ -20,11 +20,8 @@
       "tooShort": "Model must be at least {min} characters long.",
       "tooLong": "Model must be at most {max} characters long."
     },
-    "water_capacity": {
-      "invalidFormat": "Water capacity must be a number."
-    },
-    "cargo_volume_capacity": {
-      "invalidFormat": "Cargo volume must be a number."
+    "capacity": {
+      "invalidFormat": "Capacity must be a number."
     },
     "capacities": {
       "empty": "Enter at least one capacity."
@@ -57,8 +54,10 @@
       "invalidFormat": "Not a valid vehicle status."
     }
   },
-  "water_capacity": {
-    "outOfRange": "Water capacity must be between {min} and {max} liters."
+  "capacity": {
+    "amount": {
+      "outOfRange": "Capacity must not be negative."
+    }
   },
   "plan": {
     "stop_ids": {

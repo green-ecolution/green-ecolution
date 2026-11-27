@@ -1,4 +1,5 @@
-use domain::capacity::Amount;
+use std::collections::BTreeMap;
+
 use domain::shared::error::ValidationError;
 use domain::vehicle::{
     DrivingLicense, NumberPlate, VehicleAvailability, VehicleDimension, VehicleModel, VehicleType,
@@ -25,10 +26,10 @@ pub(crate) struct VehicleDraftInput {
     pub driving_license: String,
     #[serde(default)]
     pub availability: String,
+    /// One entry per capacity kind the form offers; the range of an amount
+    /// is the module's validator's business.
     #[serde(default)]
-    pub water_capacity: OptionalF64,
-    #[serde(default)]
-    pub cargo_volume_capacity: OptionalF64,
+    pub capacities: BTreeMap<String, OptionalF64>,
     #[serde(default)]
     pub height: LooseF64,
     #[serde(default)]
@@ -69,37 +70,25 @@ pub(crate) fn collect_vehicle_issues(input: &VehicleDraftInput) -> Vec<Validatio
         issues.push(issue);
     }
 
-    let capacities = [
-        (
-            input.water_capacity,
-            "vehicle.water_capacity",
-            "waterCapacity",
-        ),
-        (
-            input.cargo_volume_capacity,
-            "vehicle.cargo_volume_capacity",
-            "cargoVolumeCapacity",
-        ),
-    ];
-    for (value, field, path) in capacities {
-        match value {
-            OptionalF64::Absent => {}
-            OptionalF64::Invalid => issues.push(invalid_number_issue(field, path)),
-            OptionalF64::Value(n) => {
-                if let Err(err) = Amount::new(n) {
-                    issues.push(ValidationIssue::from_error(&err, path));
-                }
-            }
+    for (kind, value) in &input.capacities {
+        if *value == OptionalF64::Invalid {
+            issues.push(invalid_number_issue(
+                "vehicle.capacity",
+                format!("capacities.{kind}"),
+            ));
         }
     }
-    if input.water_capacity == OptionalF64::Absent
-        && input.cargo_volume_capacity == OptionalF64::Absent
+    if !input.capacities.is_empty()
+        && input
+            .capacities
+            .values()
+            .all(|value| *value == OptionalF64::Absent)
     {
         issues.push(ValidationIssue::from_error(
             &ValidationError::EmptyString {
                 field: "vehicle.capacities",
             },
-            "waterCapacity",
+            "capacities",
         ));
     }
 
@@ -150,7 +139,16 @@ pub fn validate_vehicle_draft(input: JsValue) -> Result<JsValue, JsError> {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::BTreeMap;
+
     use super::*;
+
+    fn capacities(entries: &[(&str, OptionalF64)]) -> BTreeMap<String, OptionalF64> {
+        entries
+            .iter()
+            .map(|(kind, value)| (kind.to_string(), *value))
+            .collect()
+    }
 
     fn valid() -> VehicleDraftInput {
         VehicleDraftInput {
@@ -159,8 +157,10 @@ mod tests {
             r#type: "transporter".into(),
             driving_license: "B".into(),
             availability: "available".into(),
-            water_capacity: OptionalF64::Value(100.0),
-            cargo_volume_capacity: OptionalF64::Absent,
+            capacities: capacities(&[
+                ("water", OptionalF64::Value(100.0)),
+                ("cargo_volume", OptionalF64::Absent),
+            ]),
             height: LooseF64(Some(2.5)),
             width: LooseF64(Some(2.0)),
             length: LooseF64(Some(6.0)),
@@ -212,18 +212,6 @@ mod tests {
     }
 
     #[test]
-    fn negative_water_capacity_yields_issue() {
-        let mut input = valid();
-        input.water_capacity = OptionalF64::Value(-10.0);
-        let issues = collect_vehicle_issues(&input);
-        let issue = issues
-            .iter()
-            .find(|i| i.path == "waterCapacity")
-            .expect("water_capacity issue");
-        assert!(issue.key.contains("capacity"));
-    }
-
-    #[test]
     fn unparseable_height_yields_issue() {
         let mut input = valid();
         input.height = LooseF64(None);
@@ -245,51 +233,60 @@ mod tests {
         assert!(paths.contains(&"type"));
         assert!(paths.contains(&"drivingLicense"));
         assert!(paths.contains(&"availability"));
-        assert!(paths.contains(&"waterCapacity"));
         assert!(paths.contains(&"height"));
+        assert!(!paths.iter().any(|p| p.starts_with("capacities")));
     }
 
     #[test]
-    fn unparseable_water_capacity_yields_issue() {
-        let mut input = valid();
-        input.water_capacity = OptionalF64::Invalid;
+    fn an_offered_kind_left_empty_counts_as_absent() {
+        let input: VehicleDraftInput = serde_json::from_value(serde_json::json!({
+            "capacities": { "water": "", "cargo_volume": 6000 }
+        }))
+        .unwrap();
         let issues = collect_vehicle_issues(&input);
-        let issue = issues
-            .iter()
-            .find(|i| i.path == "waterCapacity")
-            .expect("water_capacity issue");
-        assert_eq!(issue.key, "vehicle.water_capacity.invalidFormat");
+        assert!(!issues.iter().any(|i| i.path.starts_with("capacities")));
     }
 
     #[test]
-    fn a_vehicle_needs_at_least_one_capacity() {
+    fn no_offered_kind_needs_no_capacity() {
         let mut input = valid();
-        input.water_capacity = OptionalF64::Absent;
-        input.cargo_volume_capacity = OptionalF64::Absent;
-        let issues = collect_vehicle_issues(&input);
-        let issue = issues
-            .iter()
-            .find(|i| i.path == "waterCapacity")
-            .expect("capacity issue");
-        assert_eq!(issue.key, "vehicle.capacities.empty");
-    }
-
-    #[test]
-    fn cargo_volume_alone_is_enough() {
-        let mut input = valid();
-        input.water_capacity = OptionalF64::Absent;
-        input.cargo_volume_capacity = OptionalF64::Value(6000.0);
+        input.capacities = BTreeMap::new();
         assert!(collect_vehicle_issues(&input).is_empty());
     }
 
     #[test]
-    fn unparseable_cargo_volume_yields_issue() {
+    fn all_offered_kinds_empty_yields_the_group_issue() {
         let mut input = valid();
-        input.cargo_volume_capacity = OptionalF64::Invalid;
+        input.capacities = capacities(&[
+            ("water", OptionalF64::Absent),
+            ("cargo_volume", OptionalF64::Absent),
+        ]);
+        let issues = collect_vehicle_issues(&input);
+        let issue = issues
+            .iter()
+            .find(|i| i.path == "capacities")
+            .expect("group issue");
+        assert_eq!(issue.key, "vehicle.capacities.empty");
+    }
+
+    #[test]
+    fn an_unparseable_amount_is_reported_at_its_kind() {
+        let mut input = valid();
+        input.capacities = capacities(&[
+            ("water", OptionalF64::Value(100.0)),
+            ("cargo_volume", OptionalF64::Invalid),
+        ]);
         let issue = collect_vehicle_issues(&input)
             .into_iter()
-            .find(|i| i.path == "cargoVolumeCapacity")
+            .find(|i| i.path == "capacities.cargo_volume")
             .expect("cargo issue");
-        assert_eq!(issue.key, "vehicle.cargo_volume_capacity.invalidFormat");
+        assert_eq!(issue.key, "vehicle.capacity.invalidFormat");
+    }
+
+    #[test]
+    fn the_draft_leaves_the_range_to_the_module_validator() {
+        let mut input = valid();
+        input.capacities = capacities(&[("water", OptionalF64::Value(-10.0))]);
+        assert!(collect_vehicle_issues(&input).is_empty());
     }
 }
