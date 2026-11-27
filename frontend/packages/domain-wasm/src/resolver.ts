@@ -11,7 +11,7 @@ import {
   irrigationValidateTreeClusterDraft,
   irrigationValidateTreeDraft,
   validateVehicleDraft,
-  validateWateringPlanDraft,
+  validatePlanDraft,
   wasteValidateBinDraft,
 } from '../pkg/domain_wasm.js'
 
@@ -61,7 +61,7 @@ function makeResolver<TForm extends FieldValues>(
 const treeValidator = irrigationValidateTreeDraft as RawValidator
 const clusterValidator = irrigationValidateTreeClusterDraft as RawValidator
 const vehicleValidator = validateVehicleDraft as RawValidator
-const wateringPlanValidator = validateWateringPlanDraft as RawValidator
+const planValidator = validatePlanDraft as RawValidator
 const wasteBinValidator = wasteValidateBinDraft as RawValidator
 
 export const treeDraftResolver = <TForm extends FieldValues>(
@@ -76,9 +76,9 @@ export const vehicleDraftResolver = <TForm extends FieldValues>(
   translate: IssueTranslator,
 ): Resolver<TForm> => makeResolver<TForm>(vehicleValidator, translate)
 
-export const wateringPlanDraftResolver = <TForm extends FieldValues>(
+export const planDraftResolver = <TForm extends FieldValues>(
   translate: IssueTranslator,
-): Resolver<TForm> => makeResolver<TForm>(wateringPlanValidator, translate)
+): Resolver<TForm> => makeResolver<TForm>(planValidator, translate)
 
 export const wasteBinDraftResolver = <TForm extends FieldValues>(
   translate: IssueTranslator,

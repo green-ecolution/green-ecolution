@@ -61,7 +61,7 @@ export interface WasteBinForm {
   organizationId?: string
 }
 
-export interface WateringPlanForm {
+export interface PlanForm {
   date: Date
   status: string
   transporterId: string

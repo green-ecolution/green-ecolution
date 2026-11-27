@@ -56,16 +56,16 @@ export const VALIDATION_KEYS = [
   'vehicle.driving_license.invalidFormat',
   'vehicle.status.invalidFormat',
 
-  // Watering plan
-  'watering_plan.stop_ids.empty',
-  'watering_plan.driver_ids.empty',
-  'watering_plan.transporter_id.empty',
-  'watering_plan.transporter_id.outOfRange',
-  'watering_plan.trailer_id.outOfRange',
-  'watering_plan.driver_ids.invalidFormat',
-  'watering_plan.status.invalidFormat',
-  'watering_plan.date.outOfRange',
-  'watering_plan.start_point_name.empty',
+  // Plan
+  'plan.stop_ids.empty',
+  'plan.driver_ids.empty',
+  'plan.transporter_id.empty',
+  'plan.transporter_id.outOfRange',
+  'plan.trailer_id.outOfRange',
+  'plan.driver_ids.invalidFormat',
+  'plan.status.invalidFormat',
+  'plan.date.outOfRange',
+  'plan.start_point_name.empty',
 
   // Waste bin
   'waste_bin.number.empty',

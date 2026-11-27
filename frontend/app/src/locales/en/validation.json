@@ -91,7 +91,7 @@
   "water_capacity": {
     "outOfRange": "Water capacity must be between {min} and {max} liters."
   },
-  "watering_plan": {
+  "plan": {
     "stop_ids": {
       "empty": "Select at least one stop."
     },

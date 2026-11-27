@@ -5,7 +5,7 @@ vi.mock('../pkg/domain_wasm.js', () => ({
   irrigationValidateTreeDraft: vi.fn<(_: unknown) => ValidationIssue[]>(),
   irrigationValidateTreeClusterDraft: vi.fn<(_: unknown) => ValidationIssue[]>(),
   validateVehicleDraft: vi.fn<(_: unknown) => ValidationIssue[]>(),
-  validateWateringPlanDraft: vi.fn<(_: unknown) => ValidationIssue[]>(),
+  validatePlanDraft: vi.fn<(_: unknown) => ValidationIssue[]>(),
   wasteValidateBinDraft: vi.fn<(_: unknown) => ValidationIssue[]>(),
 }))
 

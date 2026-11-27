@@ -5,7 +5,7 @@ export type {
   TreeForm,
   TreeclusterForm,
   VehicleForm,
-  WateringPlanForm,
+  PlanForm,
   WasteBinForm,
 } from './types'
 export { translateIssue, VALIDATION_KEYS } from './messages'
@@ -47,7 +47,7 @@ export {
   irrigationValidateTreeDraft,
   irrigationValidateTreeClusterDraft,
   validateVehicleDraft,
-  validateWateringPlanDraft,
+  validatePlanDraft,
   wasteValidateBinDraft,
   wasteValidateBinNumber,
   wasteValidateBinVolume,
@@ -66,6 +66,6 @@ export {
   treeDraftResolver,
   clusterDraftResolver,
   vehicleDraftResolver,
-  wateringPlanDraftResolver,
+  planDraftResolver,
   wasteBinDraftResolver,
 } from './resolver'
