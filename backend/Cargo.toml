@@ -6,10 +6,8 @@ members = [
     "crates/domain",
     "crates/domain-wasm",
     "crates/devcli",
-    "crates/modules/irrigation/domain",
-    "crates/modules/irrigation/server",
-    "crates/modules/waste/domain",
-    "crates/modules/waste/server",
+    "crates/modules/*/domain",
+    "crates/modules/*/server",
 ]
 
 [workspace.package]
