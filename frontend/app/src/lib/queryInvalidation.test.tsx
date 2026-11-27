@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { QueryClient } from '@tanstack/react-query'
 import type { QueryKey } from '@tanstack/react-query'
-import { queryRoots, vehicleQueries, wateringPlanQueries } from '@/api/queries'
+import { queryRoots, vehicleQueries, planQueries } from '@/api/queries'
 import { invalidateRoots, planStatusQueryRoots } from './queryInvalidation'
 
 const PLAN_ID = '0190a8e9-7c4f-7000-8000-000000000001'
@@ -24,14 +24,14 @@ describe('invalidateRoots', () => {
     const queryClient = makeClient()
     seed(queryClient, [vehicleQueries.detail(VEHICLE_ID).queryKey])
 
-    await invalidateRoots(queryClient, routerStub(), queryRoots.wateringPlan)
+    await invalidateRoots(queryClient, routerStub(), queryRoots.plan)
 
     expect(isInvalidated(queryClient, vehicleQueries.detail(VEHICLE_ID).queryKey)).toBe(false)
   })
 
   it('invalidates the plans and what the plan module derives from them on a status change', async () => {
     const queryClient = makeClient()
-    const planKey = wateringPlanQueries.detail(PLAN_ID).queryKey
+    const planKey = planQueries.detail(PLAN_ID).queryKey
     seed(queryClient, [planKey, MODULE_KEY, vehicleQueries.detail(VEHICLE_ID).queryKey])
 
     await invalidateRoots(
@@ -46,7 +46,7 @@ describe('invalidateRoots', () => {
   })
 
   it('invalidates only the plans without a plan module', () => {
-    expect(planStatusQueryRoots(undefined)).toEqual(queryRoots.wateringPlan)
+    expect(planStatusQueryRoots(undefined)).toEqual(queryRoots.plan)
   })
 
   it('only re-runs the route loaders when asked to', async () => {

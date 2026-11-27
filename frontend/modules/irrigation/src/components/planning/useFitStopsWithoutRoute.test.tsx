@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { Map as MaplibreMap } from 'maplibre-gl'
 import type { ClusterMarkerResponse, RouteResponse } from '@green-ecolution/backend-client'
 import { renderHook } from '@/test/utils'
-import { wateringPlanQueries } from '@/api/queries'
+import { planQueries } from '@/api/queries'
 import { MapContext } from '@/components/map-gl/MapContext'
 import { clusterQueries } from '../../api/queries'
 import useFitStopsWithoutRoute, { stopBounds } from './useFitStopsWithoutRoute'
@@ -27,7 +27,7 @@ const renderFit = (route: RouteResponse | null) => {
   const fitBounds = vi.fn()
   const map = { style: {}, fitBounds } as unknown as MaplibreMap
   const client = new QueryClient()
-  client.setQueryData(wateringPlanQueries.route(PLAN_ID).queryKey, route)
+  client.setQueryData(planQueries.route(PLAN_ID).queryKey, route)
   client.setQueryData(clusterQueries.markers().queryKey, { data: markers })
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={client}>

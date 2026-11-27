@@ -72,8 +72,8 @@ export const useVehicleForm = (
         vehicleUpdateRequest: toRequest(body, opts.capacities),
       }),
 
-    // Watering plans embed their transporter and trailer.
-    invalidates: [...queryRoots.vehicle, ...queryRoots.wateringPlan],
+    // Plans embed their transporter and trailer.
+    invalidates: [...queryRoots.vehicle, ...queryRoots.plan],
 
     successRoute: (id) => ({
       to: '/vehicles/$vehicleId',

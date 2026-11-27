@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { PlanStatus } from '@green-ecolution/backend-client'
-import type { WateringPlanForm } from '@/schema/wateringPlanSchema'
+import type { PlanForm } from '@/schema/planSchema'
 import { planInList } from '@/test/plans'
 import { toPlanCreateRequest, toPlanFormUpdateRequest, toUpdateRequest } from './plans'
 
-const form: WateringPlanForm = {
+const form: PlanForm = {
   module: 'waste',
   date: new Date('2026-08-01T00:00:00Z'),
   description: 'Altstadt',

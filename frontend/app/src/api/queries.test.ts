@@ -3,7 +3,7 @@ import {
   commentQueries,
   commentQueryKey,
   vehicleQueries,
-  wateringPlanQueries,
+  planQueries,
   sensorQueries,
 } from './queries'
 import type { Vehicle } from '@/api/backendApi'
@@ -141,13 +141,13 @@ describe('Query Functions', () => {
     })
   })
 
-  describe('WateringPlan Queries', () => {
-    describe('wateringPlanQueries.boardColumn', () => {
+  describe('Plan Queries', () => {
+    describe('planQueries.boardColumn', () => {
       it('lists the plans of one module in the given statuses', async () => {
-        const options = wateringPlanQueries.boardColumn('irrigation', [PlanStatus.Planned])
+        const options = planQueries.boardColumn('irrigation', [PlanStatus.Planned])
         await options.queryFn!({} as never)
 
-        expect(options.queryKey).toEqual(['watering-plans', 'board', 'irrigation', ['planned']])
+        expect(options.queryKey).toEqual(['plans', 'board', 'irrigation', ['planned']])
         // eslint-disable-next-line @typescript-eslint/unbound-method
         expect(planApi.listPlans).toHaveBeenCalledWith({
           module: 'irrigation',
@@ -158,11 +158,11 @@ describe('Query Functions', () => {
       })
     })
 
-    describe('wateringPlanQueries.detail', () => {
+    describe('planQueries.detail', () => {
       it('returns correct query options for fetching single watering plan', () => {
-        const options = wateringPlanQueries.detail('55')
+        const options = planQueries.detail('55')
 
-        expect(options.queryKey).toEqual(['watering-plan', '55'])
+        expect(options.queryKey).toEqual(['plan', '55'])
         expect(options.queryFn).toBeDefined()
       })
 
@@ -171,7 +171,7 @@ describe('Query Functions', () => {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         vi.mocked(planApi.getPlan).mockResolvedValueOnce(mockPlan)
 
-        const result = await wateringPlanQueries.detail('plan-uuid-1').queryFn!({} as never)
+        const result = await planQueries.detail('plan-uuid-1').queryFn!({} as never)
 
         // eslint-disable-next-line @typescript-eslint/unbound-method
         expect(planApi.getPlan).toHaveBeenCalledWith({ planId: 'plan-uuid-1' })
@@ -179,9 +179,9 @@ describe('Query Functions', () => {
       })
     })
 
-    describe('wateringPlanQueries.routePreview', () => {
+    describe('planQueries.routePreview', () => {
       const preview = (overrides = {}) =>
-        wateringPlanQueries.routePreview({
+        planQueries.routePreview({
           module: 'irrigation',
           stops: ['cluster-1'],
           transporterId: 'vehicle-1',

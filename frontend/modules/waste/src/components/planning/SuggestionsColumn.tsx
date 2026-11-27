@@ -12,8 +12,8 @@ import {
   KanbanColumnHeader,
 } from '@green-ecolution/ui'
 import { PlanStatus } from '@green-ecolution/backend-client'
-import { useWateringPlanDraft } from '@/store/form/useFormDraft'
-import type { WateringPlanForm } from '@/schema/wateringPlanSchema'
+import { usePlanDraft } from '@/store/form/useFormDraft'
+import type { PlanForm } from '@/schema/planSchema'
 import { useHasPermission } from '@/lib/auth/useHasPermission'
 import { wasteBinQueries } from '../../api/queries'
 import type { WasteBin } from '../../api/client'
@@ -27,7 +27,7 @@ const SuggestionsColumn = () => {
     select: (bins) => bins.filter((bin) => bin.fillState === 'full'),
   })
   const [selected, setSelected] = useState<string[]>([])
-  const draft = useWateringPlanDraft<WateringPlanForm>('create')
+  const draft = usePlanDraft<PlanForm>('create')
   const navigate = useNavigate()
   const canBundle = useHasPermission(['collection_plan:create'])
   const { t } = useTranslation(['waste', 'common'])

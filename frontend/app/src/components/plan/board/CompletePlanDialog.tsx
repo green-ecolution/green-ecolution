@@ -10,13 +10,13 @@ import {
   DialogTitle,
 } from '@green-ecolution/ui'
 import { useTranslation } from 'react-i18next'
-import { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-client'
+import { PlanStatus } from '@green-ecolution/backend-client'
 import type { PlanInListResponse } from '@green-ecolution/backend-client'
 import type { ModulePlanning } from '@/modules/types'
-import { CancelWateringPlan, FinishWateringPlan } from '../WateringPlanStatusUpdate'
-import { useWateringPlanBoardMutations } from '@/hooks/useWateringPlanBoardMutations'
+import { CancelPlan, FinishPlan } from '../PlanStatusUpdate'
+import { usePlanBoardMutations } from '@/hooks/usePlanBoardMutations'
 import { useDateLocale } from '@/lib/i18n/useFormatters'
-import { useWateringPlanStatusDetails } from '@/hooks/details/useDetailsForWateringPlanStatus'
+import { usePlanStatusDetails } from '@/hooks/details/useDetailsForPlanStatus'
 import { formatBoardDate } from './format'
 
 type CompleteMode = 'finished' | 'canceled'
@@ -29,10 +29,10 @@ interface CompletePlanDialogProps {
 
 const CompletePlanDialog = ({ plan, planning, onClose }: CompletePlanDialogProps) => {
   const [mode, setMode] = useState<CompleteMode>('finished')
-  const { finishPlan, cancelPlan } = useWateringPlanBoardMutations(planning)
+  const { finishPlan, cancelPlan } = usePlanBoardMutations(planning)
   const { t } = useTranslation('wateringPlan')
   const dateLocale = useDateLocale()
-  const getStatusDetails = useWateringPlanStatusDetails()
+  const getStatusDetails = usePlanStatusDetails()
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
@@ -72,7 +72,7 @@ const CompletePlanDialog = ({ plan, planning, onClose }: CompletePlanDialogProps
             aria-checked={mode === 'finished'}
             onClick={() => setMode('finished')}
           >
-            {getStatusDetails(WateringPlanStatus.Finished).label}
+            {getStatusDetails(PlanStatus.Finished).label}
           </Button>
           <Button
             type="button"
@@ -82,11 +82,11 @@ const CompletePlanDialog = ({ plan, planning, onClose }: CompletePlanDialogProps
             aria-checked={mode === 'canceled'}
             onClick={() => setMode('canceled')}
           >
-            {getStatusDetails(WateringPlanStatus.Canceled).label}
+            {getStatusDetails(PlanStatus.Canceled).label}
           </Button>
         </div>
         {plan && mode === 'finished' && (
-          <FinishWateringPlan
+          <FinishPlan
             plan={plan}
             planning={planning}
             submitLabel={t('board.completeDialog.title')}
@@ -94,7 +94,7 @@ const CompletePlanDialog = ({ plan, planning, onClose }: CompletePlanDialogProps
           />
         )}
         {plan && mode === 'canceled' && (
-          <CancelWateringPlan
+          <CancelPlan
             className="w-full"
             submitLabel={t('board.cancelDialog.title')}
             onSubmit={(data) =>

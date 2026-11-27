@@ -26,16 +26,16 @@ vi.mock('@/modules/useActiveModules', () => ({
   useActiveModules: () => ({ manifests: activeManifests(), isActive: () => true }),
 }))
 
-const { default: WateringPlanDashboard } = await import('./WateringPlanDashboard')
+const { default: PlanDashboard } = await import('./PlanDashboard')
 
-describe('WateringPlanDashboard', () => {
+describe('PlanDashboard', () => {
   beforeEach(() => {
     activeManifests.mockReturnValue([probeManifest('waste'), probeManifest('irrigation')])
   })
 
   it('renders the summary and the stop list of the plan module', async () => {
     const user = userEvent.setup()
-    render(<WateringPlanDashboard wateringPlan={planResponse({ module: 'irrigation' })} />)
+    render(<PlanDashboard plan={planResponse({ module: 'irrigation' })} />)
 
     expect(await screen.findByTestId('plan-summary-irrigation')).toBeInTheDocument()
     expect(screen.queryByTestId('plan-summary-waste')).not.toBeInTheDocument()
@@ -47,7 +47,7 @@ describe('WateringPlanDashboard', () => {
 
   it('leaves the module parts out when the plan module is not active', () => {
     activeManifests.mockReturnValue([probeManifest('waste')])
-    render(<WateringPlanDashboard wateringPlan={planResponse({ module: 'irrigation' })} />)
+    render(<PlanDashboard plan={planResponse({ module: 'irrigation' })} />)
 
     expect(screen.queryByTestId('plan-summary-waste')).not.toBeInTheDocument()
     expect(screen.queryByTestId('plan-summary-irrigation')).not.toBeInTheDocument()

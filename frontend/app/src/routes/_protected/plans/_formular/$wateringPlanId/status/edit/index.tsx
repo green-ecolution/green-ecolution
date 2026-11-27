@@ -1,24 +1,24 @@
-import WateringPlanStatusUpdate from '@/components/watering-plan/WateringPlanStatusUpdate'
+import PlanStatusUpdate from '@/components/plan/PlanStatusUpdate'
 import { getAuthSession } from '@/lib/auth/session'
 import { pendingLoading } from '@/lib/router'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
 
-const wateringPlanFormRoute = getRouteApi('/_protected/plans/_formular/$wateringPlanId')
+const planFormRoute = getRouteApi('/_protected/plans/_formular/$wateringPlanId')
 
 export const Route = createFileRoute('/_protected/plans/_formular/$wateringPlanId/status/edit/')({
-  component: StatusEditWateringPlan,
+  component: StatusEditPlan,
   pendingComponent: pendingLoading({ key: 'wateringPlan:detail.loadingLabel' }),
   loader: async () => {
     if (!(await getAuthSession().isAuthenticated())) return
   },
 })
 
-function StatusEditWateringPlan() {
-  const { wateringPlan } = wateringPlanFormRoute.useLoaderData()
+function StatusEditPlan() {
+  const { wateringPlan: plan } = planFormRoute.useLoaderData()
 
   return (
     <div className="container mt-6">
-      <WateringPlanStatusUpdate wateringPlanId={wateringPlan.id.toString()} />
+      <PlanStatusUpdate wateringPlanId={plan.id.toString()} />
     </div>
   )
 }

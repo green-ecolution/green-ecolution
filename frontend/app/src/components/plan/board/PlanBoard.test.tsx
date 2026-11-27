@@ -53,8 +53,8 @@ vi.mock('@tanstack/react-query', async (importOriginal) => {
   }
 })
 
-vi.mock('@/hooks/useWateringPlanBoardMutations', () => ({
-  useWateringPlanBoardMutations: () => ({
+vi.mock('@/hooks/usePlanBoardMutations', () => ({
+  usePlanBoardMutations: () => ({
     startPlan: { mutate: vi.fn() },
     revertStart: { mutate: vi.fn() },
   }),
@@ -65,9 +65,9 @@ vi.mock('./AssignUsersPopover', () => ({
   default: () => <div data-testid="assign-users" />,
 }))
 
-const { default: WateringPlanBoard } = await import('./WateringPlanBoard')
+const { default: PlanBoard } = await import('./PlanBoard')
 
-describe('WateringPlanBoard modify gating', () => {
+describe('PlanBoard modify gating', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     permissions.mockReturnValue(new Set<string>())
@@ -76,37 +76,37 @@ describe('WateringPlanBoard modify gating', () => {
 
   it('hides the assign-users control without watering_plan:update', () => {
     permissions.mockReturnValue(new Set(['watering_plan:read']))
-    render(<WateringPlanBoard />)
+    render(<PlanBoard />)
     expect(screen.queryByTestId('assign-users')).not.toBeInTheDocument()
   })
 
   it('shows the assign-users control with watering_plan:update', () => {
     permissions.mockReturnValue(new Set(['watering_plan:update']))
-    render(<WateringPlanBoard />)
+    render(<PlanBoard />)
     expect(screen.getByTestId('assign-users')).toBeInTheDocument()
   })
 
   it('omits the drag instruction without watering_plan:update', () => {
     permissions.mockReturnValue(new Set(['watering_plan:read']))
-    render(<WateringPlanBoard />)
+    render(<PlanBoard />)
     expect(screen.queryByText(/Ziehe einen geplanten Einsatzplan/)).not.toBeInTheDocument()
     expect(screen.getByText('Aktuell ist kein Einsatzplan unterwegs.')).toBeInTheDocument()
   })
 
   it('renders planned plans as plain cards without watering_plan:update', () => {
     permissions.mockReturnValue(new Set(['watering_plan:read']))
-    const { container } = render(<WateringPlanBoard />)
+    const { container } = render(<PlanBoard />)
     expect(container.querySelector('[aria-roledescription="draggable"]')).toBeNull()
   })
 
   it('renders planned plans as draggable cards with watering_plan:update', () => {
     permissions.mockReturnValue(new Set(['watering_plan:update']))
-    const { container } = render(<WateringPlanBoard />)
+    const { container } = render(<PlanBoard />)
     expect(container.querySelector('[aria-roledescription="draggable"]')).not.toBeNull()
   })
 })
 
-describe('WateringPlanBoard planning module', () => {
+describe('PlanBoard planning module', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     permissions.mockReturnValue(new Set(['watering_plan:read']))
@@ -114,7 +114,7 @@ describe('WateringPlanBoard planning module', () => {
 
   it('renders the suggestions of the plan module and none of an inactive one', async () => {
     activeManifests.mockReturnValue([probeManifest('irrigation')])
-    render(<WateringPlanBoard module="waste" />)
+    render(<PlanBoard module="waste" />)
 
     expect(await screen.findByTestId('suggestions-irrigation')).toBeInTheDocument()
     expect(screen.queryByTestId('suggestions-waste')).not.toBeInTheDocument()
@@ -125,7 +125,7 @@ describe('WateringPlanBoard planning module', () => {
       probeManifest('irrigation'),
       probeManifest('waste', { labelKey: 'wateringPlan:entity.name' }),
     ])
-    render(<WateringPlanBoard module="waste" />)
+    render(<PlanBoard module="waste" />)
 
     expect(await screen.findByTestId('suggestions-waste')).toBeInTheDocument()
     expect(screen.queryByTestId('suggestions-irrigation')).not.toBeInTheDocument()
@@ -135,7 +135,7 @@ describe('WateringPlanBoard planning module', () => {
 
   it('shows no module switcher with a single planning module', () => {
     activeManifests.mockReturnValue([probeManifest('irrigation')])
-    render(<WateringPlanBoard />)
+    render(<PlanBoard />)
 
     expect(screen.queryByRole('tab')).not.toBeInTheDocument()
   })

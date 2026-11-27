@@ -3,7 +3,7 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import type { GeoJSONSource, LngLatBoundsLike, MapLayerMouseEvent } from 'maplibre-gl'
 import type { PlanResponse } from '@green-ecolution/backend-client'
-import { wateringPlanQueries } from '@/api/queries'
+import { planQueries } from '@/api/queries'
 import { useMaplibreMap } from '@/components/map-gl/MapContext'
 import { usePointerCursor } from '@/components/map-gl/layers/usePointerCursor'
 import { isMapAlive } from '@/components/map-gl/mapReady'
@@ -30,7 +30,7 @@ const BinRouteOverlay = ({ plan }: { plan: PlanResponse }) => {
   const map = useMaplibreMap()
   const navigate = useNavigate()
   const { data: bins } = useSuspenseQuery(wasteBinQueries.byIds(plan.stops))
-  const { data: route } = useSuspenseQuery(wateringPlanQueries.route(plan.id))
+  const { data: route } = useSuspenseQuery(planQueries.route(plan.id))
   const hasRoute = Boolean(route?.geometry.coordinates.length)
 
   useEffect(() => {

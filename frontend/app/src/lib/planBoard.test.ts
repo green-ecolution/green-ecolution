@@ -1,8 +1,8 @@
 import { describe, expect, it, beforeAll } from 'vitest'
 import type { TFunction } from 'i18next'
-import { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-client'
+import { PlanStatus } from '@green-ecolution/backend-client'
 import { getI18n } from '@/lib/i18n'
-import { columnForStatus, dropActionFor, dropHintFor } from './wateringPlanBoard'
+import { columnForStatus, dropActionFor, dropHintFor } from './planBoard'
 
 // vitest setup already calls createI18n(); fix the language so assertions
 // against the German catalog text stay stable regardless of test order.
@@ -13,18 +13,18 @@ beforeAll(() => {
 
 describe('columnForStatus', () => {
   it('maps planned and active to their columns', () => {
-    expect(columnForStatus(WateringPlanStatus.Planned)).toBe('planned')
-    expect(columnForStatus(WateringPlanStatus.Active)).toBe('active')
+    expect(columnForStatus(PlanStatus.Planned)).toBe('planned')
+    expect(columnForStatus(PlanStatus.Active)).toBe('active')
   })
 
   it('maps all terminal statuses to done', () => {
-    expect(columnForStatus(WateringPlanStatus.Finished)).toBe('done')
-    expect(columnForStatus(WateringPlanStatus.Canceled)).toBe('done')
-    expect(columnForStatus(WateringPlanStatus.NotCompleted)).toBe('done')
+    expect(columnForStatus(PlanStatus.Finished)).toBe('done')
+    expect(columnForStatus(PlanStatus.Canceled)).toBe('done')
+    expect(columnForStatus(PlanStatus.NotCompleted)).toBe('done')
   })
 
   it('maps every status to a column', () => {
-    for (const status of Object.values(WateringPlanStatus)) {
+    for (const status of Object.values(PlanStatus)) {
       expect(columnForStatus(status)).not.toBeUndefined()
     }
   })

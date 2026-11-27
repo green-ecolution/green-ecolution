@@ -4,11 +4,11 @@ import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Suspense, type ReactNode } from 'react'
 import { Toaster } from '@green-ecolution/ui'
-import { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-client'
+import { PlanStatus } from '@green-ecolution/backend-client'
 import type { PlanResponse } from '@/api/backendApi'
 import type { OutcomeInputProps } from '@/modules/types'
 import { probeManifest } from '@/test/planningManifest'
-import WateringPlanStatusUpdate, { CancelWateringPlan } from './WateringPlanStatusUpdate'
+import PlanStatusUpdate, { CancelPlan } from './PlanStatusUpdate'
 
 const getPlan = vi.fn<(...args: unknown[]) => Promise<unknown>>()
 const updatePlan = vi.fn<(...args: unknown[]) => Promise<unknown>>()
@@ -54,7 +54,7 @@ const mockPlanResponse = {
   id: PLAN_ID,
   module: 'irrigation',
   date: '2026-03-01T00:00:00Z',
-  status: WateringPlanStatus.Active,
+  status: PlanStatus.Active,
   stops: [CLUSTER_ID, HIDDEN_ID],
   outcomes: [{ stop: CLUSTER_ID, completed: false, amount: null }],
   transporterCapacityUsed: true,
@@ -62,7 +62,7 @@ const mockPlanResponse = {
   transporter: { id: VEHICLE_ID },
 } as unknown as PlanResponse
 
-describe('CancelWateringPlan', () => {
+describe('CancelPlan', () => {
   const mockOnSubmit = vi.fn()
 
   beforeEach(() => {
@@ -70,7 +70,7 @@ describe('CancelWateringPlan', () => {
   })
 
   it('save button is disabled initially with empty note', async () => {
-    render(<CancelWateringPlan onSubmit={mockOnSubmit} />)
+    render(<CancelPlan onSubmit={mockOnSubmit} />)
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /speichern/i })).toBeDisabled()
@@ -80,7 +80,7 @@ describe('CancelWateringPlan', () => {
   it('save button is enabled after typing a cancellation note', async () => {
     const user = userEvent.setup()
 
-    render(<CancelWateringPlan onSubmit={mockOnSubmit} />)
+    render(<CancelPlan onSubmit={mockOnSubmit} />)
 
     const textarea = screen.getByPlaceholderText(/warum wurde der einsatzplan abgebrochen/i)
     await user.type(textarea, 'Schlechtes Wetter')
@@ -103,14 +103,14 @@ function createWrapper() {
   )
 }
 
-describe('WateringPlanStatusUpdate — Nicht angetreten', () => {
+describe('PlanStatusUpdate — Nicht angetreten', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     getPlan.mockResolvedValue(mockPlanResponse)
   })
 
   const selectNotCompleted = async (user: ReturnType<typeof userEvent.setup>) => {
-    render(<WateringPlanStatusUpdate wateringPlanId={PLAN_ID} />, { wrapper: createWrapper() })
+    render(<PlanStatusUpdate wateringPlanId={PLAN_ID} />, { wrapper: createWrapper() })
 
     const trigger = await screen.findByRole('combobox', { name: /status des einsatzplans/i })
     await user.click(trigger)
@@ -147,13 +147,13 @@ describe('WateringPlanStatusUpdate — Nicht angetreten', () => {
       },
     ]
     expect(payload.planId).toBe(PLAN_ID)
-    expect(payload.planUpdateRequest.status).toBe(WateringPlanStatus.NotCompleted)
+    expect(payload.planUpdateRequest.status).toBe(PlanStatus.NotCompleted)
     expect(payload.planUpdateRequest.cancellationNote).toBe('Fahrzeug defekt')
     expect(payload.planUpdateRequest.stops).toEqual([CLUSTER_ID, HIDDEN_ID])
   })
 })
 
-describe('WateringPlanStatusUpdate — Beendet', () => {
+describe('PlanStatusUpdate — Beendet', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     planModuleActive = true
@@ -163,7 +163,7 @@ describe('WateringPlanStatusUpdate — Beendet', () => {
   it('explains why a plan of an inactive module cannot be finished', async () => {
     planModuleActive = false
     const user = userEvent.setup()
-    render(<WateringPlanStatusUpdate wateringPlanId={PLAN_ID} />, { wrapper: createWrapper() })
+    render(<PlanStatusUpdate wateringPlanId={PLAN_ID} />, { wrapper: createWrapper() })
 
     await user.click(await screen.findByRole('combobox', { name: /status des einsatzplans/i }))
     await user.click(await screen.findByRole('option', { name: /beendet/i }))
@@ -177,7 +177,7 @@ describe('WateringPlanStatusUpdate — Beendet', () => {
   it('finishes with the outcomes of the plan module and completes the hidden stops', async () => {
     const user = userEvent.setup()
     updatePlan.mockResolvedValueOnce({ ...mockPlanResponse })
-    render(<WateringPlanStatusUpdate wateringPlanId={PLAN_ID} />, { wrapper: createWrapper() })
+    render(<PlanStatusUpdate wateringPlanId={PLAN_ID} />, { wrapper: createWrapper() })
 
     await user.click(await screen.findByRole('combobox', { name: /status des einsatzplans/i }))
     await user.click(await screen.findByRole('option', { name: /beendet/i }))
@@ -190,7 +190,7 @@ describe('WateringPlanStatusUpdate — Beendet', () => {
     const [payload] = updatePlan.mock.calls[0] as [
       { planUpdateRequest: { status: string; outcomes: unknown[] } },
     ]
-    expect(payload.planUpdateRequest.status).toBe(WateringPlanStatus.Finished)
+    expect(payload.planUpdateRequest.status).toBe(PlanStatus.Finished)
     expect(payload.planUpdateRequest.outcomes).toEqual([
       { stop: CLUSTER_ID, completed: true, amount: 300 },
       { stop: HIDDEN_ID, completed: true, amount: null },

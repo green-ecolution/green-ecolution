@@ -1,41 +1,36 @@
-import { WATERING_PLAN_FORM } from '@/store/form/formDraftSlice'
+import { PLAN_FORM } from '@/store/form/formDraftSlice'
 import { queryRoots } from '@/api/queries'
 import type { PlanResponse } from '@/api/backendApi'
 import { planApi } from '@/api/backendApi'
 import { toPlanCreateRequest, toPlanFormUpdateRequest } from '@/lib/plans'
 import { useIssueTranslator } from '@/lib/i18n/validation'
 import type { PlanningManifest } from '@/modules/planning'
-import { WateringPlanForm } from '@/schema/wateringPlanSchema'
-import { wateringPlanDraftResolver } from '@green-ecolution/domain-wasm'
+import { PlanForm } from '@/schema/planSchema'
+import { planDraftResolver } from '@green-ecolution/domain-wasm'
 import { DefaultValues } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { EntityFormConfig, useEntityForm } from './useEntityForm'
 
-export const useWateringPlanForm = (
+export const usePlanForm = (
   mutationType: 'create' | 'update',
   opts: {
     wateringPlanId?: string
-    initForm?: DefaultValues<WateringPlanForm>
+    initForm?: DefaultValues<PlanForm>
     planManifest?: PlanningManifest
   },
 ) => {
   const translate = useIssueTranslator()
   const { t } = useTranslation('wateringPlan')
 
-  const wateringPlanConfig: EntityFormConfig<
-    WateringPlanForm,
-    WateringPlanForm,
-    WateringPlanForm,
-    PlanResponse
-  > = {
-    formType: WATERING_PLAN_FORM,
-    resolver: wateringPlanDraftResolver<WateringPlanForm>(translate),
+  const planConfig: EntityFormConfig<PlanForm, PlanForm, PlanForm, PlanResponse> = {
+    formType: PLAN_FORM,
+    resolver: planDraftResolver<PlanForm>(translate),
 
     createFn: (body) => planApi.createPlan({ planCreateRequest: toPlanCreateRequest(body) }),
     updateFn: (id, body) =>
       planApi.updatePlan({ planId: id, planUpdateRequest: toPlanFormUpdateRequest(body) }),
 
-    invalidates: queryRoots.wateringPlan,
+    invalidates: queryRoots.plan,
 
     successRoute: (id) => ({
       to: '/plans/$wateringPlanId',
@@ -53,12 +48,8 @@ export const useWateringPlanForm = (
     },
   }
 
-  return useEntityForm<WateringPlanForm, WateringPlanForm, WateringPlanForm, PlanResponse>(
-    wateringPlanConfig,
-    mutationType,
-    {
-      entityId: opts.wateringPlanId,
-      initForm: opts.initForm,
-    },
-  )
+  return useEntityForm<PlanForm, PlanForm, PlanForm, PlanResponse>(planConfig, mutationType, {
+    entityId: opts.wateringPlanId,
+    initForm: opts.initForm,
+  })
 }

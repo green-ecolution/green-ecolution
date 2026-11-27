@@ -26,22 +26,17 @@ import {
   TabsTrigger,
 } from '@green-ecolution/ui'
 import { useTranslation } from 'react-i18next'
-import { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-client'
+import { PlanStatus } from '@green-ecolution/backend-client'
 import type { PlanInListResponse } from '@green-ecolution/backend-client'
 import type { User } from '@/api/backendApi'
-import { userQueries, wateringPlanQueries } from '@/api/queries'
-import {
-  dropActionFor,
-  dropHintFor,
-  type BoardColumnId,
-  type DropAction,
-} from '@/lib/wateringPlanBoard'
-import { useWateringPlanBoardMutations } from '@/hooks/useWateringPlanBoardMutations'
+import { userQueries, planQueries } from '@/api/queries'
+import { dropActionFor, dropHintFor, type BoardColumnId, type DropAction } from '@/lib/planBoard'
+import { usePlanBoardMutations } from '@/hooks/usePlanBoardMutations'
 import { usePlanPermission } from '@/modules/usePlanPermission'
 import { useActiveModules } from '@/modules/useActiveModules'
 import { planModule, planningManifests, type PlanningManifest } from '@/modules/planning'
 import type { ModulePlanning } from '@/modules/types'
-import WateringPlanBoardCard from './WateringPlanBoardCard'
+import PlanBoardCard from './PlanBoardCard'
 import AssignUsersPopover from './AssignUsersPopover'
 import CancelPlanDialog from './CancelPlanDialog'
 import CompletePlanDialog from './CompletePlanDialog'
@@ -66,7 +61,7 @@ const DraggablePlanCard = ({ plan, planning, column, users }: PlanCardProps) => 
 
   return (
     <div ref={setNodeRef} {...listeners} {...attributes} className="touch-none">
-      <WateringPlanBoardCard
+      <PlanBoardCard
         plan={plan}
         planning={planning}
         users={users}
@@ -83,7 +78,7 @@ const PlanCard = ({ canModify, ...props }: PlanCardProps & { canModify: boolean 
   canModify ? (
     <DraggablePlanCard {...props} />
   ) : (
-    <WateringPlanBoardCard plan={props.plan} planning={props.planning} users={props.users} />
+    <PlanBoardCard plan={props.plan} planning={props.planning} users={props.users} />
   )
 
 const DroppableColumn = ({
@@ -165,7 +160,7 @@ const ModuleSwitcher = ({
   )
 }
 
-const WateringPlanBoard = ({ module }: { module?: string }) => {
+const PlanBoard = ({ module }: { module?: string }) => {
   const { manifests } = useActiveModules()
   const planManifest = planModule({ module }, manifests)
   if (!planManifest) return null
@@ -186,16 +181,14 @@ const WateringPlanBoard = ({ module }: { module?: string }) => {
 }
 
 const ModuleBoard = ({ module, planning }: { module: string; planning: ModulePlanning }) => {
-  const plannedQuery = useQuery(
-    wateringPlanQueries.boardColumn(module, [WateringPlanStatus.Planned]),
-  )
-  const activeQuery = useQuery(wateringPlanQueries.boardColumn(module, [WateringPlanStatus.Active]))
-  const doneQuery = useInfiniteQuery(wateringPlanQueries.boardDone(module))
+  const plannedQuery = useQuery(planQueries.boardColumn(module, [PlanStatus.Planned]))
+  const activeQuery = useQuery(planQueries.boardColumn(module, [PlanStatus.Active]))
+  const doneQuery = useInfiniteQuery(planQueries.boardDone(module))
   const { data: usersRes } = useQuery(userQueries.list({ page: 1, perPage: 100 }))
   const { data: plannedRes } = plannedQuery
   const { data: activeRes } = activeQuery
 
-  const { startPlan, revertStart } = useWateringPlanBoardMutations(planning)
+  const { startPlan, revertStart } = usePlanBoardMutations(planning)
   const { SuggestionsColumn } = planning
   const canModify = usePlanPermission(planning, 'update')
   const canCreate = usePlanPermission(planning, 'create')
@@ -314,7 +307,7 @@ const ModuleBoard = ({ module, planning }: { module: string; planning: ModulePla
             <KanbanColumnEmpty>{t('board.column.doneEmpty')}</KanbanColumnEmpty>
           )}
           {done.map((plan) => (
-            <WateringPlanBoardCard key={plan.id} plan={plan} planning={planning} users={users} />
+            <PlanBoardCard key={plan.id} plan={plan} planning={planning} users={users} />
           ))}
           {doneQuery.hasNextPage && (
             <Button
@@ -333,7 +326,7 @@ const ModuleBoard = ({ module, planning }: { module: string; planning: ModulePla
 
       <DragOverlay dropAnimation={null}>
         {activeDrag && (
-          <WateringPlanBoardCard
+          <PlanBoardCard
             plan={activeDrag.plan}
             planning={planning}
             users={users}
@@ -356,4 +349,4 @@ const ModuleBoard = ({ module, planning }: { module: string; planning: ModulePla
   )
 }
 
-export default WateringPlanBoard
+export default PlanBoard

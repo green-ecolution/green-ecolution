@@ -102,13 +102,13 @@ vi.mock('@tanstack/react-query', async (importOriginal) => {
 
 const revertStart = { mutate: vi.fn() }
 const startPlan = { mutate: vi.fn() }
-vi.mock('@/hooks/useWateringPlanBoardMutations', () => ({
-  useWateringPlanBoardMutations: () => ({ revertStart, startPlan }),
+vi.mock('@/hooks/usePlanBoardMutations', () => ({
+  usePlanBoardMutations: () => ({ revertStart, startPlan }),
 }))
 
 vi.mock('./AssignUsersPopover', () => ({ default: () => <div /> }))
 
-const { default: WateringPlanBoard } = await import('./WateringPlanBoard')
+const { default: PlanBoard } = await import('./PlanBoard')
 
 const drag: DragStartEvent = {
   active: { data: { current: { plan: activePlan, column: 'active' } } },
@@ -122,7 +122,7 @@ describe('dragging a plan from Unterwegs back to Geplant', () => {
   })
 
   it('offers Geplant as an active drop target', () => {
-    render(<WateringPlanBoard />)
+    render(<PlanBoard />)
     act(() => dnd.onDragStart(drag))
 
     expect(lastDroppableCall('planned')?.disabled).toBe(false)
@@ -130,14 +130,14 @@ describe('dragging a plan from Unterwegs back to Geplant', () => {
   })
 
   it('shows the undo-start drop hint on the Geplant column', () => {
-    render(<WateringPlanBoard />)
+    render(<PlanBoard />)
     act(() => dnd.onDragStart(drag))
 
     expect(screen.getByText('Start zurücknehmen')).toBeInTheDocument()
   })
 
   it('reverts the start when the card is dropped on Geplant', () => {
-    render(<WateringPlanBoard />)
+    render(<PlanBoard />)
     act(() => dnd.onDragStart(drag))
     act(() => dnd.onDragEnd({ ...drag, over: { id: 'planned' } }))
 

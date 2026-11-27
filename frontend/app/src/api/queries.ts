@@ -51,7 +51,7 @@ import {
   RouteResponse,
 } from './backendApi'
 import type { TargetRefDto } from '@green-ecolution/backend-client'
-import { DONE_STATUSES } from '@/lib/wateringPlanBoard'
+import { DONE_STATUSES } from '@/lib/planBoard'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -81,7 +81,7 @@ const SENSORS_KEY = ['sensors'] as const
 export const queryRoots = {
   vehicle: [['vehicle'], ['vehicles']],
   sensor: [['sensor'], ['sensors'], ['sensor data'], ['sensor-model']],
-  wateringPlan: [['watering-plan'], ['watering-plans'], ['watering-plan-route'], ['route-preview']],
+  plan: [['plan'], ['plans'], ['plan-route'], ['route-preview']],
   region: [['regions']],
   statistics: [['info']],
   user: [['users']],
@@ -169,17 +169,17 @@ export const sensorQueries = {
     }),
 }
 
-export const wateringPlanQueries = {
+export const planQueries = {
   detail: (id: string) =>
     queryOptions<PlanResponse>({
-      queryKey: ['watering-plan', id],
+      queryKey: ['plan', id],
       queryFn: () => planApi.getPlan({ planId: id }),
       enabled: isValidUuid(id),
     }),
 
   route: (id: string) =>
     queryOptions<RouteResponse | null>({
-      queryKey: ['watering-plan-route', id],
+      queryKey: ['plan-route', id],
       queryFn: async () => {
         try {
           return await planApi.getPlanRoute({ planId: id })
@@ -195,13 +195,13 @@ export const wateringPlanQueries = {
 
   boardColumn: (module: string, statuses: PlanStatus[]) =>
     queryOptions<ListResponsePlanInListResponse>({
-      queryKey: ['watering-plans', 'board', module, statuses],
+      queryKey: ['plans', 'board', module, statuses],
       queryFn: () => planApi.listPlans({ module, status: statuses, page: 1, perPage: 100 }),
     }),
 
   boardDone: (module: string) =>
     infiniteQueryOptions({
-      queryKey: ['watering-plans', 'board', module, 'done'],
+      queryKey: ['plans', 'board', module, 'done'],
       queryFn: ({ pageParam }) =>
         planApi.listPlans({ module, status: DONE_STATUSES, page: pageParam, perPage: 20 }),
       initialPageParam: 1,

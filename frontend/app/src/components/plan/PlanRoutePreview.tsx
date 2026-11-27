@@ -3,7 +3,7 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import { Loading } from '@green-ecolution/ui'
 import { useTranslation } from 'react-i18next'
 import type { PlanResponse } from '@green-ecolution/backend-client'
-import { routingStartPointsQuery, wateringPlanQueries } from '@/api/queries'
+import { routingStartPointsQuery, planQueries } from '@/api/queries'
 import RoutePointMarkers, {
   buildRoutePoints,
   type RoutePointMarkerData,
@@ -16,8 +16,8 @@ import { isMapAlive } from '@/components/map-gl/mapReady'
 import { planTextKey } from '@/modules/planning'
 import type { ModulePlanning } from '@/modules/types'
 
-interface WateringPlanPreviewRouteProps {
-  wateringPlan: PlanResponse
+interface PlanPreviewRouteProps {
+  plan: PlanResponse
   planning: ModulePlanning | undefined
 }
 
@@ -29,7 +29,7 @@ const RoutePreviewLayers = ({
   startPointName?: string | null
 }) => {
   const map = useMaplibreMap()
-  const { data: route } = useSuspenseQuery(wateringPlanQueries.route(planId))
+  const { data: route } = useSuspenseQuery(planQueries.route(planId))
   const { data: startPoints } = useSuspenseQuery(routingStartPointsQuery())
   const routePoints = useMemo<RoutePointMarkerData[]>(
     () => buildRoutePoints(startPoints, startPointName, route?.stationVisits),
@@ -63,7 +63,7 @@ const RoutePreviewLayers = ({
 }
 
 /** The core draws the route and its stations; the plan module draws its stops on top. */
-const WateringPlanPreviewRoute = ({ wateringPlan, planning }: WateringPlanPreviewRouteProps) => {
+const PlanPreviewRoute = ({ plan: plan, planning }: PlanPreviewRouteProps) => {
   const { t, i18n } = useTranslation('wateringPlan')
   const [centerLat, centerLng] = useMapCenter()
 
@@ -82,11 +82,11 @@ const WateringPlanPreviewRoute = ({ wateringPlan, planning }: WateringPlanPrevie
           <Loading className="justify-center" label={t('detail.routePreviewLoadingLabel')} />
         }
       >
-        <RoutePreviewLayers planId={wateringPlan.id} startPointName={wateringPlan.startPointName} />
-        {planning && <planning.RouteOverlay plan={wateringPlan} />}
+        <RoutePreviewLayers planId={plan.id} startPointName={plan.startPointName} />
+        {planning && <planning.RouteOverlay plan={plan} />}
       </Suspense>
     </MapPreview>
   )
 }
 
-export default WateringPlanPreviewRoute
+export default PlanPreviewRoute

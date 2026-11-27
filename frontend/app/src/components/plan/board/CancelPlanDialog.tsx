@@ -10,8 +10,8 @@ import {
 import { useTranslation } from 'react-i18next'
 import type { PlanInListResponse } from '@green-ecolution/backend-client'
 import type { ModulePlanning } from '@/modules/types'
-import { CancelWateringPlan } from '../WateringPlanStatusUpdate'
-import { useWateringPlanBoardMutations } from '@/hooks/useWateringPlanBoardMutations'
+import { CancelPlan } from '../PlanStatusUpdate'
+import { usePlanBoardMutations } from '@/hooks/usePlanBoardMutations'
 import { useDateLocale } from '@/lib/i18n/useFormatters'
 import { formatBoardDate } from './format'
 
@@ -22,7 +22,7 @@ interface CancelPlanDialogProps {
 }
 
 const CancelPlanDialog = ({ plan, planning, onClose }: CancelPlanDialogProps) => {
-  const { cancelPlan } = useWateringPlanBoardMutations(planning)
+  const { cancelPlan } = usePlanBoardMutations(planning)
   const { t } = useTranslation('wateringPlan')
   const dateLocale = useDateLocale()
 
@@ -45,7 +45,7 @@ const CancelPlanDialog = ({ plan, planning, onClose }: CancelPlanDialogProps) =>
           </DialogDescription>
         </DialogHeader>
         {plan && (
-          <CancelWateringPlan
+          <CancelPlan
             className="w-full"
             submitLabel={t('board.cancelDialog.title')}
             onSubmit={(data) =>

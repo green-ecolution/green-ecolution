@@ -11,10 +11,7 @@ import {
   AlertContent,
   AlertDescription,
 } from '@green-ecolution/ui'
-import {
-  useWateringPlanStatusDetails,
-  showWateringPlanStatusButton,
-} from '@/hooks/details/useDetailsForWateringPlanStatus'
+import { usePlanStatusDetails, showPlanStatusButton } from '@/hooks/details/useDetailsForPlanStatus'
 import { format } from 'date-fns'
 import { File, MoveRight, Route } from 'lucide-react'
 import { Suspense } from 'react'
@@ -25,29 +22,29 @@ import ButtonLink from '../general/links/ButtonLink'
 import type { PlanResponse } from '@green-ecolution/backend-client'
 import { useDownloadGpx } from '@/hooks/useDownloadGpx'
 import { useDateLocale } from '@/lib/i18n/useFormatters'
-import WateringPlanPreviewRoute from './WateringPlanRoutePreview'
+import PlanPreviewRoute from './PlanRoutePreview'
 import { usePlanPermission } from '@/modules/usePlanPermission'
 import { planningFor, planTextKey } from '@/modules/planning'
 import { useActiveModules } from '@/modules/useActiveModules'
 
-interface WateringPlanDashboardProps {
-  wateringPlan: PlanResponse
+interface PlanDashboardProps {
+  plan: PlanResponse
 }
 
-const WateringPlanDashboard = ({ wateringPlan }: WateringPlanDashboardProps) => {
-  const getWateringPlanStatusDetails = useWateringPlanStatusDetails()
-  const statusDetails = getWateringPlanStatusDetails(wateringPlan.status)
+const PlanDashboard = ({ plan: plan }: PlanDashboardProps) => {
+  const getPlanStatusDetails = usePlanStatusDetails()
+  const statusDetails = getPlanStatusDetails(plan.status)
   const { t, i18n } = useTranslation(['wateringPlan', 'common'])
   const dateLocale = useDateLocale()
   const { manifests } = useActiveModules()
-  const planning = planningFor(manifests, wateringPlan.module)
+  const planning = planningFor(manifests, plan.module)
   const canEdit = usePlanPermission(planning, 'update')
 
-  const date = wateringPlan?.date
-    ? format(new Date(wateringPlan?.date), 'dd.MM.yyyy', { locale: dateLocale })
+  const date = plan?.date
+    ? format(new Date(plan?.date), 'dd.MM.yyyy', { locale: dateLocale })
     : t('common:state.noData')
 
-  const { mutate: downloadGpx } = useDownloadGpx(wateringPlan.gpxUrl)
+  const { mutate: downloadGpx } = useDownloadGpx(plan.gpxUrl)
 
   return (
     <>
@@ -66,20 +63,20 @@ const WateringPlanDashboard = ({ wateringPlan }: WateringPlanDashboardProps) => 
                 label: t('detail.editLabel'),
                 link: {
                   to: `/plans/$wateringPlanId/edit`,
-                  params: { wateringPlanId: String(wateringPlan.id) },
+                  params: { wateringPlanId: String(plan.id) },
                 },
               }
             : undefined
         }
       >
         <p className="mb-4 text-dark-600">{statusDetails.description}</p>
-        {wateringPlan.description && <p className="mb-4">{wateringPlan.description}</p>}
+        {plan.description && <p className="mb-4">{plan.description}</p>}
         <div className="flex flex-wrap gap-4 items-center">
-          {canEdit && showWateringPlanStatusButton(wateringPlan) && (
+          {canEdit && showPlanStatusButton(plan) && (
             <ButtonLink
               link={{
                 to: '/plans/$wateringPlanId/status/edit',
-                params: { wateringPlanId: wateringPlan.id.toString() },
+                params: { wateringPlanId: plan.id.toString() },
               }}
               label={t('detail.updateStatusLabel')}
               icon={MoveRight}
@@ -90,7 +87,7 @@ const WateringPlanDashboard = ({ wateringPlan }: WateringPlanDashboardProps) => 
             <MoveRight className="icon-arrow-animate" />
           </Button>
         </div>
-        {wateringPlan.distance == 0 && (
+        {plan.distance == 0 && (
           <Alert variant="destructive" className="mt-6 flex items-center gap-3">
             <AlertIcon variant="destructive" />
             <AlertContent>
@@ -120,7 +117,7 @@ const WateringPlanDashboard = ({ wateringPlan }: WateringPlanDashboardProps) => 
               </span>
             </TabsTrigger>
           )}
-          {wateringPlan.distance > 0 && (
+          {plan.distance > 0 && (
             <TabsTrigger value="route">
               <Route className="w-5 h-5" />
               <span className="hidden group-data-[state=active]:block lg:block">
@@ -130,27 +127,27 @@ const WateringPlanDashboard = ({ wateringPlan }: WateringPlanDashboardProps) => 
           )}
         </TabsList>
         <TabsContent value="general">
-          <TabGeneralData wateringPlan={wateringPlan} planning={planning} />
+          <TabGeneralData plan={plan} planning={planning} />
         </TabsContent>
         {planning && (
           <TabsContent value="stops">
             <Suspense fallback={null}>
-              <planning.StopList plan={wateringPlan} />
+              <planning.StopList plan={plan} />
             </Suspense>
           </TabsContent>
         )}
-        {wateringPlan.distance > 0 && (
+        {plan.distance > 0 && (
           <TabsContent value="route">
-            <WateringPlanPreviewRoute wateringPlan={wateringPlan} planning={planning} />
+            <PlanPreviewRoute plan={plan} planning={planning} />
           </TabsContent>
         )}
       </Tabs>
 
       <div className="mt-10">
-        <CommentsSection subject={{ kind: 'plan', id: wateringPlan.id.toString() }} />
+        <CommentsSection subject={{ kind: 'plan', id: plan.id.toString() }} />
       </div>
     </>
   )
 }
 
-export default WateringPlanDashboard
+export default PlanDashboard

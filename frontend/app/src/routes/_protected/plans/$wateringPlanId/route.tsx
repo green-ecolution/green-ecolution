@@ -1,4 +1,4 @@
-import { wateringPlanQueries } from '@/api/queries'
+import { planQueries } from '@/api/queries'
 import { entityRoute } from '@/lib/router'
 import { getI18n } from '@/lib/i18n'
 import { dateFnsLocale } from '@/lib/i18n/format'
@@ -6,18 +6,18 @@ import { createFileRoute } from '@tanstack/react-router'
 import { format } from 'date-fns'
 
 /** Shared by the detail and _formular layout routes; spread it — the router mutates route options on update. */
-export const wateringPlanEntityRoute = entityRoute({
+export const planEntityRoute = entityRoute({
   key: 'wateringPlan',
-  query: wateringPlanQueries.detail,
+  query: planQueries.detail,
   idParam: 'wateringPlanId',
-  title: (wateringPlan) => ({
+  title: (plan) => ({
     titleKey: 'wateringPlan:detail.entityTitle',
     params: {
-      value: wateringPlan.date
-        ? format(new Date(wateringPlan.date), 'dd.MM.yyyy', {
+      value: plan.date
+        ? format(new Date(plan.date), 'dd.MM.yyyy', {
             locale: dateFnsLocale(getI18n().language),
           })
-        : wateringPlan.id,
+        : plan.id,
     },
   }),
   notFound: {
@@ -28,5 +28,5 @@ export const wateringPlanEntityRoute = entityRoute({
 })
 
 export const Route = createFileRoute('/_protected/plans/$wateringPlanId')({
-  ...wateringPlanEntityRoute,
+  ...planEntityRoute,
 })

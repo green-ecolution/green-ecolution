@@ -1,13 +1,7 @@
 import { useCallback, useMemo } from 'react'
 import useStore from '@/store/store'
 import { useOrganizationScope } from '@/lib/auth/scope/organizationScopeStore'
-import {
-  FormDraftKey,
-  FormDraftState,
-  FormType,
-  MutationType,
-  WATERING_PLAN_FORM,
-} from './formDraftSlice'
+import { FormDraftKey, FormDraftState, FormType, MutationType, PLAN_FORM } from './formDraftSlice'
 
 export function useFormDraft<T>(formType: FormType, mutationType: MutationType) {
   const key: FormDraftKey = `${formType}-${mutationType}`
@@ -41,5 +35,5 @@ export function useFormDraft<T>(formType: FormType, mutationType: MutationType) 
   )
 }
 
-export const useWateringPlanDraft = <T>(mutationType: MutationType) =>
-  useFormDraft<T>(WATERING_PLAN_FORM, mutationType)
+export const usePlanDraft = <T>(mutationType: MutationType) =>
+  useFormDraft<T>(PLAN_FORM, mutationType)

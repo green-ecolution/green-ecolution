@@ -1,11 +1,11 @@
 import { useSuspenseQuery } from '@tanstack/react-query'
 import FormPageHeader from '../general/FormPageHeader'
 import { useInitFormQuery } from '@/hooks/form/useInitForm'
-import { userQueries, vehicleQueries, wateringPlanQueries } from '@/api/queries'
+import { userQueries, vehicleQueries, planQueries } from '@/api/queries'
 import { format } from 'date-fns'
-import FormForWateringPlan from '../general/form/FormForWateringPlan'
+import FormForPlan from '../general/form/FormForPlan'
 import GeneralLink from '../general/links/GeneralLink'
-import { showWateringPlanStatusButton } from '@/hooks/details/useDetailsForWateringPlanStatus'
+import { showPlanStatusButton } from '@/hooks/details/useDetailsForPlanStatus'
 import { Loading } from '@green-ecolution/ui'
 import { Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -15,23 +15,23 @@ import { planStatusQueryRoots } from '@/lib/queryInvalidation'
 import { planningManifests, planTextKey } from '@/modules/planning'
 import { useActiveModules } from '@/modules/useActiveModules'
 import { usePlanPermission } from '@/modules/usePlanPermission'
-import { useWateringPlanForm } from '@/hooks/form/useWateringPlanForm'
-import { WateringPlanForm } from '@/schema/wateringPlanSchema'
+import { usePlanForm } from '@/hooks/form/usePlanForm'
+import { PlanForm } from '@/schema/planSchema'
 import { FormProvider, SubmitHandler } from 'react-hook-form'
-import { useWateringPlanDraft } from '@/store/form/useFormDraft'
+import { usePlanDraft } from '@/store/form/useFormDraft'
 import { useDateLocale } from '@/lib/i18n/useFormatters'
 import UnsavedChangesDialog from '../general/form/UnsavedChangesDialog'
 
-interface WateringPlanUpdateProps {
+interface PlanUpdateProps {
   wateringPlanId: string
 }
 
-const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
+const PlanUpdate = ({ wateringPlanId }: PlanUpdateProps) => {
   const { t, i18n } = useTranslation(['wateringPlan', 'common'])
   const dateLocale = useDateLocale()
-  const draft = useWateringPlanDraft<WateringPlanForm>('update')
+  const draft = usePlanDraft<PlanForm>('update')
   const { initForm, loadedData } = useInitFormQuery(
-    wateringPlanQueries.detail(wateringPlanId),
+    planQueries.detail(wateringPlanId),
     (data) =>
       draft.data ?? {
         date: new Date(data.date),
@@ -53,14 +53,11 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
   const planning = planManifest?.planning
   const canUpdateStatus = usePlanPermission(planning, 'update')
   const canDelete = usePlanPermission(planning, 'delete')
-  const { mutate, isError, error, form, navigationBlocker, saveDraft } = useWateringPlanForm(
-    'update',
-    {
-      wateringPlanId,
-      initForm,
-      planManifest,
-    },
-  )
+  const { mutate, isError, error, form, navigationBlocker, saveDraft } = usePlanForm('update', {
+    wateringPlanId,
+    initForm,
+    planManifest,
+  })
 
   const date = loadedData?.date
     ? format(new Date(loadedData?.date), 'dd.MM.yyyy', { locale: dateLocale })
@@ -72,9 +69,9 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
     vehicleQueries.list({ type: [VehicleType.Transporter] }),
   )
 
-  const onSubmit: SubmitHandler<WateringPlanForm> = (data) => mutate(data)
+  const onSubmit: SubmitHandler<PlanForm> = (data) => mutate(data)
 
-  const handleDeleteWateringPlan = () => {
+  const handleDeletePlan = () => {
     return planApi.deletePlan({ planId: wateringPlanId })
   }
 
@@ -93,7 +90,7 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
         <p>
           {i18n.t(planTextKey(planning, 'updateDescription', 'wateringPlan:update.description'))}
         </p>
-        {canUpdateStatus && showWateringPlanStatusButton(loadedData) && (
+        {canUpdateStatus && showPlanStatusButton(loadedData) && (
           <p className="mt-5 flex flex-wrap gap-x-4">
             {t('update.statusEditNotice')}
             <GeneralLink
@@ -109,7 +106,7 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
 
       <section className="mt-10">
         <FormProvider {...form}>
-          <FormForWateringPlan
+          <FormForPlan
             displayError={isError}
             onSubmit={onSubmit}
             users={users.data}
@@ -130,7 +127,7 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
           fallback={<Loading className="mt-20 justify-center" label={t('update.deletingLabel')} />}
         >
           <DeleteSection
-            mutationFn={handleDeleteWateringPlan}
+            mutationFn={handleDeletePlan}
             entityName={{ key: 'wateringPlan:entity.nameWithArticle' }}
             redirectUrl={{ to: '/plans' }}
             invalidates={planStatusQueryRoots(planning)}
@@ -143,4 +140,4 @@ const WateringPlanUpdate = ({ wateringPlanId }: WateringPlanUpdateProps) => {
   )
 }
 
-export default WateringPlanUpdate
+export default PlanUpdate

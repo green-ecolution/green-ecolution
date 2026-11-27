@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { ReactNode } from 'react'
-import { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-client'
+import { PlanStatus } from '@green-ecolution/backend-client'
 import type { StopOutcomeDto } from '@green-ecolution/backend-client'
 import type { OutcomeInputProps } from '@/modules/types'
 import { probePlanning } from '@/test/planningManifest'
@@ -10,8 +10,8 @@ import { planInList } from '@/test/plans'
 
 const finishPlan = vi.fn()
 const cancelPlan = vi.fn()
-vi.mock('@/hooks/useWateringPlanBoardMutations', () => ({
-  useWateringPlanBoardMutations: () => ({
+vi.mock('@/hooks/usePlanBoardMutations', () => ({
+  usePlanBoardMutations: () => ({
     finishPlan: { mutate: finishPlan },
     cancelPlan: { mutate: cancelPlan },
   }),
@@ -36,7 +36,7 @@ const OutcomeInput = ({ plan, onChange }: OutcomeInputProps) => (
   </div>
 )
 
-const plan = planInList({ status: WateringPlanStatus.Active, stops: ['c1', 'hidden'] })
+const plan = planInList({ status: PlanStatus.Active, stops: ['c1', 'hidden'] })
 const planning = probePlanning({ OutcomeInput })
 
 describe('CompletePlanDialog', () => {

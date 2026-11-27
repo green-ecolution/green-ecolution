@@ -1,20 +1,20 @@
-import WateringPlanDashboard from '@/components/watering-plan/WateringPlanDashboard'
+import PlanDashboard from '@/components/plan/PlanDashboard'
 import { pendingLoading } from '@/lib/router'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
 
-const wateringPlanRoute = getRouteApi('/_protected/plans/$wateringPlanId')
+const planRoute = getRouteApi('/_protected/plans/$wateringPlanId')
 
 export const Route = createFileRoute('/_protected/plans/$wateringPlanId/')({
-  component: SingleWateringPlan,
+  component: SinglePlan,
   pendingComponent: pendingLoading({ key: 'wateringPlan:detail.loadingLabel' }),
 })
 
-function SingleWateringPlan() {
-  const { wateringPlan } = wateringPlanRoute.useLoaderData()
+function SinglePlan() {
+  const { wateringPlan: plan } = planRoute.useLoaderData()
 
   return (
     <div className="container mt-6">
-      <WateringPlanDashboard wateringPlan={wateringPlan} />
+      <PlanDashboard plan={plan} />
     </div>
   )
 }

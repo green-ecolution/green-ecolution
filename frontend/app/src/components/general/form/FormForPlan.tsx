@@ -11,7 +11,7 @@ import {
 import { useTranslation } from 'react-i18next'
 import FormError from './FormError'
 import FormSubmitButton from './FormSubmitButton'
-import { WateringPlanForm } from '@/schema/wateringPlanSchema'
+import { PlanForm } from '@/schema/planSchema'
 import type { User, Vehicle } from '@/api/backendApi'
 import type { DrivingLicense } from '@green-ecolution/backend-client'
 import { useDrivingLicenseDetails } from '@/hooks/details/useDetailsForDrivingLicense'
@@ -23,7 +23,7 @@ import { planningManifests } from '@/modules/planning'
 import type { PlanFormContext } from '@/modules/types'
 import { useActiveModules } from '@/modules/useActiveModules'
 
-interface FormForWateringPlanProps {
+interface FormForPlanProps {
   displayError: boolean
   errorMessage?: string
   transporters: Vehicle[]
@@ -33,17 +33,17 @@ interface FormForWateringPlanProps {
   planId?: string
   organizationId?: string
   saveDraft: () => void
-  onSubmit: SubmitHandler<WateringPlanForm>
+  onSubmit: SubmitHandler<PlanForm>
   onBlur?: () => void
 }
 
 const startOfToday = new Date()
 startOfToday.setHours(0, 0, 0, 0)
 
-const FormForWateringPlan = (props: FormForWateringPlanProps) => {
+const FormForPlan = (props: FormForPlanProps) => {
   const { t, i18n } = useTranslation(['wateringPlan', 'common'])
   const { register, handleSubmit, control, resetField, getValues, setValue } =
-    useFormContext<WateringPlanForm>()
+    useFormContext<PlanForm>()
   const { errors } = useFormState({ control })
   const { manifests } = useActiveModules()
   const planningModules = planningManifests(manifests)
@@ -63,12 +63,12 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
     }
   }, [startPoints, getValues, resetField])
 
-  const watchedTransporterId = useWatch<WateringPlanForm, 'transporterId'>({
+  const watchedTransporterId = useWatch<PlanForm, 'transporterId'>({
     name: 'transporterId',
   })
-  const watchedTrailerId = useWatch<WateringPlanForm, 'trailerId'>({ name: 'trailerId' })
-  const watchedDriverIds = useWatch<WateringPlanForm, 'driverIds'>({ name: 'driverIds' })
-  const watchedModule = useWatch<WateringPlanForm, 'module'>({ name: 'module' })
+  const watchedTrailerId = useWatch<PlanForm, 'trailerId'>({ name: 'trailerId' })
+  const watchedDriverIds = useWatch<PlanForm, 'driverIds'>({ name: 'driverIds' })
+  const watchedModule = useWatch<PlanForm, 'module'>({ name: 'module' })
   const planManifest = planningModules.find(({ key }) => key === watchedModule)
   const StopPicker = planManifest?.planning.StopPicker
   const capacity = capacityDisplay[planManifest?.planning.capacityKind ?? 'water']
@@ -326,4 +326,4 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
   )
 }
 
-export default FormForWateringPlan
+export default FormForPlan

@@ -1,20 +1,20 @@
 import { Suspense, useCallback, useState } from 'react'
 import FormPageHeader from '../general/FormPageHeader'
-import { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-client'
+import { PlanStatus } from '@green-ecolution/backend-client'
 import type {
   PlanInListResponse,
   PlanResponse,
   PlanUpdateRequest,
   StopOutcomeDto,
 } from '@green-ecolution/backend-client'
-import { wateringPlanQueries } from '@/api/queries'
+import { planQueries } from '@/api/queries'
 import { format } from 'date-fns'
 import { MoveRight } from 'lucide-react'
 import FormError from '../general/form/FormError'
 import {
-  useWateringPlanStatusDetails,
-  useWateringPlanStatusTransitionOptions,
-} from '@/hooks/details/useDetailsForWateringPlanStatus'
+  usePlanStatusDetails,
+  usePlanStatusTransitionOptions,
+} from '@/hooks/details/useDetailsForPlanStatus'
 import {
   Badge,
   TextareaField,
@@ -23,7 +23,7 @@ import {
   InlineAlert,
   Loading,
 } from '@green-ecolution/ui'
-import { WateringPlanCancelForm, wateringPlanCancelSchema } from '@/schema/wateringPlanSchema'
+import { PlanCancelForm, planCancelSchema } from '@/schema/planSchema'
 import { zodResolver } from '@/lib/zodResolver'
 import { SubmitHandler, useForm } from 'react-hook-form'
 import { useMutation, useSuspenseQuery } from '@tanstack/react-query'
@@ -39,12 +39,12 @@ import { completeOutcomes, planningFor, planTextKey } from '@/modules/planning'
 import type { ModulePlanning } from '@/modules/types'
 import { useActiveModules } from '@/modules/useActiveModules'
 
-interface WateringPlanStatusUpdateProps {
+interface PlanStatusUpdateProps {
   wateringPlanId: string
 }
 
-const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdateProps) => {
-  const { data: loadedData } = useSuspenseQuery(wateringPlanQueries.detail(wateringPlanId))
+const PlanStatusUpdate = ({ wateringPlanId }: PlanStatusUpdateProps) => {
+  const { data: loadedData } = useSuspenseQuery(planQueries.detail(wateringPlanId))
   const { manifests } = useActiveModules()
   const planning = planningFor(manifests, loadedData.module)
   const navigate = useNavigate()
@@ -52,9 +52,9 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
   const showToast = createToast()
   const { t, i18n } = useTranslation(['wateringPlan', 'errors', 'common'])
   const dateLocale = useDateLocale()
-  const getWateringPlanStatusDetails = useWateringPlanStatusDetails()
-  const statusDetails = getWateringPlanStatusDetails(loadedData.status)
-  const statusOptions = useWateringPlanStatusTransitionOptions(loadedData.status)
+  const getPlanStatusDetails = usePlanStatusDetails()
+  const statusDetails = getPlanStatusDetails(loadedData.status)
+  const statusOptions = usePlanStatusTransitionOptions(loadedData.status)
   const [selectedStatus, setSelectedStatus] = useState(statusDetails)
 
   const { mutate, isError, error } = useMutation({
@@ -98,31 +98,31 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
   const date = format(new Date(loadedData.date), 'dd.MM.yyyy', { locale: dateLocale })
 
   const formByStatus = useCallback(
-    (status: WateringPlanStatus) => {
+    (status: PlanStatus) => {
       const onSubmitFinished = (outcomes: StopOutcomeDto[]) => {
         mutate({
-          status: WateringPlanStatus.Finished,
+          status: PlanStatus.Finished,
           outcomes: completeOutcomes(loadedData.stops, outcomes),
         })
       }
 
-      const onSubmitCancel: SubmitHandler<WateringPlanCancelForm> = (data) => {
-        mutate({ status: WateringPlanStatus.Canceled, cancellationNote: data.cancellationNote })
+      const onSubmitCancel: SubmitHandler<PlanCancelForm> = (data) => {
+        mutate({ status: PlanStatus.Canceled, cancellationNote: data.cancellationNote })
       }
 
-      const onSubmitNotCompleted: SubmitHandler<WateringPlanCancelForm> = (data) => {
-        mutate({ status: WateringPlanStatus.NotCompleted, cancellationNote: data.cancellationNote })
+      const onSubmitNotCompleted: SubmitHandler<PlanCancelForm> = (data) => {
+        mutate({ status: PlanStatus.NotCompleted, cancellationNote: data.cancellationNote })
       }
 
-      const onSubmitOtherStatus = (status: WateringPlanStatus) => {
+      const onSubmitOtherStatus = (status: PlanStatus) => {
         mutate({ status })
       }
       switch (status) {
         case 'canceled':
-          return <CancelWateringPlan onSubmit={onSubmitCancel} className="mt-6 md:w-1/2" />
-        case WateringPlanStatus.NotCompleted:
+          return <CancelPlan onSubmit={onSubmitCancel} className="mt-6 md:w-1/2" />
+        case PlanStatus.NotCompleted:
           return (
-            <CancelWateringPlan
+            <CancelPlan
               onSubmit={onSubmitNotCompleted}
               className="mt-6 md:w-1/2"
               label={t('statusUpdate.notCompletedReasonLabel')}
@@ -131,7 +131,7 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
           )
         case 'finished':
           return planning ? (
-            <FinishWateringPlan plan={loadedData} planning={planning} onSubmit={onSubmitFinished} />
+            <FinishPlan plan={loadedData} planning={planning} onSubmit={onSubmitFinished} />
           ) : (
             <InlineAlert
               variant="info"
@@ -195,8 +195,8 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
                 description={selectedStatus.description}
                 onValueChange={(value) => {
                   // SelectField's onValueChange is string-typed; value is always
-                  // one of statusOptions' WateringPlanStatus values.
-                  setSelectedStatus(getWateringPlanStatusDetails(value as WateringPlanStatus))
+                  // one of statusOptions' PlanStatus values.
+                  setSelectedStatus(getPlanStatusDetails(value as PlanStatus))
                 }}
                 options={statusOptions}
               />
@@ -211,14 +211,14 @@ const WateringPlanStatusUpdate = ({ wateringPlanId }: WateringPlanStatusUpdatePr
 }
 
 interface CancelPlanProps {
-  onSubmit: SubmitHandler<WateringPlanCancelForm>
+  onSubmit: SubmitHandler<PlanCancelForm>
   submitLabel?: string
   className?: string
   label?: string
   placeholder?: string
 }
 
-export const CancelWateringPlan = ({
+export const CancelPlan = ({
   onSubmit,
   submitLabel,
   className = 'md:w-1/2',
@@ -232,7 +232,7 @@ export const CancelWateringPlan = ({
     formState: { isValid, errors },
   } = useForm({
     mode: 'onChange',
-    resolver: zodResolver(wateringPlanCancelSchema),
+    resolver: zodResolver(planCancelSchema),
   })
 
   return (
@@ -261,7 +261,7 @@ interface FinishPlanProps {
 }
 
 /** The amounts per stop come from the plan module; the core only gates the submit on them. */
-export const FinishWateringPlan = ({ plan, planning, onSubmit, submitLabel }: FinishPlanProps) => {
+export const FinishPlan = ({ plan, planning, onSubmit, submitLabel }: FinishPlanProps) => {
   const { t } = useTranslation('common')
   const [result, setResult] = useState<{ outcomes: StopOutcomeDto[]; valid: boolean }>({
     outcomes: [],
@@ -294,4 +294,4 @@ export const FinishWateringPlan = ({ plan, planning, onSubmit, submitLabel }: Fi
   )
 }
 
-export default WateringPlanStatusUpdate
+export default PlanStatusUpdate

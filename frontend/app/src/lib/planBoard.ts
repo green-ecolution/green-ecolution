@@ -1,23 +1,23 @@
 import type { TFunction } from 'i18next'
-import { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-client'
+import { PlanStatus } from '@green-ecolution/backend-client'
 
 export type BoardColumnId = 'planned' | 'active' | 'done'
 
-export const DONE_STATUSES: WateringPlanStatus[] = [
-  WateringPlanStatus.Finished,
-  WateringPlanStatus.Canceled,
-  WateringPlanStatus.NotCompleted,
+export const DONE_STATUSES: PlanStatus[] = [
+  PlanStatus.Finished,
+  PlanStatus.Canceled,
+  PlanStatus.NotCompleted,
 ]
 
-export function columnForStatus(status: WateringPlanStatus): BoardColumnId {
+export function columnForStatus(status: PlanStatus): BoardColumnId {
   switch (status) {
-    case WateringPlanStatus.Planned:
+    case PlanStatus.Planned:
       return 'planned'
-    case WateringPlanStatus.Active:
+    case PlanStatus.Active:
       return 'active'
-    case WateringPlanStatus.Finished:
-    case WateringPlanStatus.Canceled:
-    case WateringPlanStatus.NotCompleted:
+    case PlanStatus.Finished:
+    case PlanStatus.Canceled:
+    case PlanStatus.NotCompleted:
       return 'done'
   }
 }

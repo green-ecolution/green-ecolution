@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import { Toaster } from '@green-ecolution/ui'
-import { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-client'
+import { PlanStatus } from '@green-ecolution/backend-client'
 import CancelPlanDialog from './CancelPlanDialog'
 import { probePlanning } from '@/test/planningManifest'
 import { planInList } from '@/test/plans'
@@ -26,7 +26,7 @@ vi.mock('@tanstack/react-router', () => ({
   Link: ({ children }: { children: ReactNode }) => <a>{children}</a>,
 }))
 
-const plan = planInList({ status: WateringPlanStatus.Planned })
+const plan = planInList({ status: PlanStatus.Planned })
 const planning = probePlanning()
 
 function createWrapper() {
@@ -60,7 +60,7 @@ describe('CancelPlanDialog', () => {
     const request = updatePlan.mock.calls[0][0] as {
       planUpdateRequest: { status: string; cancellationNote: string }
     }
-    expect(request.planUpdateRequest.status).toBe(WateringPlanStatus.Canceled)
+    expect(request.planUpdateRequest.status).toBe(PlanStatus.Canceled)
     expect(request.planUpdateRequest.cancellationNote).toBe('Regen vorhergesagt')
     await waitFor(() => expect(onClose).toHaveBeenCalled())
   })

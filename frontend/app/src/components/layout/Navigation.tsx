@@ -108,7 +108,7 @@ const moduleLinksFor = (
       })),
   )
 
-// Module links sit between `before` and `after`, where the irrigation entries used to be.
+// Module links sit between `before` and `after`.
 const protectedNavData = (
   t: TFunction<'navigation'>,
   translate: (key: I18nKey) => string,
@@ -152,7 +152,7 @@ const protectedNavData = (
         planResourcesOf(manifests).length > 0
           ? [
               {
-                key: 'nav-watering-plans',
+                key: 'nav-plans',
                 label: t('sidebar.wateringPlans'),
                 icon: <ArrowLeftRight className="w-5 h-5" />,
                 to: '/plans',
@@ -161,7 +161,7 @@ const protectedNavData = (
           : [],
       after: [
         {
-          key: 'nav-watering-plan-vehicle',
+          key: 'nav-plan-vehicles',
           label: t('sidebar.vehicles'),
           icon: <Car className="w-5 h-5" />,
           to: '/vehicles',

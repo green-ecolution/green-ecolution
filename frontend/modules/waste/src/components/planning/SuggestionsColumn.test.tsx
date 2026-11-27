@@ -89,7 +89,7 @@ describe('waste SuggestionsColumn', () => {
     await user.click(screen.getByRole('checkbox', { name: 'B-0001 für Leerungstour auswählen' }))
     await user.click(screen.getByRole('button', { name: /zu leerungstour bündeln/i }))
 
-    expect(useStore.getState().formDrafts['wateringplan-create']?.data).toMatchObject({
+    expect(useStore.getState().formDrafts['plan-create']?.data).toMatchObject({
       module: 'waste',
       stopIds: ['b1'],
     })

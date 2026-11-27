@@ -103,13 +103,11 @@ const MemberProfileCard = ({
             <div className="flex flex-col gap-y-2 @min-[36rem]:col-span-2">
               <div className="flex items-center gap-x-3">
                 <Switch
-                  id="member-watering-plan-selectable"
+                  id="member-plan-selectable"
                   checked={draft.planSelectable}
                   onCheckedChange={onPlanSelectableChange}
                 />
-                <Label htmlFor="member-watering-plan-selectable">
-                  {t('members.planSelectableLabel')}
-                </Label>
+                <Label htmlFor="member-plan-selectable">{t('members.planSelectableLabel')}</Label>
               </div>
               <p className="text-sm text-dark-600">{t('members.planSelectableHint')}</p>
             </div>

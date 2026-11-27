@@ -2,11 +2,11 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, waitFor, act } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactNode } from 'react'
-import { useWateringPlanForm } from './useWateringPlanForm'
+import { usePlanForm } from './usePlanForm'
 import { Toaster } from '@green-ecolution/ui'
-import { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-client'
+import { PlanStatus } from '@green-ecolution/backend-client'
 import useStore from '@/store/store'
-import type { WateringPlanForm } from '@/schema/wateringPlanSchema'
+import type { PlanForm } from '@/schema/planSchema'
 import { probeManifest } from '@/test/planningManifest'
 
 vi.mock('@/api/backendApi', () => ({
@@ -51,10 +51,10 @@ function createWrapper() {
 const futureDate = new Date()
 futureDate.setDate(futureDate.getDate() + 7)
 
-const defaultInitForm: WateringPlanForm = {
+const defaultInitForm: PlanForm = {
   module: 'irrigation',
   date: futureDate,
-  status: WateringPlanStatus.Planned,
+  status: PlanStatus.Planned,
   transporterId: 'transporter-uuid-1',
   trailerId: 'trailer-uuid-2',
   driverIds: ['550e8400-e29b-41d4-a716-446655440000'],
@@ -68,7 +68,7 @@ function createMockPlan(overrides: Partial<PlanResponse> = {}): PlanResponse {
   return {
     id: 'plan-uuid-1',
     date: futureDate.toISOString(),
-    status: WateringPlanStatus.Planned,
+    status: PlanStatus.Planned,
     description: '',
     transporter: {
       id: 'transporter-uuid-1',
@@ -87,7 +87,7 @@ function createMockPlan(overrides: Partial<PlanResponse> = {}): PlanResponse {
   } as unknown as PlanResponse
 }
 
-describe('useWateringPlanForm', () => {
+describe('usePlanForm', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     useStore.getState().clearAllFormDrafts()
@@ -98,13 +98,12 @@ describe('useWateringPlanForm', () => {
   })
 
   it('initializes form with provided default values', () => {
-    const { result } = renderHook(
-      () => useWateringPlanForm('create', { initForm: defaultInitForm }),
-      { wrapper: createWrapper() },
-    )
+    const { result } = renderHook(() => usePlanForm('create', { initForm: defaultInitForm }), {
+      wrapper: createWrapper(),
+    })
 
     expect(result.current.form.getValues('transporterId')).toBe('transporter-uuid-1')
-    expect(result.current.form.getValues('status')).toBe(WateringPlanStatus.Planned)
+    expect(result.current.form.getValues('status')).toBe(PlanStatus.Planned)
     expect(result.current.form.getValues('driverIds')).toEqual([
       '550e8400-e29b-41d4-a716-446655440000',
     ])
@@ -112,10 +111,9 @@ describe('useWateringPlanForm', () => {
   })
 
   it('returns form methods and mutation state', () => {
-    const { result } = renderHook(
-      () => useWateringPlanForm('create', { initForm: defaultInitForm }),
-      { wrapper: createWrapper() },
-    )
+    const { result } = renderHook(() => usePlanForm('create', { initForm: defaultInitForm }), {
+      wrapper: createWrapper(),
+    })
 
     expect(result.current.form).toBeDefined()
     expect(result.current.form.getValues).toBeDefined()
@@ -131,10 +129,9 @@ describe('useWateringPlanForm', () => {
     const createMock = vi.mocked(planApi.createPlan)
     createMock.mockResolvedValueOnce(mockResponse)
 
-    const { result } = renderHook(
-      () => useWateringPlanForm('create', { initForm: defaultInitForm }),
-      { wrapper: createWrapper() },
-    )
+    const { result } = renderHook(() => usePlanForm('create', { initForm: defaultInitForm }), {
+      wrapper: createWrapper(),
+    })
 
     act(() => {
       result.current.mutate(defaultInitForm)
@@ -161,7 +158,7 @@ describe('useWateringPlanForm', () => {
   it('updates the plan when mutationType is update', async () => {
     const mockResponse = createMockPlan({
       id: 'plan-uuid-5',
-      status: WateringPlanStatus.Active,
+      status: PlanStatus.Active,
     })
     // eslint-disable-next-line @typescript-eslint/unbound-method
     const updateMock = vi.mocked(planApi.updatePlan)
@@ -169,11 +166,11 @@ describe('useWateringPlanForm', () => {
 
     const updateInitForm = {
       ...defaultInitForm,
-      status: WateringPlanStatus.Active,
+      status: PlanStatus.Active,
     }
 
     const { result } = renderHook(
-      () => useWateringPlanForm('update', { wateringPlanId: '5', initForm: updateInitForm }),
+      () => usePlanForm('update', { wateringPlanId: '5', initForm: updateInitForm }),
       { wrapper: createWrapper() },
     )
 
@@ -187,7 +184,7 @@ describe('useWateringPlanForm', () => {
         planId: '5',
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         planUpdateRequest: expect.objectContaining({
-          status: WateringPlanStatus.Active,
+          status: PlanStatus.Active,
           transporterId: 'transporter-uuid-1',
           stops: ['cluster-uuid-1', 'cluster-uuid-2'],
         }),
@@ -203,30 +200,28 @@ describe('useWateringPlanForm', () => {
       createMock.mockResolvedValueOnce(mockResponse)
 
       // Pre-populate draft
-      useStore.getState().setFormDraft('wateringplan-create', defaultInitForm)
+      useStore.getState().setFormDraft('plan-create', defaultInitForm)
 
-      const { result } = renderHook(
-        () => useWateringPlanForm('create', { initForm: defaultInitForm }),
-        { wrapper: createWrapper() },
-      )
+      const { result } = renderHook(() => usePlanForm('create', { initForm: defaultInitForm }), {
+        wrapper: createWrapper(),
+      })
 
       // Verify draft exists before mutation
-      expect(useStore.getState().formDrafts['wateringplan-create']).toBeDefined()
+      expect(useStore.getState().formDrafts['plan-create']).toBeDefined()
 
       act(() => {
         result.current.mutate(defaultInitForm)
       })
 
       await waitFor(() => {
-        expect(useStore.getState().formDrafts['wateringplan-create']).toBeUndefined()
+        expect(useStore.getState().formDrafts['plan-create']).toBeUndefined()
       })
     })
 
     it('returns navigationBlocker with correct message', () => {
-      const { result } = renderHook(
-        () => useWateringPlanForm('create', { initForm: defaultInitForm }),
-        { wrapper: createWrapper() },
-      )
+      const { result } = renderHook(() => usePlanForm('create', { initForm: defaultInitForm }), {
+        wrapper: createWrapper(),
+      })
 
       expect(result.current.navigationBlocker).toBeDefined()
       expect(result.current.navigationBlocker.message).toContain('Einsatzplan')
@@ -235,7 +230,7 @@ describe('useWateringPlanForm', () => {
     it('lets the dirty form open the stop picker pages of the plan module', () => {
       const { result, rerender } = renderHook(
         () =>
-          useWateringPlanForm('create', {
+          usePlanForm('create', {
             initForm: defaultInitForm,
             planManifest: probeManifest('probe', { stopPickerPaths: ['/probe/pick'] }),
           }),

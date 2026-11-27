@@ -9,7 +9,7 @@ import {
 import { useTranslation } from 'react-i18next'
 import type { PlanInListResponse } from '@green-ecolution/backend-client'
 import type { User } from '@/api/backendApi'
-import { useWateringPlanBoardMutations } from '@/hooks/useWateringPlanBoardMutations'
+import { usePlanBoardMutations } from '@/hooks/usePlanBoardMutations'
 
 interface AssignUsersPopoverProps {
   plan: PlanInListResponse
@@ -19,7 +19,7 @@ interface AssignUsersPopoverProps {
 const AssignUsersPopover = ({ plan, users }: AssignUsersPopoverProps) => {
   const [open, setOpen] = useState(false)
   const [selected, setSelected] = useState<string[]>(plan.userIds)
-  const { assignUsers } = useWateringPlanBoardMutations()
+  const { assignUsers } = usePlanBoardMutations()
   const { t } = useTranslation('wateringPlan')
 
   const options = users.map((user) => ({

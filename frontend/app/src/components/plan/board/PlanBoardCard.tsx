@@ -1,10 +1,10 @@
 import { Link } from '@tanstack/react-router'
 import { Avatar, AvatarFallback, AvatarImage, Badge, KanbanCard } from '@green-ecolution/ui'
-import { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-client'
+import { PlanStatus } from '@green-ecolution/backend-client'
 import type { PlanInListResponse } from '@green-ecolution/backend-client'
 import type { User } from '@/api/backendApi'
-import { useWateringPlanStatusDetails } from '@/hooks/details/useDetailsForWateringPlanStatus'
-import { columnForStatus } from '@/lib/wateringPlanBoard'
+import { usePlanStatusDetails } from '@/hooks/details/useDetailsForPlanStatus'
+import { columnForStatus } from '@/lib/planBoard'
 import { formatLiters } from '@/lib/utils'
 import { capacityDisplay } from '@/lib/capacity'
 import type { ModulePlanning } from '@/modules/types'
@@ -14,15 +14,15 @@ import { useDateLocale } from '@/lib/i18n/useFormatters'
 import { userInitials, formatBoardDate } from './format'
 import { Truck, UserRound } from 'lucide-react'
 
-const statusDot: Record<WateringPlanStatus, string> = {
-  [WateringPlanStatus.Planned]: 'bg-dark-300',
-  [WateringPlanStatus.Active]: 'bg-green-light',
-  [WateringPlanStatus.Finished]: 'bg-green-dark-700',
-  [WateringPlanStatus.Canceled]: 'bg-red',
-  [WateringPlanStatus.NotCompleted]: 'bg-dark-400',
+const statusDot: Record<PlanStatus, string> = {
+  [PlanStatus.Planned]: 'bg-dark-300',
+  [PlanStatus.Active]: 'bg-green-light',
+  [PlanStatus.Finished]: 'bg-green-dark-700',
+  [PlanStatus.Canceled]: 'bg-red',
+  [PlanStatus.NotCompleted]: 'bg-dark-400',
 }
 
-interface WateringPlanBoardCardProps {
+interface PlanBoardCardProps {
   plan: PlanInListResponse
   planning: ModulePlanning
   users: User[]
@@ -30,16 +30,10 @@ interface WateringPlanBoardCardProps {
   cardState?: 'idle' | 'dragging' | 'ghost'
 }
 
-const WateringPlanBoardCard = ({
-  plan,
-  planning,
-  users,
-  assignSlot,
-  cardState,
-}: WateringPlanBoardCardProps) => {
+const PlanBoardCard = ({ plan, planning, users, assignSlot, cardState }: PlanBoardCardProps) => {
   const column = columnForStatus(plan.status)
-  const getWateringPlanStatusDetails = useWateringPlanStatusDetails()
-  const statusDetails = getWateringPlanStatusDetails(plan.status)
+  const getPlanStatusDetails = usePlanStatusDetails()
+  const statusDetails = getPlanStatusDetails(plan.status)
   const assigned = users.filter((u) => plan.userIds.includes(u.id))
   const { t, i18n } = useTranslation('wateringPlan')
   const dateLocale = useDateLocale()
@@ -122,4 +116,4 @@ const WateringPlanBoardCard = ({
   )
 }
 
-export default WateringPlanBoardCard
+export default PlanBoardCard

@@ -1,4 +1,4 @@
-import { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-client'
+import { PlanStatus } from '@green-ecolution/backend-client'
 import type { PlanResponse } from '@green-ecolution/backend-client'
 import type { ModulePlanning } from '@/modules/types'
 import { capacityDisplay } from '@/lib/capacity'
@@ -13,27 +13,27 @@ import { useDateLocale } from '@/lib/i18n/useFormatters'
 import { formatKm } from '@/lib/utils'
 
 interface TabGeneralDataProps {
-  wateringPlan: PlanResponse
+  plan: PlanResponse
   /** Absent when the plan's module is not active; its rows and summary are left out then. */
   planning: ModulePlanning | undefined
 }
 
-const TabGeneralData: React.FC<TabGeneralDataProps> = ({ wateringPlan, planning }) => {
+const TabGeneralData: React.FC<TabGeneralDataProps> = ({ plan, planning }) => {
   const { t, i18n } = useTranslation(['wateringPlan', 'common'])
   const dateLocale = useDateLocale()
   const { data: userRes } = useSuspenseQuery(userQueries.list({ page: 1, perPage: 100 }))
   const { data: startPoints } = useQuery(routingStartPointsQuery())
   const defaultStartPointName = startPoints?.[0]?.name
 
-  const assignedUsers = userRes.data?.filter((user) => wateringPlan.userIds.includes(user.id)) ?? []
+  const assignedUsers = userRes.data?.filter((user) => plan.userIds.includes(user.id)) ?? []
   const noData = t('common:state.noData')
   const capacity = capacityDisplay[planning?.capacityKind ?? 'water']
 
-  const updatedDate = wateringPlan?.updatedAt
-    ? format(new Date(wateringPlan.updatedAt), 'dd.MM.yyyy', { locale: dateLocale })
+  const updatedDate = plan?.updatedAt
+    ? format(new Date(plan.updatedAt), 'dd.MM.yyyy', { locale: dateLocale })
     : noData
 
-  const wateringPlanData: {
+  const planData: {
     label: string
     value: string
   }[] = [
@@ -41,33 +41,31 @@ const TabGeneralData: React.FC<TabGeneralDataProps> = ({ wateringPlan, planning 
       ? [
           {
             label: t(capacityDisplay[planning.capacityKind].demandLabelKey),
-            value: wateringPlan.totalDemand
-              ? t('detail.demandValue', { value: wateringPlan.totalDemand })
-              : noData,
+            value: plan.totalDemand ? t('detail.demandValue', { value: plan.totalDemand }) : noData,
           },
         ]
       : []),
     {
       label: t('detail.transporterLabel'),
-      value: wateringPlan.transporter
-        ? wateringPlan.transporter.archivedAt
-          ? t('detail.archivedVehicleValue', { numberPlate: wateringPlan.transporter.numberPlate })
-          : wateringPlan.transporter.numberPlate
+      value: plan.transporter
+        ? plan.transporter.archivedAt
+          ? t('detail.archivedVehicleValue', { numberPlate: plan.transporter.numberPlate })
+          : plan.transporter.numberPlate
         : noData,
     },
     {
       label: t('detail.trailerLabel'),
-      value: wateringPlan.trailer
-        ? wateringPlan.trailer.archivedAt
-          ? t('detail.archivedVehicleValue', { numberPlate: wateringPlan.trailer.numberPlate })
-          : wateringPlan.trailer.numberPlate
+      value: plan.trailer
+        ? plan.trailer.archivedAt
+          ? t('detail.archivedVehicleValue', { numberPlate: plan.trailer.numberPlate })
+          : plan.trailer.numberPlate
         : noData,
     },
-    ...(wateringPlan.trailer
+    ...(plan.trailer
       ? [
           {
             label: t(capacity.transporterLabelKey),
-            value: wateringPlan.transporterCapacityUsed
+            value: plan.transporterCapacityUsed
               ? t(capacity.transporterUsedValueKey)
               : t(capacity.transporterUnusedValueKey),
           },
@@ -77,8 +75,8 @@ const TabGeneralData: React.FC<TabGeneralDataProps> = ({ wateringPlan, planning 
       ? [
           {
             label: i18n.t(planning.stopCountLabelKey),
-            value: wateringPlan.stops.length
-              ? i18n.t(planning.stopCountKey, { count: wateringPlan.stops.length })
+            value: plan.stops.length
+              ? i18n.t(planning.stopCountKey, { count: plan.stops.length })
               : noData,
           },
         ]
@@ -91,12 +89,12 @@ const TabGeneralData: React.FC<TabGeneralDataProps> = ({ wateringPlan, planning 
     },
     {
       label: t('detail.refillCountLabel'),
-      value: wateringPlan.refillCount ? wateringPlan.refillCount.toString() : noData,
+      value: plan.refillCount ? plan.refillCount.toString() : noData,
     },
     {
       label: t('detail.durationLabel'),
-      value: wateringPlan.duration
-        ? `${formatDuration(intervalToDuration({ start: 0, end: wateringPlan.duration * 1000 }), { format: ['hours', 'minutes'], delimiter: ', ', locale: dateLocale })}`
+      value: plan.duration
+        ? `${formatDuration(intervalToDuration({ start: 0, end: plan.duration * 1000 }), { format: ['hours', 'minutes'], delimiter: ', ', locale: dateLocale })}`
         : noData,
     },
     {
@@ -108,29 +106,29 @@ const TabGeneralData: React.FC<TabGeneralDataProps> = ({ wateringPlan, planning 
   return (
     <>
       <StatusCardGrid>
-        {wateringPlan?.status === WateringPlanStatus.Canceled && wateringPlan.cancellationNote && (
+        {plan?.status === PlanStatus.Canceled && plan.cancellationNote && (
           <li>
             <StatusCard
               label={t('detail.cancellationNoteLabel')}
               value=""
-              description={wateringPlan.cancellationNote}
+              description={plan.cancellationNote}
             />
           </li>
         )}
         {planning && (
           <Suspense fallback={null}>
-            <planning.PlanSummary plan={wateringPlan} />
+            <planning.PlanSummary plan={plan} />
           </Suspense>
         )}
         <li>
           <StatusCard
             label={t('detail.routeLengthLabel')}
-            value={formatKm(wateringPlan.distance)}
+            value={formatKm(plan.distance)}
             isLarge
             description={
-              (wateringPlan.startPointName ?? defaultStartPointName)
+              (plan.startPointName ?? defaultStartPointName)
                 ? t('detail.routeStartDescription', {
-                    startPoint: wateringPlan.startPointName ?? defaultStartPointName,
+                    startPoint: plan.startPointName ?? defaultStartPointName,
                   })
                 : undefined
             }
@@ -139,7 +137,7 @@ const TabGeneralData: React.FC<TabGeneralDataProps> = ({ wateringPlan, planning 
       </StatusCardGrid>
 
       <section className="mt-16">
-        <DetailedList headline={t('detail.dataHeadline')} details={wateringPlanData} />
+        <DetailedList headline={t('detail.dataHeadline')} details={planData} />
       </section>
     </>
   )

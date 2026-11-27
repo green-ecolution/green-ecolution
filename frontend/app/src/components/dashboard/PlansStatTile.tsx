@@ -2,7 +2,7 @@ import { useQueries } from '@tanstack/react-query'
 import { isToday } from 'date-fns'
 import { useTranslation } from 'react-i18next'
 import { PlanStatus } from '@green-ecolution/backend-client'
-import { wateringPlanQueries } from '@/api/queries'
+import { planQueries } from '@/api/queries'
 import { usePermissions } from '@/lib/auth/usePermissions'
 import { satisfies } from '@/lib/auth/permissions'
 import { planningManifests } from '@/modules/planning'
@@ -20,10 +20,10 @@ const PlansStatTile = () => {
 
   // Same keys as the board columns, so opening the board after this reuses the cache.
   const active = useQueries({
-    queries: modules.map((module) => wateringPlanQueries.boardColumn(module, [PlanStatus.Active])),
+    queries: modules.map((module) => planQueries.boardColumn(module, [PlanStatus.Active])),
   })
   const planned = useQueries({
-    queries: modules.map((module) => wateringPlanQueries.boardColumn(module, [PlanStatus.Planned])),
+    queries: modules.map((module) => planQueries.boardColumn(module, [PlanStatus.Planned])),
   })
   if (modules.length === 0) return null
 

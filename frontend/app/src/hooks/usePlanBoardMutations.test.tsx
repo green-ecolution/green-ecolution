@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { ReactNode } from 'react'
 import { renderHook, waitFor } from '@testing-library/react'
-import { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-client'
+import { PlanStatus } from '@green-ecolution/backend-client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { QueryKey } from '@tanstack/react-query'
-import { wateringPlanQueries } from '@/api/queries'
-import { useWateringPlanBoardMutations } from './useWateringPlanBoardMutations'
+import { planQueries } from '@/api/queries'
+import { usePlanBoardMutations } from './usePlanBoardMutations'
 import { planInList } from '@/test/plans'
 
 const updatePlan = vi.fn()
@@ -30,12 +30,12 @@ const HIDDEN_CLUSTER_ID = '0190a8e9-7c4f-7000-8000-000000000006'
 // Module query keys stand in for whatever a plan module derives from its plans.
 const CLUSTER_DETAIL: QueryKey = ['treecluster', CLUSTER_ID]
 const TREE_DETAIL: QueryKey = ['tree', TREE_ID]
-const PLAN_DETAIL: QueryKey = wateringPlanQueries.detail(PLAN_ID).queryKey
+const PLAN_DETAIL: QueryKey = planQueries.detail(PLAN_ID).queryKey
 const planning = { invalidateOnStatusChange: [['treecluster'], ['tree']] }
 
 const plan = planInList({
   id: PLAN_ID,
-  status: WateringPlanStatus.Active,
+  status: PlanStatus.Active,
   transporter: { id: '0190a8e9-7c4f-7000-8000-000000000004' } as never,
   stops: [CLUSTER_ID, HIDDEN_CLUSTER_ID],
 })
@@ -50,7 +50,7 @@ function renderBoardMutations() {
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   )
-  const view = renderHook(() => useWateringPlanBoardMutations(planning), { wrapper })
+  const view = renderHook(() => usePlanBoardMutations(planning), { wrapper })
 
   // Cached views a user visited before the mutation.
   ;[CLUSTER_DETAIL, TREE_DETAIL, PLAN_DETAIL].forEach((key) =>
@@ -60,7 +60,7 @@ function renderBoardMutations() {
   return { ...view, queryClient }
 }
 
-describe('useWateringPlanBoardMutations', () => {
+describe('usePlanBoardMutations', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     updatePlan.mockResolvedValue({ id: PLAN_ID })
@@ -87,7 +87,7 @@ describe('useWateringPlanBoardMutations', () => {
       planId: PLAN_ID,
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       planUpdateRequest: expect.objectContaining({
-        status: WateringPlanStatus.Finished,
+        status: PlanStatus.Finished,
         stops: [CLUSTER_ID, HIDDEN_CLUSTER_ID],
         outcomes: [
           { stop: CLUSTER_ID, completed: true, amount: 100 },
@@ -100,14 +100,14 @@ describe('useWateringPlanBoardMutations', () => {
   it('keeps stops the user cannot see when a plan is started from the board', async () => {
     const { result } = renderBoardMutations()
 
-    result.current.startPlan.mutate({ ...plan, status: WateringPlanStatus.Planned })
+    result.current.startPlan.mutate({ ...plan, status: PlanStatus.Planned })
 
     await waitFor(() => expect(updatePlan).toHaveBeenCalledTimes(1))
     expect(updatePlan).toHaveBeenCalledWith({
       planId: PLAN_ID,
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       planUpdateRequest: expect.objectContaining({
-        status: WateringPlanStatus.Active,
+        status: PlanStatus.Active,
         stops: [CLUSTER_ID, HIDDEN_CLUSTER_ID],
       }),
     })

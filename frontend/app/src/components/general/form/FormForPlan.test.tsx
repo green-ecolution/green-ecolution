@@ -1,17 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import FormForWateringPlan from './FormForWateringPlan'
-import { WateringPlanForm } from '@/schema/wateringPlanSchema'
+import FormForPlan from './FormForPlan'
+import { PlanForm } from '@/schema/planSchema'
 import { FormProvider, useForm, useWatch } from 'react-hook-form'
-import { wateringPlanDraftResolver } from '@green-ecolution/domain-wasm'
+import { planDraftResolver } from '@green-ecolution/domain-wasm'
 import { ReactNode } from 'react'
 import { FORM_VALIDATION_MODE } from '@/hooks/form/useEntityForm'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from '@green-ecolution/ui'
 import type { Vehicle, User } from '@/api/backendApi'
 import {
-  PlanStatus as WateringPlanStatus,
+  PlanStatus,
   VehicleType,
   DrivingLicense,
   VehicleAvailability,
@@ -35,12 +35,12 @@ vi.mock('@/modules/useActiveModules', () => ({
 }))
 
 function ModuleProbe() {
-  const module = useWatch<WateringPlanForm, 'module'>({ name: 'module' })
+  const module = useWatch<PlanForm, 'module'>({ name: 'module' })
   return <span data-testid="module">{module}</span>
 }
 
 function TankUsedProbe() {
-  const tankUsed = useWatch<WateringPlanForm, 'transporterTankUsed'>({
+  const tankUsed = useWatch<PlanForm, 'transporterTankUsed'>({
     name: 'transporterTankUsed',
   })
   return <span data-testid="tank-used">{String(tankUsed)}</span>
@@ -51,15 +51,15 @@ function TestWrapper({
   defaultValues,
 }: {
   children: ReactNode
-  defaultValues: WateringPlanForm
+  defaultValues: PlanForm
 }) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
 
-  const methods = useForm<WateringPlanForm>({
+  const methods = useForm<PlanForm>({
     defaultValues,
-    resolver: wateringPlanDraftResolver<WateringPlanForm>((key) => key),
+    resolver: planDraftResolver<PlanForm>((key) => key),
     mode: FORM_VALIDATION_MODE,
   })
 
@@ -80,9 +80,9 @@ function TestWrapper({
 const futureDate = new Date()
 futureDate.setDate(futureDate.getDate() + 7)
 
-const defaultFormValues: WateringPlanForm = {
+const defaultFormValues: PlanForm = {
   date: futureDate,
-  status: WateringPlanStatus.Planned,
+  status: PlanStatus.Planned,
   transporterId: '',
   trailerId: undefined,
   transporterTankUsed: true,
@@ -155,7 +155,7 @@ const driverOptions = async () => {
     .map((option) => option.textContent ?? '')
 }
 
-describe('FormForWateringPlan', () => {
+describe('FormForPlan', () => {
   const mockOnSubmit = vi.fn()
   const mockSaveDraft = vi.fn()
 
@@ -167,7 +167,7 @@ describe('FormForWateringPlan', () => {
   it('renders all form fields', () => {
     render(
       <TestWrapper defaultValues={defaultFormValues}>
-        <FormForWateringPlan
+        <FormForPlan
           displayError={false}
           transporters={mockTransporters}
           trailers={mockTrailers}
@@ -191,7 +191,7 @@ describe('FormForWateringPlan', () => {
 
     render(
       <TestWrapper defaultValues={defaultFormValues}>
-        <FormForWateringPlan
+        <FormForPlan
           displayError={false}
           transporters={mockTransporters}
           trailers={mockTrailers}
@@ -217,7 +217,7 @@ describe('FormForWateringPlan', () => {
 
     render(
       <TestWrapper defaultValues={defaultFormValues}>
-        <FormForWateringPlan
+        <FormForPlan
           displayError={false}
           transporters={mockTransporters}
           trailers={mockTrailers}
@@ -240,7 +240,7 @@ describe('FormForWateringPlan', () => {
   it('renders user select with options', async () => {
     render(
       <TestWrapper defaultValues={defaultFormValues}>
-        <FormForWateringPlan
+        <FormForPlan
           displayError={false}
           transporters={mockTransporters}
           trailers={mockTrailers}
@@ -261,7 +261,7 @@ describe('FormForWateringPlan', () => {
   it('offers only employees marked as selectable for watering plans', async () => {
     render(
       <TestWrapper defaultValues={defaultFormValues}>
-        <FormForWateringPlan
+        <FormForPlan
           displayError={false}
           transporters={mockTransporters}
           trailers={mockTrailers}
@@ -281,7 +281,7 @@ describe('FormForWateringPlan', () => {
   })
 
   it('keeps a stored driver who is no longer selectable hidden from the picker while still validating their licence', async () => {
-    const formValues: WateringPlanForm = {
+    const formValues: PlanForm = {
       ...defaultFormValues,
       transporterId: 'vehicle-uuid-1',
       driverIds: ['550e8400-e29b-41d4-a716-446655440002'],
@@ -289,7 +289,7 @@ describe('FormForWateringPlan', () => {
 
     render(
       <TestWrapper defaultValues={formValues}>
-        <FormForWateringPlan
+        <FormForPlan
           displayError={false}
           transporters={mockTransporters}
           trailers={mockTrailers}
@@ -347,7 +347,7 @@ describe('FormForWateringPlan', () => {
     await user.click(screen.getByRole('button', { name: /speichern/i }))
 
     await waitFor(() =>
-      expect(screen.getByTestId('picker-error')).toHaveTextContent('watering_plan.stop_ids.empty'),
+      expect(screen.getByTestId('picker-error')).toHaveTextContent('plan.stop_ids.empty'),
     )
   })
 
@@ -358,7 +358,7 @@ describe('FormForWateringPlan', () => {
     ])
     render(
       <TestWrapper defaultValues={{ ...defaultFormValues, module: 'waste' }}>
-        <FormForWateringPlan
+        <FormForPlan
           displayError={false}
           transporters={mockTransporters}
           trailers={mockTrailers}
@@ -377,7 +377,7 @@ describe('FormForWateringPlan', () => {
   it('shows error message when displayError is true', () => {
     render(
       <TestWrapper defaultValues={defaultFormValues}>
-        <FormForWateringPlan
+        <FormForPlan
           displayError={true}
           errorMessage="Ein Fehler ist aufgetreten"
           transporters={mockTransporters}
@@ -400,7 +400,7 @@ describe('FormForWateringPlan', () => {
 
     render(
       <TestWrapper defaultValues={defaultFormValues}>
-        <FormForWateringPlan
+        <FormForPlan
           displayError={false}
           transporters={mockTransporters}
           trailers={mockTrailers}
@@ -426,7 +426,7 @@ describe('FormForWateringPlan', () => {
 
     render(
       <TestWrapper defaultValues={defaultFormValues}>
-        <FormForWateringPlan
+        <FormForPlan
           displayError={false}
           transporters={mockTransporters}
           trailers={mockTrailers}
@@ -475,7 +475,7 @@ describe('FormForWateringPlan', () => {
 
     render(
       <TestWrapper defaultValues={defaultFormValues}>
-        <FormForWateringPlan
+        <FormForPlan
           displayError={false}
           transporters={mockTransporters}
           trailers={mockTrailers}
@@ -511,7 +511,7 @@ describe('FormForWateringPlan', () => {
 
     render(
       <TestWrapper defaultValues={defaultFormValues}>
-        <FormForWateringPlan
+        <FormForPlan
           displayError={false}
           transporters={mockTransporters}
           trailers={mockTrailers}
@@ -552,7 +552,7 @@ describe('FormForWateringPlan', () => {
     ] as StartPointResponse[])
 
     // Everything but the start point is filled in, so validity hinges on it alone.
-    const almostValid: WateringPlanForm = {
+    const almostValid: PlanForm = {
       ...defaultFormValues,
       transporterId: 'vehicle-uuid-1',
       driverIds: ['550e8400-e29b-41d4-a716-446655440000'],
@@ -561,7 +561,7 @@ describe('FormForWateringPlan', () => {
 
     render(
       <TestWrapper defaultValues={almostValid}>
-        <FormForWateringPlan
+        <FormForPlan
           displayError={false}
           transporters={mockTransporters}
           trailers={mockTrailers}
@@ -577,10 +577,10 @@ describe('FormForWateringPlan', () => {
     expect(screen.getByRole('button', { name: /speichern/i })).not.toBeDisabled()
   })
 
-  function renderForm(defaultValues: WateringPlanForm) {
+  function renderForm(defaultValues: PlanForm) {
     return render(
       <TestWrapper defaultValues={defaultValues}>
-        <FormForWateringPlan
+        <FormForPlan
           displayError={false}
           transporters={mockTransporters}
           trailers={mockTrailers}

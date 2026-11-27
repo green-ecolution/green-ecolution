@@ -277,7 +277,7 @@ describe('DeleteSection', () => {
       ).toBeInTheDocument()
     })
 
-    it('works with WateringPlan entity', async () => {
+    it('works with Plan entity', async () => {
       const user = userEvent.setup()
       const deletePlanFn = vi.fn().mockResolvedValue(undefined)
 
