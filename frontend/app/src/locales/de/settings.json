@@ -50,16 +50,12 @@
   },
   "stations": {
     "title": "Stationen",
-    "intro": "Startpunkte und Stationen, an denen Fahrzeuge Wasser auffüllen oder Laderaum entladen.",
+    "intro": "Startpunkte und Stationen, an denen Fahrzeuge ihre Kapazität auffüllen oder entladen.",
     "createButton": "Station anlegen",
     "loading": "Stationen werden geladen …",
     "empty": "Zur Zeit sind keine Stationen angelegt.",
     "routingDisabled": "Routing ist in dieser Installation ausgeschaltet.",
     "defaultBadge": "Standard",
-    "kind": {
-      "water": "Wasser",
-      "cargo_volume": "Laderaum"
-    },
     "noReplenishes": "Nur Start und Ziel",
     "action": {
       "edit": "Station {name} bearbeiten",
@@ -81,10 +77,6 @@
       "nameRequired": "Bitte einen Namen angeben.",
       "nameTooLong": "Der Name darf höchstens 255 Zeichen lang sein.",
       "replenishesLegend": "Fahrzeuge können hier",
-      "replenishes": {
-        "water": "Wasser auffüllen",
-        "cargo_volume": "Laderaum entladen"
-      },
       "replenishesHint": "Ohne Auswahl dient die Station nur als Start und Ziel einer Tour.",
       "positionLabel": "Position",
       "positionHint": "Verschiebe die Markierung auf der Karte an den Standort der Station.",

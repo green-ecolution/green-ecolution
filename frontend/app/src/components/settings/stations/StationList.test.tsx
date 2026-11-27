@@ -50,7 +50,7 @@ const stations: StartPointResponse[] = [
     lon: 9.5,
     isDefault: false,
     organizationId: 'org-2',
-    replenishes: ['water', 'cargo_volume'],
+    replenishes: ['water', 'cargo_volume', 'sand'],
   },
 ]
 const organizations = [
@@ -87,6 +87,11 @@ describe('StationList', () => {
     expect(screen.getAllByText('Wasser')).toHaveLength(2)
     expect(screen.getByText('Laderaum')).toBeInTheDocument()
     expect(screen.getAllByText('Standard')).toHaveLength(1)
+  })
+
+  it('labels a kind no module declares by its key', () => {
+    renderList()
+    expect(screen.getByText('sand')).toBeInTheDocument()
   })
 
   it('offers no actions without write permissions', () => {

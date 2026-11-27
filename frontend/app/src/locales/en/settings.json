@@ -50,16 +50,12 @@
   },
   "stations": {
     "title": "Stations",
-    "intro": "Start points and stations where vehicles refill water or unload cargo volume.",
+    "intro": "Start points and stations where vehicles refill or unload their capacity.",
     "createButton": "Add station",
     "loading": "Loading stations...",
     "empty": "No stations have been created yet.",
     "routingDisabled": "Routing is switched off in this installation.",
     "defaultBadge": "Default",
-    "kind": {
-      "water": "Water",
-      "cargo_volume": "Cargo volume"
-    },
     "noReplenishes": "Start and end only",
     "action": {
       "edit": "Edit station {name}",
@@ -81,10 +77,6 @@
       "nameRequired": "Please enter a name.",
       "nameTooLong": "The name may be at most 255 characters long.",
       "replenishesLegend": "At this station vehicles can",
-      "replenishes": {
-        "water": "Refill water",
-        "cargo_volume": "Unload cargo"
-      },
       "replenishesHint": "Without a selection the station only serves as the start and end of a tour.",
       "positionLabel": "Position",
       "positionHint": "Move the marker on the map to the location of the station.",

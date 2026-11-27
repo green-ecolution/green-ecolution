@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { ArrowRightLeft, Pencil, Star, Trash2 } from 'lucide-react'
 import { Badge, Button, ListCard, ListCardDescription, ListCardTitle } from '@green-ecolution/ui'
 import type { Organization, StartPointResponse } from '@/api/backendApi'
-import { capacityDisplay } from '@/lib/capacity'
+import { capacityKindOf } from '@/modules/capacities'
 import { satisfies, type Permission } from '@/lib/auth/permissions'
 import { useOrganizationsWithPermission } from '@/lib/auth/useOrganizationsWithPermission'
 import { usePermissionsResolver } from '@/lib/auth/usePermissionsIn'
@@ -28,7 +28,7 @@ const StationList = ({
   onDelete,
   onTransfer,
 }: StationListProps) => {
-  const { t } = useTranslation('settings')
+  const { t, i18n } = useTranslation('settings')
   const [pendingDelete, setPendingDelete] = useState<StartPointResponse | null>(null)
   const [pendingTransfer, setPendingTransfer] = useState<StartPointResponse | null>(null)
   const writableOrganizations = useOrganizationsWithPermission('start_point:update')
@@ -70,11 +70,11 @@ const StationList = ({
                 <span className="text-sm text-dark-600">{t('stations.noReplenishes')}</span>
               ) : (
                 station.replenishes.map((kind) => {
-                  const { icon: Icon } = capacityDisplay[kind]
+                  const capacity = capacityKindOf(kind)
                   return (
                     <Badge key={kind} variant="muted">
-                      <Icon className="size-3.5" aria-hidden />
-                      {t(`stations.kind.${kind}`)}
+                      {capacity && <capacity.icon className="size-3.5" aria-hidden />}
+                      {capacity ? i18n.t(capacity.texts.label) : kind}
                     </Badge>
                   )
                 })
