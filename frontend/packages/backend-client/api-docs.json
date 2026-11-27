@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Green Ecolution API",
-    "description": "REST API for the Green Ecolution smart irrigation and green-space management platform. Combines IoT sensor data, route optimization, and automated maintenance scheduling to help municipalities manage urban greenery efficiently. The system uses LoRaWAN sensors to monitor soil conditions, calculates optimal watering routes, and provides fleet management capabilities.",
+    "description": "REST API of Green Ecolution, a platform for municipal maintenance operations. It manages organizations and tenants, permissions, sensors, vehicles and operation plans; feature modules add their own resources.",
     "contact": {
       "name": "Green Ecolution",
       "url": "https://green-ecolution.de"
@@ -2847,7 +2847,7 @@
           "Roles"
         ],
         "summary": "List the permission catalog",
-        "description": "Returns every grantable permission as `<resource>:<action>`, e.g. `tree:read`.",
+        "description": "Returns every grantable permission as `<resource>:<action>`, e.g. `sensor:read`.",
         "operationId": "listPermissions",
         "responses": {
           "200": {
@@ -2893,7 +2893,7 @@
             "schema": {
               "type": "string"
             },
-            "example": "irrigation"
+            "example": "example"
           },
           {
             "name": "page",
@@ -5811,7 +5811,7 @@
           "Routing"
         ],
         "summary": "List routing start points",
-        "description": "Returns the persisted named start/return points for watering routes.",
+        "description": "Returns the persisted named start/return points for routes.",
         "operationId": "listRoutingStartPoints",
         "responses": {
           "200": {
@@ -6253,7 +6253,7 @@
                 "null"
               ]
             },
-            "example": "irrigation"
+            "example": "example"
           },
           {
             "name": "id",
@@ -6612,7 +6612,7 @@
           "Sensors"
         ],
         "summary": "Activate a prepared sensor by attaching it to a target",
-        "description": "Transitions a sensor from `Prepared` to `Offline` and attaches it to the given target, e.g. a tree. Idempotent if the sensor is already attached to the same target.",
+        "description": "Transitions a sensor from `Prepared` to `Offline` and attaches it to the given target, an object of a module. Idempotent if the sensor is already attached to the same target.",
         "operationId": "activateSensor",
         "parameters": [
           {
@@ -6677,7 +6677,7 @@
             }
           },
           "422": {
-            "description": "The target takes no sensors or refuses this one, or belongs to a different organization (codes `target.not_accepted`, `tree.not_yet_planted`, `organization_mismatch.sensor_vs_target`)",
+            "description": "The target takes no sensors or refuses this one, or belongs to a different organization (codes `target.not_accepted`, `organization_mismatch.sensor_vs_target` or a code of the target's module)",
             "content": {
               "application/json": {
                 "schema": {
@@ -7172,7 +7172,7 @@
             }
           },
           "422": {
-            "description": "The target takes no sensors or refuses this one, or belongs to a different organization (codes `target.not_accepted`, `tree.not_yet_planted`, `organization_mismatch.sensor_vs_target`)",
+            "description": "The target takes no sensors or refuses this one, or belongs to a different organization (codes `target.not_accepted`, `organization_mismatch.sensor_vs_target` or a code of the target's module)",
             "content": {
               "application/json": {
                 "schema": {
@@ -9561,7 +9561,7 @@
           "Vehicles"
         ],
         "summary": "Create a vehicle",
-        "description": "Registers a new watering vehicle.",
+        "description": "Registers a new vehicle.",
         "operationId": "createVehicle",
         "requestBody": {
           "content": {
@@ -11033,8 +11033,8 @@
           }
         },
         "example": {
-          "code": "conflict.tree_in_cluster",
-          "error": "tree is part of a cluster"
+          "code": "conflict.target_already_has_sensor",
+          "error": "the target already has a sensor"
         }
       },
       "EvaluationResponse": {
@@ -11495,7 +11495,7 @@
                 "description": {
                   "type": "string",
                   "description": "Human-readable description of the plan.",
-                  "example": "Bewässerungsplan Stadtpark Nord"
+                  "example": "Tour Stadtpark Nord"
                 },
                 "distance": {
                   "type": "number",
@@ -11513,7 +11513,7 @@
                 "module": {
                   "type": "string",
                   "description": "Module the plan belongs to.",
-                  "example": "irrigation"
+                  "example": "example"
                 },
                 "provider": {
                   "type": [
@@ -11697,7 +11697,7 @@
             "type": "array",
             "items": {
               "type": "object",
-              "description": "A LoRaWAN sensor used for soil moisture monitoring.",
+              "description": "A LoRaWAN sensor.",
               "required": [
                 "id",
                 "created_at",
@@ -12123,7 +12123,7 @@
                 "status",
                 "roles",
                 "driving_licenses",
-                "watering_plan_selectable"
+                "plan_selectable"
               ],
               "properties": {
                 "avatar_url": {
@@ -12189,6 +12189,11 @@
                   "description": "Contact phone number.",
                   "example": "+49 461 123456"
                 },
+                "plan_selectable": {
+                  "type": "boolean",
+                  "description": "Whether the user may be assigned to operation plans.",
+                  "example": true
+                },
                 "roles": {
                   "type": "array",
                   "items": {
@@ -12204,11 +12209,6 @@
                   "type": "string",
                   "description": "Login username.",
                   "example": "jdoe"
-                },
-                "watering_plan_selectable": {
-                  "type": "boolean",
-                  "description": "Whether the user may be assigned to watering plans.",
-                  "example": true
                 }
               },
               "example": {
@@ -12225,10 +12225,10 @@
                 "last_name": "Doe",
                 "organization": null,
                 "phone_number": "+49 461 123456",
+                "plan_selectable": true,
                 "roles": [],
                 "status": "Available",
-                "username": "jdoe",
-                "watering_plan_selectable": true
+                "username": "jdoe"
               }
             }
           },
@@ -12248,7 +12248,7 @@
             "type": "array",
             "items": {
               "type": "object",
-              "description": "Represents a watering vehicle used for urban green-space irrigation.",
+              "description": "A vehicle operation plans can be carried out with.",
               "required": [
                 "id",
                 "created_at",
@@ -12285,7 +12285,7 @@
                 },
                 "availability": {
                   "$ref": "#/components/schemas/VehicleAvailability",
-                  "description": "Whether the vehicle may be assigned to a watering plan."
+                  "description": "Whether the vehicle may be assigned to an operation plan."
                 },
                 "capacities": {
                   "type": "object",
@@ -12314,7 +12314,7 @@
                 "description": {
                   "type": "string",
                   "description": "Human-readable description of the vehicle.",
-                  "example": "Großes Bewässerungsfahrzeug für den Innenstadtbereich"
+                  "example": "Großes Fahrzeug für den Innenstadtbereich"
                 },
                 "driving_license": {
                   "$ref": "#/components/schemas/DrivingLicense",
@@ -12365,7 +12365,7 @@
                 },
                 "status": {
                   "$ref": "#/components/schemas/VehicleStatus",
-                  "description": "Operational status. Read-only: derived from `availability` and the\nwatering plans the vehicle is assigned to."
+                  "description": "Operational status. Read-only: derived from `availability` and the\noperation plans the vehicle is assigned to."
                 },
                 "type": {
                   "$ref": "#/components/schemas/VehicleType",
@@ -12722,11 +12722,11 @@
           },
           "kind": {
             "type": "string",
-            "example": "tree"
+            "example": "item"
           },
           "module": {
             "type": "string",
-            "example": "irrigation"
+            "example": "example"
           }
         }
       },
@@ -13320,12 +13320,12 @@
           "description": {
             "type": "string",
             "description": "Human-readable description of the plan.",
-            "example": "Bewässerungsplan Stadtpark Nord"
+            "example": "Tour Stadtpark Nord"
           },
           "module": {
             "type": "string",
             "description": "Module the plan belongs to.",
-            "example": "irrigation"
+            "example": "example"
           },
           "organization_id": {
             "type": [
@@ -13441,7 +13441,7 @@
           "description": {
             "type": "string",
             "description": "Human-readable description of the plan.",
-            "example": "Bewässerungsplan Stadtpark Nord"
+            "example": "Tour Stadtpark Nord"
           },
           "distance": {
             "type": "number",
@@ -13459,7 +13459,7 @@
           "module": {
             "type": "string",
             "description": "Module the plan belongs to.",
-            "example": "irrigation"
+            "example": "example"
           },
           "provider": {
             "type": [
@@ -13578,7 +13578,7 @@
           "description": {
             "type": "string",
             "description": "Human-readable description of the plan.",
-            "example": "Bewässerungsplan Stadtpark Nord"
+            "example": "Tour Stadtpark Nord"
           },
           "distance": {
             "type": "number",
@@ -13608,7 +13608,7 @@
           "module": {
             "type": "string",
             "description": "Module the plan belongs to.",
-            "example": "irrigation"
+            "example": "example"
           },
           "organization_id": {
             "type": "string",
@@ -13716,7 +13716,7 @@
           "module": {
             "type": "string",
             "description": "Module whose stops are routed.",
-            "example": "irrigation"
+            "example": "example"
           },
           "organization_id": {
             "type": [
@@ -13814,7 +13814,7 @@
           "description": {
             "type": "string",
             "description": "Human-readable description of the plan.",
-            "example": "Bewässerungsplan Stadtpark Nord"
+            "example": "Tour Stadtpark Nord"
           },
           "outcomes": {
             "type": [
@@ -13944,15 +13944,15 @@
           "frontend": {
             "mode": "none"
           },
-          "name": "TBZ Baumkataster",
+          "name": "Kataster-Import",
           "organization_id": "01980000-0000-7000-8000-000000000001",
           "permissions": [
-            "tree:create"
+            "sensor:create"
           ],
           "required_permissions": [
-            "tree:read"
+            "sensor:read"
           ],
-          "slug": "tbz-baumkataster"
+          "slug": "kataster-import"
         }
       },
       "PluginFrontendDto": {
@@ -14139,16 +14139,16 @@
           "has_credential": true,
           "id": "01990000-0000-7000-8000-000000000001",
           "last_seen_at": "2026-09-01T10:00:00Z",
-          "name": "TBZ Baumkataster",
+          "name": "Kataster-Import",
           "organization_id": "01980000-0000-7000-8000-000000000001",
           "permissions": [
-            "tree:create",
-            "tree:update"
+            "sensor:create",
+            "sensor:update"
           ],
           "required_permissions": [
-            "tree:read"
+            "sensor:read"
           ],
-          "slug": "tbz-baumkataster"
+          "slug": "kataster-import"
         }
       },
       "PluginSensorCreateRequest": {
@@ -14312,8 +14312,8 @@
           "frontend_mode": "external",
           "frontend_target": "https://kataster.example.org/view",
           "frontend_url": null,
-          "name": "TBZ Baumkataster",
-          "slug": "tbz-baumkataster",
+          "name": "Kataster-Import",
+          "slug": "kataster-import",
           "view_ticket": "gev_3f2a9c41d7b05e6a8f1c2d3e4b5a69788796a5b4c3d2e1f00112233445566778"
         }
       },
@@ -14444,10 +14444,10 @@
           }
         },
         "example": {
-          "name": "Gießtrupp",
+          "name": "Außendienst",
           "permissions": [
-            "tree:read",
-            "tree:update"
+            "sensor:read",
+            "sensor:update"
           ]
         }
       },
@@ -14505,7 +14505,7 @@
               "string",
               "null"
             ],
-            "description": "Which delivered template this role still matches verbatim, e.g.\n`tree_care`. Null once someone edits the name or description, or for a\nhand-made role. A client may translate `name` and `description` while\nthis is set, and must show them verbatim once it is null."
+            "description": "Which delivered template this role still matches verbatim, e.g.\n`observer`. Null once someone edits the name or description, or for a\nhand-made role. A client may translate `name` and `description` while\nthis is set, and must show them verbatim once it is null."
           }
         },
         "example": {
@@ -14516,8 +14516,8 @@
           "name": "Administrator",
           "organization_id": "01980000-0000-7000-8000-000000000001",
           "permissions": [
-            "tree:read",
-            "tree:create"
+            "sensor:read",
+            "sensor:create"
           ],
           "template_key": "administrator"
         }
@@ -14547,10 +14547,10 @@
           }
         },
         "example": {
-          "description": "Bewässerung Nordbezirk",
-          "name": "Gießtrupp Nord",
+          "description": "Außendienst Nordbezirk",
+          "name": "Außendienst Nord",
           "permissions": [
-            "tree:read",
+            "vehicle:read",
             "sensor:read"
           ]
         }
@@ -14885,7 +14885,7 @@
       },
       "SensorResponse": {
         "type": "object",
-        "description": "A LoRaWAN sensor used for soil moisture monitoring.",
+        "description": "A LoRaWAN sensor.",
         "required": [
           "id",
           "created_at",
@@ -15711,7 +15711,7 @@
       },
       "TargetRefDto": {
         "type": "object",
-        "description": "An object of a module a sensor can be attached to, e.g. a tree.",
+        "description": "An object of a module a sensor can be attached to.",
         "required": [
           "module",
           "kind",
@@ -15725,11 +15725,11 @@
           },
           "kind": {
             "type": "string",
-            "example": "tree"
+            "example": "item"
           },
           "module": {
             "type": "string",
-            "example": "irrigation"
+            "example": "example"
           }
         }
       },
@@ -16671,6 +16671,14 @@
             "description": "Optional contact phone number.",
             "example": "+49 461 123456"
           },
+          "plan_selectable": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Whether the new user may be assigned to operation plans (defaults to true).",
+            "example": true
+          },
           "role_ids": {
             "type": "array",
             "items": {
@@ -16694,14 +16702,6 @@
             "type": "string",
             "description": "Desired login username.",
             "example": "jdoe"
-          },
-          "watering_plan_selectable": {
-            "type": [
-              "boolean",
-              "null"
-            ],
-            "description": "Whether the new user may be assigned to watering plans (defaults to true).",
-            "example": true
           }
         },
         "example": {
@@ -16715,10 +16715,10 @@
           "last_name": "Doe",
           "organization_id": "01980000-0000-7000-8000-000000000001",
           "phone_number": "+49 461 123456",
+          "plan_selectable": true,
           "role_ids": [],
           "status": "available",
-          "username": "jdoe",
-          "watering_plan_selectable": true
+          "username": "jdoe"
         }
       },
       "UserRegisterResponse": {
@@ -16756,7 +16756,7 @@
           "status",
           "roles",
           "driving_licenses",
-          "watering_plan_selectable"
+          "plan_selectable"
         ],
         "properties": {
           "avatar_url": {
@@ -16822,6 +16822,11 @@
             "description": "Contact phone number.",
             "example": "+49 461 123456"
           },
+          "plan_selectable": {
+            "type": "boolean",
+            "description": "Whether the user may be assigned to operation plans.",
+            "example": true
+          },
           "roles": {
             "type": "array",
             "items": {
@@ -16837,11 +16842,6 @@
             "type": "string",
             "description": "Login username.",
             "example": "jdoe"
-          },
-          "watering_plan_selectable": {
-            "type": "boolean",
-            "description": "Whether the user may be assigned to watering plans.",
-            "example": true
           }
         },
         "example": {
@@ -16858,10 +16858,10 @@
           "last_name": "Doe",
           "organization": null,
           "phone_number": "+49 461 123456",
+          "plan_selectable": true,
           "roles": [],
           "status": "Available",
-          "username": "jdoe",
-          "watering_plan_selectable": true
+          "username": "jdoe"
         }
       },
       "UserStatus": {
@@ -16879,7 +16879,7 @@
         "required": [
           "status",
           "driving_licenses",
-          "watering_plan_selectable"
+          "plan_selectable"
         ],
         "properties": {
           "avatar_url": {
@@ -16913,14 +16913,14 @@
             "description": "Contact phone number; empty or absent clears the value.",
             "example": "+49 461 123456"
           },
+          "plan_selectable": {
+            "type": "boolean",
+            "description": "Whether the user may be assigned to operation plans.",
+            "example": true
+          },
           "status": {
             "$ref": "#/components/schemas/UserStatus",
             "description": "New availability status."
-          },
-          "watering_plan_selectable": {
-            "type": "boolean",
-            "description": "Whether the user may be assigned to watering plans.",
-            "example": true
           }
         },
         "example": {
@@ -16931,8 +16931,8 @@
           ],
           "employee_id": "EMP-042",
           "phone_number": "+49 461 123456",
-          "status": "available",
-          "watering_plan_selectable": true
+          "plan_selectable": true,
+          "status": "available"
         }
       },
       "ValidationIssue": {
@@ -16957,8 +16957,8 @@
           }
         },
         "example": {
-          "field": "cluster.name",
-          "key": "cluster.name.tooLong",
+          "field": "vehicle.number_plate",
+          "key": "vehicle.number_plate.tooLong",
           "params": {
             "got": 300,
             "max": 255
@@ -16967,7 +16967,7 @@
       },
       "VehicleAvailability": {
         "type": "string",
-        "description": "Whether a watering vehicle may be assigned at all. Set by hand; the only\npart of a vehicle's state the system cannot observe for itself.",
+        "description": "Whether a vehicle may be assigned at all. Set by hand; the only\npart of a vehicle's state the system cannot observe for itself.",
         "enum": [
           "available",
           "not_available"
@@ -16976,7 +16976,7 @@
       },
       "VehicleCreateRequest": {
         "type": "object",
-        "description": "Request body for creating a new watering vehicle.",
+        "description": "Request body for creating a new vehicle.",
         "required": [
           "number_plate",
           "capacities",
@@ -16999,7 +16999,7 @@
           },
           "availability": {
             "$ref": "#/components/schemas/VehicleAvailability",
-            "description": "Whether the vehicle may be assigned to a watering plan."
+            "description": "Whether the vehicle may be assigned to an operation plan."
           },
           "capacities": {
             "type": "object",
@@ -17026,7 +17026,7 @@
               "null"
             ],
             "description": "Human-readable description of the vehicle.",
-            "example": "Großes Bewässerungsfahrzeug für den Innenstadtbereich"
+            "example": "Großes Fahrzeug für den Innenstadtbereich"
           },
           "driving_license": {
             "$ref": "#/components/schemas/DrivingLicense",
@@ -17117,7 +17117,7 @@
       },
       "VehicleResponse": {
         "type": "object",
-        "description": "Represents a watering vehicle used for urban green-space irrigation.",
+        "description": "A vehicle operation plans can be carried out with.",
         "required": [
           "id",
           "created_at",
@@ -17154,7 +17154,7 @@
           },
           "availability": {
             "$ref": "#/components/schemas/VehicleAvailability",
-            "description": "Whether the vehicle may be assigned to a watering plan."
+            "description": "Whether the vehicle may be assigned to an operation plan."
           },
           "capacities": {
             "type": "object",
@@ -17183,7 +17183,7 @@
           "description": {
             "type": "string",
             "description": "Human-readable description of the vehicle.",
-            "example": "Großes Bewässerungsfahrzeug für den Innenstadtbereich"
+            "example": "Großes Fahrzeug für den Innenstadtbereich"
           },
           "driving_license": {
             "$ref": "#/components/schemas/DrivingLicense",
@@ -17234,7 +17234,7 @@
           },
           "status": {
             "$ref": "#/components/schemas/VehicleStatus",
-            "description": "Operational status. Read-only: derived from `availability` and the\nwatering plans the vehicle is assigned to."
+            "description": "Operational status. Read-only: derived from `availability` and the\noperation plans the vehicle is assigned to."
           },
           "type": {
             "$ref": "#/components/schemas/VehicleType",
@@ -17263,7 +17263,7 @@
       },
       "VehicleStatus": {
         "type": "string",
-        "description": "Operational status of a watering vehicle. Read-only: derived from the\nvehicle's availability and the watering plans it is assigned to.",
+        "description": "Operational status of a vehicle. Read-only: derived from the\nvehicle's availability and the operation plans it is assigned to.",
         "enum": [
           "active",
           "available",
@@ -17273,7 +17273,7 @@
       },
       "VehicleType": {
         "type": "string",
-        "description": "Classification of a watering vehicle.",
+        "description": "Classification of a vehicle.",
         "enum": [
           "transporter",
           "trailer"
@@ -17282,7 +17282,7 @@
       },
       "VehicleUpdateRequest": {
         "type": "object",
-        "description": "Request body for updating an existing watering vehicle.",
+        "description": "Request body for updating an existing vehicle.",
         "required": [
           "number_plate",
           "capacities",
@@ -17305,7 +17305,7 @@
           },
           "availability": {
             "$ref": "#/components/schemas/VehicleAvailability",
-            "description": "Whether the vehicle may be assigned to a watering plan."
+            "description": "Whether the vehicle may be assigned to an operation plan."
           },
           "capacities": {
             "type": "object",
@@ -17332,7 +17332,7 @@
               "null"
             ],
             "description": "Human-readable description of the vehicle.",
-            "example": "Großes Bewässerungsfahrzeug für den Innenstadtbereich"
+            "example": "Großes Fahrzeug für den Innenstadtbereich"
           },
           "driving_license": {
             "$ref": "#/components/schemas/DrivingLicense",
@@ -17724,15 +17724,15 @@
   "tags": [
     {
       "name": "Regions",
-      "description": "Manage geographic regions used to group the objects modules place on the map. Regions define administrative boundaries for organizing green spaces."
+      "description": "Manage geographic regions used to group the objects modules place on the map. Regions define administrative boundaries."
     },
     {
       "name": "Vehicles",
-      "description": "Manage watering vehicles (transporters and trailers) including their water capacity, dimensions, and availability status. Vehicles can be archived when decommissioned."
+      "description": "Manage vehicles (transporters and trailers) including their capacities, dimensions, and availability status. Vehicles can be archived when decommissioned."
     },
     {
       "name": "Sensors",
-      "description": "Access LoRaWAN sensor data for soil moisture monitoring. Sensors are attached to module objects and provide real-time environmental readings."
+      "description": "Access LoRaWAN sensor data. Sensors are attached to module objects and provide real-time environmental readings."
     },
     {
       "name": "Plans",
@@ -17752,7 +17752,7 @@
     },
     {
       "name": "Routing",
-      "description": "Routing configuration and start point management. Exposes the named depot locations available for watering route optimization."
+      "description": "Routing configuration and start point management. Exposes the named depot locations available for route optimization."
     },
     {
       "name": "Organizations",

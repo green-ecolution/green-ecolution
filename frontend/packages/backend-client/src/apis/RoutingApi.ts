@@ -2,7 +2,7 @@
 /* eslint-disable */
 /**
  * Green Ecolution API
- * REST API for the Green Ecolution smart irrigation and green-space management platform. Combines IoT sensor data, route optimization, and automated maintenance scheduling to help municipalities manage urban greenery efficiently. The system uses LoRaWAN sensors to monitor soil conditions, calculates optimal watering routes, and provides fleet management capabilities.
+ * REST API of Green Ecolution, a platform for municipal maintenance operations. It manages organizations and tenants, permissions, sensors, vehicles and operation plans; feature modules add their own resources.
  *
  * The version of the OpenAPI document: 0.9.0
  * 
@@ -134,7 +134,7 @@ export class RoutingApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the persisted named start/return points for watering routes.
+     * Returns the persisted named start/return points for routes.
      * List routing start points
      */
     async listRoutingStartPointsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<StartPointResponse>>> {
@@ -156,7 +156,7 @@ export class RoutingApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the persisted named start/return points for watering routes.
+     * Returns the persisted named start/return points for routes.
      * List routing start points
      */
     async listRoutingStartPoints(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<StartPointResponse>> {

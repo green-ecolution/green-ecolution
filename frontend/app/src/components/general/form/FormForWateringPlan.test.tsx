@@ -129,21 +129,21 @@ const mockUsers = [
     firstName: 'Max',
     lastName: 'Mustermann',
     drivingLicenses: [DrivingLicense.B, DrivingLicense.C],
-    wateringPlanSelectable: true,
+    planSelectable: true,
   },
   {
     id: '550e8400-e29b-41d4-a716-446655440001',
     firstName: 'Anna',
     lastName: 'Schmidt',
     drivingLicenses: [DrivingLicense.B],
-    wateringPlanSelectable: true,
+    planSelectable: true,
   },
   {
     id: '550e8400-e29b-41d4-a716-446655440002',
     firstName: 'Bernd',
     lastName: 'Bürokraft',
     drivingLicenses: [DrivingLicense.B],
-    wateringPlanSelectable: false,
+    planSelectable: false,
   },
 ] as User[]
 

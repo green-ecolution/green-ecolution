@@ -97,7 +97,7 @@ const FormForWateringPlan = (props: FormForWateringPlanProps) => {
       .join(', ')
   }
 
-  const selectableUsers = props.users.filter((user) => user.wateringPlanSelectable)
+  const selectableUsers = props.users.filter((user) => user.planSelectable)
 
   return (
     <form

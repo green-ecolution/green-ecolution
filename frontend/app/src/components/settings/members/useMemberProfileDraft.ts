@@ -8,7 +8,7 @@ export interface MemberProfileDraft {
   drivingLicenses: DrivingLicense[]
   phoneNumber: string
   employeeId: string
-  wateringPlanSelectable: boolean
+  planSelectable: boolean
   // The endpoint replaces the whole profile; an omitted avatarUrl clears the stored value.
   // This field is carried passively to avoid data loss on save.
   avatarUrl: string | null
@@ -20,7 +20,7 @@ const canonical = (draft: MemberProfileDraft): string =>
     [...draft.drivingLicenses].sort().join(','),
     draft.phoneNumber.trim(),
     draft.employeeId.trim(),
-    String(draft.wateringPlanSelectable),
+    String(draft.planSelectable),
   ].join('|')
 
 const draftOf = (user: UserResponse): MemberProfileDraft => ({
@@ -29,7 +29,7 @@ const draftOf = (user: UserResponse): MemberProfileDraft => ({
   drivingLicenses: [...user.drivingLicenses],
   phoneNumber: user.phoneNumber ?? '',
   employeeId: user.employeeId ?? '',
-  wateringPlanSelectable: user.wateringPlanSelectable,
+  planSelectable: user.planSelectable,
   avatarUrl: user.avatarUrl ?? null,
 })
 
@@ -64,8 +64,8 @@ export const useMemberProfileDraft = () => {
     setDraft((current) => (current ? { ...current, employeeId } : current))
   }, [])
 
-  const setWateringPlanSelectable = useCallback((wateringPlanSelectable: boolean) => {
-    setDraft((current) => (current ? { ...current, wateringPlanSelectable } : current))
+  const setPlanSelectable = useCallback((planSelectable: boolean) => {
+    setDraft((current) => (current ? { ...current, planSelectable } : current))
   }, [])
 
   const dirty = draft !== null && baseline !== null && canonical(draft) !== baseline
@@ -79,6 +79,6 @@ export const useMemberProfileDraft = () => {
     setDrivingLicenses,
     setPhoneNumber,
     setEmployeeId,
-    setWateringPlanSelectable,
+    setPlanSelectable,
   }
 }

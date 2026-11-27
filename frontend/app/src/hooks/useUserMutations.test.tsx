@@ -99,7 +99,7 @@ describe('useUserMutations', () => {
       avatarUrl: 'https://example.com/avatar.png',
       status: 'available',
       drivingLicenses: [],
-      wateringPlanSelectable: true,
+      planSelectable: true,
     })
 
     await waitFor(() => expect(result.current.updateProfile.isError).toBe(true))
@@ -117,7 +117,7 @@ describe('useUserMutations', () => {
       avatarUrl: 'https://example.com/avatar.png',
       status: 'available',
       drivingLicenses: [],
-      wateringPlanSelectable: true,
+      planSelectable: true,
     })
 
     await waitFor(() => expect(result.current.updateProfile.isSuccess).toBe(true))
@@ -126,7 +126,7 @@ describe('useUserMutations', () => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       userUpdateRequest: expect.objectContaining({
         avatarUrl: 'https://example.com/avatar.png',
-        wateringPlanSelectable: true,
+        planSelectable: true,
       }),
     })
   })

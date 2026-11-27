@@ -19,7 +19,7 @@ interface MemberProfileCardProps {
   onDrivingLicensesChange: (licenses: DrivingLicense[]) => void
   onPhoneNumberChange: (value: string) => void
   onEmployeeIdChange: (value: string) => void
-  onWateringPlanSelectableChange: (value: boolean) => void
+  onPlanSelectableChange: (value: boolean) => void
 }
 
 const StaticField = ({
@@ -44,7 +44,7 @@ const MemberProfileCard = ({
   onDrivingLicensesChange,
   onPhoneNumberChange,
   onEmployeeIdChange,
-  onWateringPlanSelectableChange,
+  onPlanSelectableChange,
 }: MemberProfileCardProps) => {
   const { t } = useTranslation(['settings', 'common'])
   const translate = useIssueTranslator()
@@ -104,14 +104,14 @@ const MemberProfileCard = ({
               <div className="flex items-center gap-x-3">
                 <Switch
                   id="member-watering-plan-selectable"
-                  checked={draft.wateringPlanSelectable}
-                  onCheckedChange={onWateringPlanSelectableChange}
+                  checked={draft.planSelectable}
+                  onCheckedChange={onPlanSelectableChange}
                 />
                 <Label htmlFor="member-watering-plan-selectable">
-                  {t('members.wateringPlanSelectableLabel')}
+                  {t('members.planSelectableLabel')}
                 </Label>
               </div>
-              <p className="text-sm text-dark-600">{t('members.wateringPlanSelectableHint')}</p>
+              <p className="text-sm text-dark-600">{t('members.planSelectableHint')}</p>
             </div>
           </>
         ) : (
@@ -137,8 +137,8 @@ const MemberProfileCard = ({
               fallback={notProvided}
             />
             <StaticField
-              label={t('members.wateringPlanSelectableLabel')}
-              value={draft.wateringPlanSelectable ? t('members.yes') : t('members.no')}
+              label={t('members.planSelectableLabel')}
+              value={draft.planSelectable ? t('members.yes') : t('members.no')}
               fallback={notProvided}
             />
           </>

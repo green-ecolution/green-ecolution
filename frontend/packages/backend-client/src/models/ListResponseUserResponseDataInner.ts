@@ -2,7 +2,7 @@
 /* eslint-disable */
 /**
  * Green Ecolution API
- * REST API for the Green Ecolution smart irrigation and green-space management platform. Combines IoT sensor data, route optimization, and automated maintenance scheduling to help municipalities manage urban greenery efficiently. The system uses LoRaWAN sensors to monitor soil conditions, calculates optimal watering routes, and provides fleet management capabilities.
+ * REST API of Green Ecolution, a platform for municipal maintenance operations. It manages organizations and tenants, permissions, sensors, vehicles and operation plans; feature modules add their own resources.
  *
  * The version of the OpenAPI document: 0.9.0
  * 
@@ -115,6 +115,12 @@ export interface ListResponseUserResponseDataInner {
      */
     phoneNumber: string;
     /**
+     * Whether the user may be assigned to operation plans.
+     * @type {boolean}
+     * @memberof ListResponseUserResponseDataInner
+     */
+    planSelectable: boolean;
+    /**
      * Roles assigned to the user (org-scoped permission sets).
      * @type {Array<RoleResponse>}
      * @memberof ListResponseUserResponseDataInner
@@ -132,12 +138,6 @@ export interface ListResponseUserResponseDataInner {
      * @memberof ListResponseUserResponseDataInner
      */
     username: string;
-    /**
-     * Whether the user may be assigned to watering plans.
-     * @type {boolean}
-     * @memberof ListResponseUserResponseDataInner
-     */
-    wateringPlanSelectable: boolean;
 }
 
 
@@ -156,10 +156,10 @@ export function instanceOfListResponseUserResponseDataInner(value: object): valu
     if (!('id' in value) || value['id'] === undefined) return false;
     if (!('lastName' in value) || value['lastName'] === undefined) return false;
     if (!('phoneNumber' in value) || value['phoneNumber'] === undefined) return false;
+    if (!('planSelectable' in value) || value['planSelectable'] === undefined) return false;
     if (!('roles' in value) || value['roles'] === undefined) return false;
     if (!('status' in value) || value['status'] === undefined) return false;
     if (!('username' in value) || value['username'] === undefined) return false;
-    if (!('wateringPlanSelectable' in value) || value['wateringPlanSelectable'] === undefined) return false;
     return true;
 }
 
@@ -184,10 +184,10 @@ export function ListResponseUserResponseDataInnerFromJSONTyped(json: any, ignore
         'lastName': json['last_name'],
         'organization': json['organization'] == null ? undefined : OrganizationResponseFromJSON(json['organization']),
         'phoneNumber': json['phone_number'],
+        'planSelectable': json['plan_selectable'],
         'roles': ((json['roles'] as Array<any>).map(RoleResponseFromJSON)),
         'status': UserStatusFromJSON(json['status']),
         'username': json['username'],
-        'wateringPlanSelectable': json['watering_plan_selectable'],
     };
 }
 
@@ -213,10 +213,10 @@ export function ListResponseUserResponseDataInnerToJSONTyped(value?: ListRespons
         'last_name': value['lastName'],
         'organization': OrganizationResponseToJSON(value['organization']),
         'phone_number': value['phoneNumber'],
+        'plan_selectable': value['planSelectable'],
         'roles': ((value['roles'] as Array<any>).map(RoleResponseToJSON)),
         'status': UserStatusToJSON(value['status']),
         'username': value['username'],
-        'watering_plan_selectable': value['wateringPlanSelectable'],
     };
 }
 
