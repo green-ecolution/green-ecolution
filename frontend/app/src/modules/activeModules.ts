@@ -13,3 +13,15 @@ export function activeManifestsFrom(
   const active = activeModuleKeys(response)
   return manifests.filter(({ key }) => registered.has(key) && active.has(key))
 }
+
+export function activeManifestsIn(
+  manifests: readonly ModuleManifest[],
+  response: ModuleListResponse,
+  organizationId: string,
+): ModuleManifest[] {
+  const registered = new Set(response.modules)
+  const active = new Set(
+    response.organizations.find((entry) => entry.organizationId === organizationId)?.active ?? [],
+  )
+  return manifests.filter(({ key }) => registered.has(key) && active.has(key))
+}

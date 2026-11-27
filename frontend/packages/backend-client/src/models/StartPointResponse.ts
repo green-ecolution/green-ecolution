@@ -13,14 +13,6 @@
  */
 
 import { mapValues } from '../runtime';
-import type { CapacityKindDto } from './CapacityKindDto';
-import {
-    CapacityKindDtoFromJSON,
-    CapacityKindDtoFromJSONTyped,
-    CapacityKindDtoToJSON,
-    CapacityKindDtoToJSONTyped,
-} from './CapacityKindDto';
-
 /**
  * Named departure/return point for routes. `replenishes` lists the capacity
  * kinds a vehicle restores here.
@@ -65,11 +57,11 @@ export interface StartPointResponse {
      */
     organizationId: string;
     /**
-     * 
-     * @type {Array<CapacityKindDto>}
+     * Capacity kinds a vehicle restores here.
+     * @type {Array<string>}
      * @memberof StartPointResponse
      */
-    replenishes: Array<CapacityKindDto>;
+    replenishes: Array<string>;
 }
 
 /**
@@ -102,7 +94,7 @@ export function StartPointResponseFromJSONTyped(json: any, ignoreDiscriminator: 
         'lon': json['lon'],
         'name': json['name'],
         'organizationId': json['organization_id'],
-        'replenishes': ((json['replenishes'] as Array<any>).map(CapacityKindDtoFromJSON)),
+        'replenishes': json['replenishes'],
     };
 }
 
@@ -123,7 +115,7 @@ export function StartPointResponseToJSONTyped(value?: StartPointResponse | null,
         'lon': value['lon'],
         'name': value['name'],
         'organization_id': value['organizationId'],
-        'replenishes': ((value['replenishes'] as Array<any>).map(CapacityKindDtoToJSON)),
+        'replenishes': value['replenishes'],
     };
 }
 

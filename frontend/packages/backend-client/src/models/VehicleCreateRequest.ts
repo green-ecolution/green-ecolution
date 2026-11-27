@@ -54,8 +54,8 @@ export interface VehicleCreateRequest {
      */
     availability: VehicleAvailability;
     /**
-     * Capacity in liters per kind. A kind that is absent means the vehicle
-     * does not offer it.
+     * Amount per capacity kind, in the unit the kind's module declares. A
+     * kind that is absent means the vehicle does not offer it.
      * @type {{ [key: string]: number; }}
      * @memberof VehicleCreateRequest
      */

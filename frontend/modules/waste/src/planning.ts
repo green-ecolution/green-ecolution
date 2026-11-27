@@ -1,6 +1,7 @@
 import { lazy } from 'react'
 import { Trash2 } from 'lucide-react'
 import type { ModulePlanning } from '@/modules/types'
+import { CARGO_VOLUME } from './capacity'
 import { wasteRoots } from './api/roots'
 
 // Lazy because the manifest sits in the core bundle next to the registry, and
@@ -29,7 +30,7 @@ export const wastePlanning: ModulePlanning = {
     routeErrorAlert: 'waste:planning.texts.routeErrorAlert',
     routePreviewAriaLabel: 'waste:planning.texts.routePreviewAriaLabel',
   },
-  capacityKind: 'cargo_volume',
+  capacityKind: CARGO_VOLUME,
   labelKey: 'waste:planning.label',
   stopsLabelKey: 'waste:planning.stopsLabel',
   stopCountLabelKey: 'waste:planning.stopCountLabel',

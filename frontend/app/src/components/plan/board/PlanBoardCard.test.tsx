@@ -18,7 +18,7 @@ describe('PlanBoardCard', () => {
     )
 
     expect(screen.getByText('3 Gruppen')).toBeInTheDocument()
-    expect(screen.getByTitle('Benötigtes Wasser')).toHaveTextContent('4.200 L')
+    expect(screen.getByTitle('Benötigtes Wasser')).toHaveTextContent('4.200 Liter')
   })
 
   it('names the demand after the capacity kind of the module', () => {
@@ -30,6 +30,6 @@ describe('PlanBoardCard', () => {
       />,
     )
 
-    expect(screen.getByTitle('Benötigtes Ladevolumen')).toHaveTextContent('900 L')
+    expect(screen.getByTitle('Benötigtes Ladevolumen')).toHaveTextContent('900 Liter')
   })
 })

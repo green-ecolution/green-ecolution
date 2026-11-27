@@ -1,7 +1,7 @@
 import { PlanStatus } from '@green-ecolution/backend-client'
 import type { PlanResponse } from '@green-ecolution/backend-client'
 import type { ModulePlanning } from '@/modules/types'
-import { capacityDisplay } from '@/lib/capacity'
+import { capacityKindOf } from '@/modules/capacities'
 import { Suspense } from 'react'
 import { DetailedList, StatusCard } from '@green-ecolution/ui'
 import StatusCardGrid from '../general/StatusCardGrid'
@@ -27,7 +27,7 @@ const TabGeneralData: React.FC<TabGeneralDataProps> = ({ plan, planning }) => {
 
   const assignedUsers = userRes.data?.filter((user) => plan.userIds.includes(user.id)) ?? []
   const noData = t('common:state.noData')
-  const capacity = capacityDisplay[planning?.capacityKind ?? 'water']
+  const capacity = planning ? capacityKindOf(planning.capacityKind) : undefined
 
   const updatedDate = plan?.updatedAt
     ? format(new Date(plan.updatedAt), 'dd.MM.yyyy', { locale: dateLocale })
@@ -37,11 +37,16 @@ const TabGeneralData: React.FC<TabGeneralDataProps> = ({ plan, planning }) => {
     label: string
     value: string
   }[] = [
-    ...(planning
+    ...(capacity
       ? [
           {
-            label: t(capacityDisplay[planning.capacityKind].demandLabelKey),
-            value: plan.totalDemand ? t('detail.demandValue', { value: plan.totalDemand }) : noData,
+            label: i18n.t(capacity.texts.demand),
+            value: plan.totalDemand
+              ? t('detail.demandValue', {
+                  value: plan.totalDemand,
+                  unit: i18n.t(capacity.texts.unit),
+                })
+              : noData,
           },
         ]
       : []),
@@ -61,13 +66,13 @@ const TabGeneralData: React.FC<TabGeneralDataProps> = ({ plan, planning }) => {
           : plan.trailer.numberPlate
         : noData,
     },
-    ...(plan.trailer
+    ...(plan.trailer && capacity
       ? [
           {
-            label: t(capacity.transporterLabelKey),
+            label: i18n.t(capacity.texts.transporter),
             value: plan.transporterCapacityUsed
-              ? t(capacity.transporterUsedValueKey)
-              : t(capacity.transporterUnusedValueKey),
+              ? t('detail.transporterCapacityUsed')
+              : i18n.t(capacity.texts.transporterUnused),
           },
         ]
       : []),

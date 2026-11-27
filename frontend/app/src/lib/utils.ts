@@ -35,9 +35,9 @@ export function isHTTPError(data: unknown): data is HTTPError {
   )
 }
 
-export function formatLiters(liters: number): string {
+export function formatAmount(amount: number): string {
   const locale = intlLocale(getI18n().language)
-  return `${new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(liters)} L`
+  return new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(amount)
 }
 
 // RHF `setValueAs` for number inputs: German keyboards produce a decimal

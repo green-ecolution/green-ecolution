@@ -2,6 +2,7 @@ import { Trash2 } from 'lucide-react'
 import type { ModuleManifest } from '@/modules/types'
 import { wasteMap } from './map'
 import { wastePlanning } from './planning'
+import { cargoVolumeCapacity } from './capacity'
 import { WASTE } from './lib/targets'
 import { wasteResources } from './resources'
 import { binSensorTarget } from './sensorTargets'
@@ -41,6 +42,7 @@ export const wasteManifest: ModuleManifest = {
   ],
   map: wasteMap,
   planning: wastePlanning,
+  capacities: [cargoVolumeCapacity],
   targets: [binSensorTarget],
   settingsSection: wasteSettingsSection,
   statistics: {

@@ -5,7 +5,6 @@ export * from './ActivateSensorRequest';
 export * from './AddressDto';
 export * from './AppInfoResponse';
 export * from './AssignRoleRequest';
-export * from './CapacityKindDto';
 export * from './ClusterBoundaryListResponse';
 export * from './ClusterBoundaryResponse';
 export * from './ClusterMarkerListResponse';

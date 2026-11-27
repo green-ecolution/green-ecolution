@@ -22,11 +22,7 @@
     "loadingLabel": "Einsatzplan wird geladen …",
     "routeLengthLabel": "Länge der Route",
     "startPointLabel": "Startpunkt",
-    "demandLabel": {
-      "water": "Benötigtes Wasser",
-      "cargo_volume": "Benötigtes Ladevolumen"
-    },
-    "demandValue": "{value} Liter",
+    "demandValue": "{value} {unit}",
     "transporterLabel": "Transporter",
     "archivedVehicleValue": "{numberPlate} (Archiviert)",
     "trailerLabel": "Zusätzlicher Anhänger",
@@ -42,18 +38,7 @@
     "notFoundBackLabel": "Zur Einsatzplanliste",
     "routePreviewAriaLabel": "Karte mit der Route und den Stopps des Plans",
     "routePreviewLoadingLabel": "Lade Karte …",
-    "transporterCapacity": {
-      "water": {
-        "label": "Wassertank des Fahrzeugs",
-        "used": "Wird mitgenutzt",
-        "unused": "Bleibt leer, nur der Anhänger führt Wasser"
-      },
-      "cargo_volume": {
-        "label": "Laderaum des Fahrzeugs",
-        "used": "Wird mitgenutzt",
-        "unused": "Bleibt leer, nur der Anhänger lädt"
-      }
-    }
+    "transporterCapacityUsed": "Wird mitgenutzt"
   },
   "update": {
     "backLabel": "Zurück zum Einsatzplan",
@@ -96,17 +81,7 @@
     "createLeaveMessage": "Möchtest du die Seite wirklich verlassen? Deine Eingaben zum Erstellen des Einsatzplans gehen verloren, wenn du jetzt gehst.",
     "updateLeaveMessage": "Möchtest du die Seite wirklich verlassen? Deine Änderungen am Einsatzplan gehen verloren, wenn du jetzt gehst.",
     "createSuccessMessage": "Der Einsatzplan wurde erfolgreich erstellt.",
-    "updateSuccessMessage": "Der Einsatzplan wurde erfolgreich bearbeitet.",
-    "transporterCapacityUsed": {
-      "water": {
-        "label": "Wassertank des Fahrzeugs mitnutzen",
-        "hint": "Abwählen, wenn nur der Anhänger Wasser mitführt. Die Route rechnet dann allein mit dessen Fassungsvermögen."
-      },
-      "cargo_volume": {
-        "label": "Laderaum des Fahrzeugs mitnutzen",
-        "hint": "Abwählen, wenn nur der Anhänger geladen wird. Die Route rechnet dann allein mit dessen Fassungsvermögen."
-      }
-    }
+    "updateSuccessMessage": "Der Einsatzplan wurde erfolgreich bearbeitet."
   },
   "create": {
     "backLabel": "Zu allen Einsatzplänen",

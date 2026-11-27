@@ -531,5 +531,16 @@
   "roles": {
     "tree_care": "Tree care",
     "route_planning": "Route planning"
+  },
+  "capacity": {
+    "label": "Water",
+    "vehicleField": "Water tank",
+    "unit": "liters",
+    "stationAction": "Refill water",
+    "demand": "Water required",
+    "transporter": "Vehicle water tank",
+    "transporterUnused": "Stays empty, only the trailer carries water",
+    "transporterUsedFormLabel": "Use the vehicle's water tank",
+    "transporterUsedHint": "Clear this if only the trailer carries water. The route then plans with the trailer's capacity alone."
   }
 }

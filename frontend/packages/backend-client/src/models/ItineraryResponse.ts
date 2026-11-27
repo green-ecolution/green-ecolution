@@ -13,13 +13,6 @@
  */
 
 import { mapValues } from '../runtime';
-import type { CapacityKindDto } from './CapacityKindDto';
-import {
-    CapacityKindDtoFromJSON,
-    CapacityKindDtoFromJSONTyped,
-    CapacityKindDtoToJSON,
-    CapacityKindDtoToJSONTyped,
-} from './CapacityKindDto';
 import type { ItineraryEntryResponse } from './ItineraryEntryResponse';
 import {
     ItineraryEntryResponseFromJSON,
@@ -35,11 +28,17 @@ import {
  */
 export interface ItineraryResponse {
     /**
-     * `water` or `cargo_volume`.
-     * @type {CapacityKindDto}
+     * Capacity kind of the plan's module.
+     * @type {string}
      * @memberof ItineraryResponse
      */
-    capacityKind: CapacityKindDto;
+    capacityKind: string;
+    /**
+     * Unit of `demand`, as the kind's module declares it.
+     * @type {string}
+     * @memberof ItineraryResponse
+     */
+    capacityUnit: string;
     /**
      * 
      * @type {Array<ItineraryEntryResponse>}
@@ -60,13 +59,12 @@ export interface ItineraryResponse {
     planId: string;
 }
 
-
-
 /**
  * Check if a given object implements the ItineraryResponse interface.
  */
 export function instanceOfItineraryResponse(value: object): value is ItineraryResponse {
     if (!('capacityKind' in value) || value['capacityKind'] === undefined) return false;
+    if (!('capacityUnit' in value) || value['capacityUnit'] === undefined) return false;
     if (!('entries' in value) || value['entries'] === undefined) return false;
     if (!('module' in value) || value['module'] === undefined) return false;
     if (!('planId' in value) || value['planId'] === undefined) return false;
@@ -83,7 +81,8 @@ export function ItineraryResponseFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
-        'capacityKind': CapacityKindDtoFromJSON(json['capacity_kind']),
+        'capacityKind': json['capacity_kind'],
+        'capacityUnit': json['capacity_unit'],
         'entries': ((json['entries'] as Array<any>).map(ItineraryEntryResponseFromJSON)),
         'module': json['module'],
         'planId': json['plan_id'],
@@ -101,7 +100,8 @@ export function ItineraryResponseToJSONTyped(value?: ItineraryResponse | null, i
 
     return {
         
-        'capacity_kind': CapacityKindDtoToJSON(value['capacityKind']),
+        'capacity_kind': value['capacityKind'],
+        'capacity_unit': value['capacityUnit'],
         'entries': ((value['entries'] as Array<any>).map(ItineraryEntryResponseToJSON)),
         'module': value['module'],
         'plan_id': value['planId'],
