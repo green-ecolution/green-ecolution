@@ -6,7 +6,9 @@ import type { CreateRoleVariables } from '@/hooks/useRoleMutations'
 import type { ModuleManifest } from '@/modules/types'
 import type { Resource } from '@/lib/auth/permissions'
 import { getI18n } from '@/lib/i18n'
-import { irrigationManifest } from '@green-ecolution/module-irrigation'
+import { manifestOf } from '@/test/moduleFixtures'
+
+const irrigationManifest = manifestOf('irrigation')
 
 const templates: Role[] = [
   {
@@ -48,7 +50,8 @@ const probeManifest = (key: string): ModuleManifest => ({
 })
 const probes = vi.hoisted(() => ({ list: [] as ModuleManifest[] }))
 vi.mock('@/modules/registry', async () => {
-  const { irrigationManifest: irrigation } = await import('@green-ecolution/module-irrigation')
+  const { manifestOf } = await import('@/test/moduleFixtures')
+  const irrigation = manifestOf('irrigation')
   return {
     get moduleManifests() {
       return [irrigation, ...probes.list]

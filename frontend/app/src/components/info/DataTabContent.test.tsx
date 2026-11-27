@@ -1,9 +1,11 @@
 import type { ReactNode } from 'react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { DataStatisticsResponse } from '@green-ecolution/backend-client'
-import { irrigationManifest } from '@green-ecolution/module-irrigation'
+import { manifestOf } from '@/test/moduleFixtures'
 import { render, screen } from '@/test/utils'
 import type { ModuleManifest } from '@/modules/types'
+
+const irrigationManifest = manifestOf('irrigation')
 
 vi.mock('@tanstack/react-router', () => ({
   Link: ({ to, children }: { to: string; children: ReactNode }) => <a href={to}>{children}</a>,

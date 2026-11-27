@@ -14,9 +14,11 @@ import {
   routePermissionsFor,
   visibleNavSections as visibleNavSectionsIn,
 } from './routePermissions'
-import { irrigationManifest } from '@green-ecolution/module-irrigation'
+import { manifestOf } from '@/test/moduleFixtures'
 import type { ModuleManifest, ModuleMap } from '@/modules/types'
 import { probeManifest } from '@/test/planningManifest'
+
+const irrigationManifest = manifestOf('irrigation')
 
 const perms = (...granted: string[]): Permissions => new Set(granted)
 

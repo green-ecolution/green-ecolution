@@ -3,7 +3,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { irrigationManifest } from '@green-ecolution/module-irrigation'
+import { manifestOf } from '@/test/moduleFixtures'
 import {
   createRootRoute,
   createRoute,
@@ -14,6 +14,8 @@ import {
 } from '@tanstack/react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { type Permissions } from '@/lib/auth/permissions'
+
+const irrigationManifest = manifestOf('irrigation')
 
 const permissions = vi.fn((): Permissions => new Set<string>())
 const textTarget = vi.fn(() => undefined as unknown)

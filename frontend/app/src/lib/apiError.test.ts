@@ -2,7 +2,9 @@ import { describe, it, expect } from 'vitest'
 import { FetchError, ResponseError } from '@green-ecolution/backend-client'
 import { resolveApiError } from './apiError'
 import errors from '@/locales/de/errors.json'
-import irrigationDe from '@green-ecolution/module-irrigation/locales/de'
+import { germanCatalogOf } from '@/test/moduleFixtures'
+
+const irrigationDe = germanCatalogOf('irrigation')
 
 const { irrigation } = irrigationDe
 

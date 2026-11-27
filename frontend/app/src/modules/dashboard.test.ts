@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { irrigationManifest } from '@green-ecolution/module-irrigation'
+import { manifestOf } from '@/test/moduleFixtures'
 import { probeManifest } from '@/test/planningManifest'
 import { cardDescriptionKeys, coreCardsShown } from './dashboard'
+
+const irrigationManifest = manifestOf('irrigation')
 
 describe('cardDescriptionKeys', () => {
   it('keeps the core texts without a module phrasing them', () => {

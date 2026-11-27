@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from 'vitest'
 import type { TFunction } from 'i18next'
 import { getI18n } from '@/lib/i18n'
 import { ensureLanguage } from '@/lib/i18n/load'
-import { irrigationManifest } from '@green-ecolution/module-irrigation'
+import { manifestOf } from '@/test/moduleFixtures'
 import { UNRESTRICTED } from './permissions'
 import {
   activeActionCount,
@@ -16,6 +16,8 @@ import {
   toggleAction,
   unknownPermissions,
 } from './permissionAreas'
+
+const irrigationManifest = manifestOf('irrigation')
 
 let t: TFunction<'settings'>
 let tEn: TFunction<'settings'>

@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { irrigationManifest } from '@green-ecolution/module-irrigation'
+import { manifestOf } from '@/test/moduleFixtures'
 import { mapActivateError, mapReassignError, mapDeactivateError } from './sensorErrors'
+
+const irrigationManifest = manifestOf('irrigation')
 
 const responseError = (status: number) => new Response(null, { status })
 
