@@ -22,12 +22,16 @@ dieser Orte sind zugleich Stationen: Dort können Fahrzeuge unterwegs auffüllen
 entladen. Beides pflegst du auf derselben Seite **Stationen**, denn technisch ist eine
 Station ein Startpunkt mit einer Angabe dazu, was dort geschieht.
 
-Diese Angabe steht unter **Fahrzeuge können hier** und kennt zwei Möglichkeiten.
-**Wasser auffüllen** bedeutet, dass ein Fahrzeug hier den Tank wieder füllen kann, etwa an
-einem Hydranten oder auf dem Betriebshof. **Laderaum entladen** bedeutet, dass ein
-Fahrzeug hier seinen Laderaum leeren kann, etwa an einem Wertstoffhof. Eine Station kann beides zugleich anbieten. Wählst du nichts
-aus, dient der Ort nur als Start und Ziel einer Tour. Bei der Routenberechnung kommen nur
-Stationen infrage, die zur Kapazität des jeweiligen Einsatzplans passen.
+Diese Angabe steht unter **Fahrzeuge können hier**. Welche Möglichkeiten dort erscheinen,
+hängt von den Fachmodulen ab, die in der Organisation der Station aktiv sind. Die
+Bewässerung bietet **Wasser auffüllen** an: Ein Fahrzeug kann hier den Tank wieder
+füllen, etwa an einem Hydranten oder auf dem Betriebshof. Der Abfall bietet **Laderaum
+entladen** an: Ein Fahrzeug kann hier seinen Laderaum leeren, etwa an einem Wertstoffhof.
+Eine Station kann mehreres zugleich anbieten. Wählst du nichts aus oder ist kein solches
+Fachmodul aktiv, dient der Ort nur als Start und Ziel einer Tour. Eine gespeicherte
+Angabe, für die gerade keine Auswahl erscheint, bleibt beim Speichern erhalten. Bei der
+Routenberechnung kommen nur Stationen infrage, die zur Kapazität des jeweiligen
+Einsatzplans passen.
 
 ![Die Liste der Stationen mit zwei Einträgen, einer davon als Standard markiert](../images/settings-stations.png)
 

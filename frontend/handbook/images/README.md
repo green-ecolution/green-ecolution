@@ -105,10 +105,12 @@ be re-shot under the capture conditions above.
 - `dashboard.png`: while more than one module draws on the map or plans, the cards "Karte"
   and "Einsatzpläne" show the neutral core description instead of the irrigation wording.
   Re-shoot only if the capture instance has the waste module switched on.
-- `vehicle-form.png` shows water capacity as the only, required capacity. The form now
-  groups the capacities in a "Kapazität" section (Wassertank and Laderaum, each with a
-  "Liter" suffix and a "für <Modul>" line) and requires at least one of them, so it needs
-  a re-shoot.
+- `vehicle-form.png` shows water capacity as the only, required capacity with the old
+  default of 300 liters. The form now groups the capacities in a "Kapazität" section that
+  lists only the kinds of the modules active in the vehicle's organization (Wassertank and
+  Laderaum, each with a "Liter" suffix and a "für <Modul>" line); the fields start empty.
+  It needs a re-shoot. `settings-stations.png` and `settings-station-form.png` stay valid
+  as long as both modules are active in the captured organization.
 - `treecluster-dashboard.png` shows the old "Sensorik", "Bäume" and
   "Bewässerungshistorie" cards. All three are now compact divided lists: sensor rows with
   one line of signal, battery and last transmission, a tree list collapsed to three rows

@@ -153,7 +153,7 @@ Startpasswort. Mehr dazu steht unter
 Nach dem Speichern eines Einsatzplans bleibt der Reiter **Route** aus, und die
 Detailseite weist darauf hin, dass sich keine Route berechnen ließ. Meistens liegt das
 daran, dass die ausgewählten Bewässerungsgruppen zusammen mehr Wasser benötigen, als
-das gewählte Fahrzeug samt einem eventuellen Anhänger fasst; prüfe die Wasserkapazität
+das gewählte Fahrzeug samt einem eventuellen Anhänger fasst; prüfe den Wassertank
 gegen die Anzahl der Bäume in den gewählten Gruppen, siehe
 [Route festlegen](./watering-plans.md#route-festlegen). Ebenso führt ein fehlender
 Startpunkt oder ein fehlendes Fahrzeug dazu, dass sich aus den restlichen Angaben keine
