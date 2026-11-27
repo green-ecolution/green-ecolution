@@ -115,8 +115,8 @@ function SelectCluster() {
     switch (formType) {
       case 'update':
         return navigate({
-          to: `/plans/$wateringPlanId/edit`,
-          params: { wateringPlanId: String(wateringPlanId) },
+          to: `/plans/$planId/edit`,
+          params: { planId: String(wateringPlanId) },
         })
       case 'create':
         return navigate({ to: '/plans/new' })

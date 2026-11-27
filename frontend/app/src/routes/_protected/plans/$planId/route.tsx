@@ -9,7 +9,7 @@ import { format } from 'date-fns'
 export const planEntityRoute = entityRoute({
   key: 'plan',
   query: planQueries.detail,
-  idParam: 'wateringPlanId',
+  idParam: 'planId',
   title: (plan) => ({
     titleKey: 'plan:detail.entityTitle',
     params: {
@@ -27,6 +27,6 @@ export const planEntityRoute = entityRoute({
   },
 })
 
-export const Route = createFileRoute('/_protected/plans/$wateringPlanId')({
+export const Route = createFileRoute('/_protected/plans/$planId')({
   ...planEntityRoute,
 })

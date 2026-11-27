@@ -2,9 +2,9 @@ import PlanDashboard from '@/components/plan/PlanDashboard'
 import { pendingLoading } from '@/lib/router'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
 
-const planRoute = getRouteApi('/_protected/plans/$wateringPlanId')
+const planRoute = getRouteApi('/_protected/plans/$planId')
 
-export const Route = createFileRoute('/_protected/plans/$wateringPlanId/')({
+export const Route = createFileRoute('/_protected/plans/$planId/')({
   component: SinglePlan,
   pendingComponent: pendingLoading({ key: 'plan:detail.loadingLabel' }),
 })

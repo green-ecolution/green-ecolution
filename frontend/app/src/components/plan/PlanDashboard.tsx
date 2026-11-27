@@ -62,8 +62,8 @@ const PlanDashboard = ({ plan: plan }: PlanDashboardProps) => {
             ? {
                 label: t('detail.editLabel'),
                 link: {
-                  to: `/plans/$wateringPlanId/edit`,
-                  params: { wateringPlanId: String(plan.id) },
+                  to: `/plans/$planId/edit`,
+                  params: { planId: String(plan.id) },
                 },
               }
             : undefined
@@ -75,8 +75,8 @@ const PlanDashboard = ({ plan: plan }: PlanDashboardProps) => {
           {canEdit && showPlanStatusButton(plan) && (
             <ButtonLink
               link={{
-                to: '/plans/$wateringPlanId/status/edit',
-                params: { wateringPlanId: plan.id.toString() },
+                to: '/plans/$planId/status/edit',
+                params: { planId: plan.id.toString() },
               }}
               label={t('detail.updateStatusLabel')}
               icon={MoveRight}

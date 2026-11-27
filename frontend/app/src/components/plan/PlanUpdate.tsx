@@ -23,15 +23,15 @@ import { useDateLocale } from '@/lib/i18n/useFormatters'
 import UnsavedChangesDialog from '../general/form/UnsavedChangesDialog'
 
 interface PlanUpdateProps {
-  wateringPlanId: string
+  planId: string
 }
 
-const PlanUpdate = ({ wateringPlanId }: PlanUpdateProps) => {
+const PlanUpdate = ({ planId }: PlanUpdateProps) => {
   const { t, i18n } = useTranslation(['plan', 'common'])
   const dateLocale = useDateLocale()
   const draft = usePlanDraft<PlanForm>('update')
   const { initForm, loadedData } = useInitFormQuery(
-    planQueries.detail(wateringPlanId),
+    planQueries.detail(planId),
     (data) =>
       draft.data ?? {
         date: new Date(data.date),
@@ -54,7 +54,7 @@ const PlanUpdate = ({ wateringPlanId }: PlanUpdateProps) => {
   const canUpdateStatus = usePlanPermission(planning, 'update')
   const canDelete = usePlanPermission(planning, 'delete')
   const { mutate, isError, error, form, navigationBlocker, saveDraft } = usePlanForm('update', {
-    wateringPlanId,
+    planId,
     initForm,
     planManifest,
   })
@@ -72,7 +72,7 @@ const PlanUpdate = ({ wateringPlanId }: PlanUpdateProps) => {
   const onSubmit: SubmitHandler<PlanForm> = (data) => mutate(data)
 
   const handleDeletePlan = () => {
-    return planApi.deletePlan({ planId: wateringPlanId })
+    return planApi.deletePlan({ planId: planId })
   }
 
   return (
@@ -81,8 +81,8 @@ const PlanUpdate = ({ wateringPlanId }: PlanUpdateProps) => {
         backLink={{
           label: t('update.backLabel'),
           link: {
-            to: `/plans/$wateringPlanId`,
-            params: { wateringPlanId: wateringPlanId?.toString() },
+            to: `/plans/$planId`,
+            params: { planId: planId?.toString() },
           },
         }}
         title={<>{t('update.title', { date })}</>}
@@ -93,8 +93,8 @@ const PlanUpdate = ({ wateringPlanId }: PlanUpdateProps) => {
             {t('update.statusEditNotice')}
             <GeneralLink
               link={{
-                to: `/plans/$wateringPlanId/status/edit`,
-                params: { wateringPlanId: String(loadedData.id) },
+                to: `/plans/$planId/status/edit`,
+                params: { planId: String(loadedData.id) },
               }}
               label={t('detail.updateStatusLabel')}
             />
@@ -111,7 +111,7 @@ const PlanUpdate = ({ wateringPlanId }: PlanUpdateProps) => {
             trailers={trailers.data}
             transporters={transporters.data}
             formType="update"
-            planId={wateringPlanId}
+            planId={planId}
             organizationId={loadedData.organizationId}
             saveDraft={saveDraft}
             errorMessage={error?.message}

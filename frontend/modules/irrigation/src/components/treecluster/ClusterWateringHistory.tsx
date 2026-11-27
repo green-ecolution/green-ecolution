@@ -52,8 +52,8 @@ const ClusterWateringHistory = ({ clusterId }: ClusterWateringHistoryProps) => {
                   />
                 )}
                 <Link
-                  to="/plans/$wateringPlanId"
-                  params={{ wateringPlanId: event.wateringPlanId }}
+                  to="/plans/$planId"
+                  params={{ planId: event.wateringPlanId }}
                   className="group relative flex items-center gap-3 rounded-sm py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-dark"
                 >
                   <span className="flex size-4 shrink-0 items-center justify-center bg-card">

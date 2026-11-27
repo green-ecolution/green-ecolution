@@ -170,7 +170,7 @@ describe('usePlanForm', () => {
     }
 
     const { result } = renderHook(
-      () => usePlanForm('update', { wateringPlanId: '5', initForm: updateInitForm }),
+      () => usePlanForm('update', { planId: '5', initForm: updateInitForm }),
       { wrapper: createWrapper() },
     )
 

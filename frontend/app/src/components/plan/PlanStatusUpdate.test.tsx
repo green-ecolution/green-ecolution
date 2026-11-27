@@ -110,7 +110,7 @@ describe('PlanStatusUpdate — Nicht angetreten', () => {
   })
 
   const selectNotCompleted = async (user: ReturnType<typeof userEvent.setup>) => {
-    render(<PlanStatusUpdate wateringPlanId={PLAN_ID} />, { wrapper: createWrapper() })
+    render(<PlanStatusUpdate planId={PLAN_ID} />, { wrapper: createWrapper() })
 
     const trigger = await screen.findByRole('combobox', { name: /status des einsatzplans/i })
     await user.click(trigger)
@@ -163,7 +163,7 @@ describe('PlanStatusUpdate — Beendet', () => {
   it('explains why a plan of an inactive module cannot be finished', async () => {
     planModuleActive = false
     const user = userEvent.setup()
-    render(<PlanStatusUpdate wateringPlanId={PLAN_ID} />, { wrapper: createWrapper() })
+    render(<PlanStatusUpdate planId={PLAN_ID} />, { wrapper: createWrapper() })
 
     await user.click(await screen.findByRole('combobox', { name: /status des einsatzplans/i }))
     await user.click(await screen.findByRole('option', { name: /beendet/i }))
@@ -177,7 +177,7 @@ describe('PlanStatusUpdate — Beendet', () => {
   it('finishes with the outcomes of the plan module and completes the hidden stops', async () => {
     const user = userEvent.setup()
     updatePlan.mockResolvedValueOnce({ ...mockPlanResponse })
-    render(<PlanStatusUpdate wateringPlanId={PLAN_ID} />, { wrapper: createWrapper() })
+    render(<PlanStatusUpdate planId={PLAN_ID} />, { wrapper: createWrapper() })
 
     await user.click(await screen.findByRole('combobox', { name: /status des einsatzplans/i }))
     await user.click(await screen.findByRole('option', { name: /beendet/i }))

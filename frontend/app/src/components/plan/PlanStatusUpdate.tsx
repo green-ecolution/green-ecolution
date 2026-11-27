@@ -40,11 +40,11 @@ import type { ModulePlanning } from '@/modules/types'
 import { useActiveModules } from '@/modules/useActiveModules'
 
 interface PlanStatusUpdateProps {
-  wateringPlanId: string
+  planId: string
 }
 
-const PlanStatusUpdate = ({ wateringPlanId }: PlanStatusUpdateProps) => {
-  const { data: loadedData } = useSuspenseQuery(planQueries.detail(wateringPlanId))
+const PlanStatusUpdate = ({ planId }: PlanStatusUpdateProps) => {
+  const { data: loadedData } = useSuspenseQuery(planQueries.detail(planId))
   const { manifests } = useActiveModules()
   const planning = planningFor(manifests, loadedData.module)
   const navigate = useNavigate()
@@ -61,7 +61,7 @@ const PlanStatusUpdate = ({ wateringPlanId }: PlanStatusUpdateProps) => {
     mutationFn: async (overrides: Partial<PlanUpdateRequest>) => {
       try {
         return await planApi.updatePlan({
-          planId: wateringPlanId,
+          planId: planId,
           planUpdateRequest: toUpdateRequest(loadedData, overrides),
         })
       } catch (error) {
@@ -75,8 +75,8 @@ const PlanStatusUpdate = ({ wateringPlanId }: PlanStatusUpdateProps) => {
       )
 
       navigate({
-        to: `/plans/$wateringPlanId`,
-        params: { wateringPlanId: data.id.toString() },
+        to: `/plans/$planId`,
+        params: { planId: data.id.toString() },
         replace: true,
       }).catch((error) => console.error('Navigation failed:', error))
 
@@ -154,8 +154,8 @@ const PlanStatusUpdate = ({ wateringPlanId }: PlanStatusUpdateProps) => {
         backLink={{
           label: t('statusUpdate.backLabel'),
           link: {
-            to: `/plans/$wateringPlanId`,
-            params: { wateringPlanId },
+            to: `/plans/$planId`,
+            params: { planId },
           },
         }}
         title={<>{t('statusUpdate.title', { date })}</>}

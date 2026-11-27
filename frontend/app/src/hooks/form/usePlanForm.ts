@@ -14,7 +14,7 @@ import { EntityFormConfig, useEntityForm } from './useEntityForm'
 export const usePlanForm = (
   mutationType: 'create' | 'update',
   opts: {
-    wateringPlanId?: string
+    planId?: string
     initForm?: DefaultValues<PlanForm>
     planManifest?: PlanningManifest
   },
@@ -33,8 +33,8 @@ export const usePlanForm = (
     invalidates: queryRoots.plan,
 
     successRoute: (id) => ({
-      to: '/plans/$wateringPlanId',
-      params: { wateringPlanId: id.toString() },
+      to: '/plans/$planId',
+      params: { planId: id.toString() },
     }),
     replaceOnSuccess: true,
     allowedPaths: [...(opts.planManifest?.planning.stopPickerPaths ?? [])],
@@ -49,7 +49,7 @@ export const usePlanForm = (
   }
 
   return useEntityForm<PlanForm, PlanForm, PlanForm, PlanResponse>(planConfig, mutationType, {
-    entityId: opts.wateringPlanId,
+    entityId: opts.planId,
     initForm: opts.initForm,
   })
 }

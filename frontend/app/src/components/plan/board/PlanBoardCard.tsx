@@ -43,8 +43,8 @@ const PlanBoardCard = ({ plan, planning, users, assignSlot, cardState }: PlanBoa
   return (
     <KanbanCard state={cardState}>
       <Link
-        to="/plans/$wateringPlanId"
-        params={{ wateringPlanId: plan.id.toString() }}
+        to="/plans/$planId"
+        params={{ planId: plan.id.toString() }}
         className="block focus-visible:outline-hidden"
       >
         <div className="flex items-center gap-2">
