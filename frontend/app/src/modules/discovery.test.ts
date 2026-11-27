@@ -34,6 +34,13 @@ describe('module discovery', () => {
     ])
   })
 
+  it('orders by code point, the same on every machine', () => {
+    file('a/src/manifest.tsx')
+    file('B/src/manifest.tsx')
+
+    expect(discoverModules(dir).map((m) => m.key)).toEqual(['B', 'a'])
+  })
+
   it('skips a directory without a manifest', () => {
     file('half/src/index.ts')
     file('README.md')

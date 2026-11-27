@@ -14,6 +14,10 @@ describe('module registry', () => {
     expect(sortManifests([fake('b', 10), fake('a', 10)]).map((m) => m.key)).toEqual(['a', 'b'])
   })
 
+  it('orders keys by code point, the same for every browser locale', () => {
+    expect(sortManifests([fake('a', 10), fake('B', 10)]).map((m) => m.key)).toEqual(['B', 'a'])
+  })
+
   it('holds one manifest per module directory, keyed like the directory', () => {
     expect(moduleManifests.map((m) => m.key).sort()).toEqual(MODULE_BUILDS.map((b) => b.key).sort())
   })

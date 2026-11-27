@@ -15,7 +15,7 @@ export function discoverModules(modulesDir: string): ModuleBuild[] {
         ? { ...build, routesDirectory: ROUTES_DIRECTORY }
         : build,
     )
-    .sort((a, b) => a.key.localeCompare(b.key))
+    .sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0))
 }
 
 export const MODULE_BUILDS: readonly ModuleBuild[] = discoverModules(
