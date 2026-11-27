@@ -655,14 +655,20 @@ API wrappers, store, validation schemas and translation catalogs, and describes 
 the app through a manifest. Whether a module is shown is decided at runtime by the
 organization's module switches, so the app only renders the manifests of active modules.
 
+A module package is a directory under `frontend/modules/` that holds `src/manifest.tsx`.
+The app finds it by that file: `frontend/app/modules.config.ts` discovers the packages for
+Vite and Vitest, and `modules/registry.ts` loads the manifests. The directory name is the
+module's key. Nothing outside the package has to be edited to add one; only the lockfile
+and `routeTree.gen.ts` are regenerated (see below).
+
 A module package consists of:
 
-- `module.config.ts`: `{ key, routesDirectory }`, read by Vite, Vitest and the manifest.
-  It is a separate file because the manifest imports React components and cannot be
-  loaded from `vite.config.ts`. The app lists every config in `frontend/app/modules.config.ts`.
 - `src/manifest.tsx`: the `ModuleManifest` (type in `frontend/app/src/modules/types.ts`)
-  with navigation, route permissions, resources, statistics, map, planning, sensor target
-  and settings slots, and the module's i18n namespaces.
+  as the default export, with `key` (equal to the directory name), `order` (where the module
+  sorts among the others), navigation, route permissions, resources, statistics, map,
+  planning, sensor target and settings slots, and the module's i18n namespaces.
+- `src/locales/catalog.ts`: adds the module's German catalog to the `Catalogs` interface of
+  `@/lib/i18n/catalogs`, which makes its translation keys type-checked.
 - `src/routes/`: the module's route files, mirroring the app's paths, for example
   `src/routes/_protected/trees/...` with `createFileRoute('/_protected/trees')`. The
   TanStack Router plugin picks them up through a `virtualRouteConfig`, so the URLs stay
@@ -671,17 +677,18 @@ A module package consists of:
 
 A module may import from the app with `@/…`, but the app must never import a module. The
 only places in `frontend/app/src` that may reference a module package are
-`modules/registry.ts` (the list of manifests), `lib/i18n/i18next.d.ts` (types of the module
-catalogs) and the generated `routeTree.gen.ts`. `frontend/app/src/modules/boundary.test.ts`
-enforces this and fails with the offending files; do not add exceptions, hand the data
-over through a manifest slot instead. Core text must stay neutral and module-specific
+`modules/registry.ts` (which loads the manifests) and the generated `routeTree.gen.ts`.
+`frontend/app/src/modules/boundary.test.ts` enforces this and fails with the offending
+files. It derives what it forbids (module keys, routes, API names, permissions) from the
+module packages, so a new module is covered without touching the test; do not add
+exceptions, hand the data over through a manifest slot instead. Core text must stay neutral and module-specific
 wording belongs in the module's catalogs.
 
 A module package keeps the same devDependencies as the app, including the peer variants
 (`typescript` as alias for `@typescript/typescript6`, `@types/node`, `jsdom`,
 `@vitest/*`). If they drift, pnpm installs a second copy of `react-i18next` or `vitest`
-and translations come back empty in tests. `src/instances.test.ts` in the module checks
-that the packages resolve to the same instance. Tailwind only finds a module's classes
+and translations come back empty in tests. `frontend/app/src/modules/instances.test.ts`
+checks for every module that the packages resolve to the same instance. Tailwind only finds a module's classes
 through the `@source "../../../modules/*/src/**/*.{ts,tsx}"` line in
 `frontend/app/src/css/site.css`, which `src/modules/tailwindSource.test.ts` guards; a
 module outside `frontend/modules/` needs its own `@source` line. After adding or moving route files,
