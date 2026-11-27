@@ -103,9 +103,10 @@ async fn a_new_tenant_has_no_module_released() {
     let tenant = create_tenant(&app, "Neu").await;
 
     let releases = get_json(&app, "/api/v1/modules/releases").await;
-    assert_eq!(releases["modules"], json!(["irrigation", "waste"]));
+    let keys = crate::helpers::module_keys(&[]);
+    assert_eq!(releases["modules"], json!(keys));
     let entry = tenant_entry(&releases, tenant);
-    for key in ["irrigation", "waste"] {
+    for key in &keys {
         assert_eq!(module_of(entry, key).unwrap()["released"], false, "{key}");
     }
 

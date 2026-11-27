@@ -29,7 +29,7 @@ async fn seed_profile_in(app: &TestApp, org_id: &str) -> Uuid {
 }
 
 #[tokio::test]
-async fn create_organization_copies_the_six_templates() {
+async fn create_organization_copies_every_template() {
     let app = spawn_app().await;
     let resp = app
         .post_json(
@@ -53,7 +53,10 @@ async fn create_organization_copies_the_six_templates() {
         .iter()
         .map(|r| r["name"].as_str().unwrap())
         .collect();
-    assert_eq!(roles.as_array().unwrap().len(), 6);
+    assert_eq!(
+        roles.as_array().unwrap().len(),
+        crate::helpers::template_count(&app).await
+    );
     assert!(names.contains(&"Administrator"));
 }
 

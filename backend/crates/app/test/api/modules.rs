@@ -1,7 +1,10 @@
 use serde_json::json;
 use uuid::Uuid;
 
-use crate::{helpers::spawn_app, organizations::ROOT_ORG_ID};
+use crate::{
+    helpers::{default_on_module_keys, module_keys, spawn_app},
+    organizations::ROOT_ORG_ID,
+};
 
 #[tokio::test]
 async fn list_holds_the_registered_modules() {
@@ -9,13 +12,14 @@ async fn list_holds_the_registered_modules() {
     let resp = app.get("/api/v1/modules").await;
     assert_eq!(resp.status(), 200);
     let body: serde_json::Value = resp.json().await.unwrap();
-    assert_eq!(body["modules"], json!(["irrigation", "waste"]));
+    assert_eq!(body["modules"], json!(module_keys(&[])));
     assert!(
         body["organizations"]
             .as_array()
             .unwrap()
             .iter()
-            .any(|o| o["organization_id"] == ROOT_ORG_ID && o["active"] == json!(["irrigation"]))
+            .any(|o| o["organization_id"] == ROOT_ORG_ID
+                && o["active"] == json!(default_on_module_keys()))
     );
 }
 
