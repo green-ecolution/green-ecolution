@@ -31,6 +31,7 @@ pub mod module_release_migration;
 pub mod modules;
 pub mod my_plans;
 pub mod openapi;
+pub mod openapi_neutral;
 pub mod organization_resource_counts;
 pub mod organization_scope;
 pub mod organizations;

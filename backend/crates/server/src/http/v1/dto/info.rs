@@ -182,9 +182,9 @@ pub struct DataStatisticsResponse {
 
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct ModuleCountResponse {
-    #[schema(example = "irrigation")]
+    #[schema(example = "example")]
     pub module: String,
-    #[schema(example = "tree")]
+    #[schema(example = "item")]
     pub kind: String,
     #[schema(example = 342)]
     pub count: i64,

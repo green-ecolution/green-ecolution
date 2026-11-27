@@ -43,7 +43,7 @@ fn ensure_routing(state: &AppState) -> Result<(), ServiceError> {
 #[utoipa::path(get, path = "/routing/start-points", tag = "Routing",
     operation_id = "listRoutingStartPoints",
     summary = "List routing start points",
-    description = "Returns the persisted named start/return points for watering routes.",
+    description = "Returns the persisted named start/return points for routes.",
     responses(
         (status = 200, description = "List of start points", body = Vec<StartPointResponse>),
         (status = 503, description = "Routing feature is disabled (code `feature.routing_disabled`)", body = ErrorBody),

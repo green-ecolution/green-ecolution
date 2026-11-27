@@ -214,7 +214,7 @@ impl From<SensorTypeResponse> for SensorType {
     }
 }
 
-/// A LoRaWAN sensor used for soil moisture monitoring.
+/// A LoRaWAN sensor.
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct SensorResponse {
     /// Unique sensor identifier (EUI).
@@ -416,12 +416,12 @@ fn hex_field(label: &'static str, s: &str, len: usize) -> Result<(), ServiceErro
     Ok(())
 }
 
-/// An object of a module a sensor can be attached to, e.g. a tree.
+/// An object of a module a sensor can be attached to.
 #[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct TargetRefDto {
-    #[schema(example = "irrigation")]
+    #[schema(example = "example")]
     pub module: String,
-    #[schema(example = "tree")]
+    #[schema(example = "item")]
     pub kind: String,
     #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
     pub id: uuid::Uuid,
@@ -741,7 +741,7 @@ pub struct SensorListParams {
     #[serde(default)]
     pub attached: Option<bool>,
     /// Only sensors attached to a target of this module.
-    #[param(nullable, example = "irrigation")]
+    #[param(nullable, example = "example")]
     pub module: Option<String>,
     /// Sensor ids. Repeatable: `?id=<eui>&id=<eui>`.
     #[serde(default)]

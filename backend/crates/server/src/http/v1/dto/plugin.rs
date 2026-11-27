@@ -32,12 +32,12 @@ fn parse_device_capabilities(raw: &[String]) -> Result<BTreeSet<DeviceCapability
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 #[schema(example = json!({
     "id": "01990000-0000-7000-8000-000000000001",
-    "slug": "tbz-baumkataster",
-    "name": "TBZ Baumkataster",
+    "slug": "kataster-import",
+    "name": "Kataster-Import",
     "description": null,
     "organization_id": "01980000-0000-7000-8000-000000000001",
-    "permissions": ["tree:create", "tree:update"],
-    "required_permissions": ["tree:read"],
+    "permissions": ["sensor:create", "sensor:update"],
+    "required_permissions": ["sensor:read"],
     "device_capabilities": [],
     "frontend_mode": "none",
     "frontend_target": null,
@@ -90,8 +90,8 @@ impl From<&PluginView> for PluginResponse {
 /// plugin's own permissions, its credential state and its last sign of life.
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 #[schema(example = json!({
-    "slug": "tbz-baumkataster",
-    "name": "TBZ Baumkataster",
+    "slug": "kataster-import",
+    "name": "Kataster-Import",
     "description": null,
     "frontend_mode": "external",
     "frontend_target": "https://kataster.example.org/view",
@@ -211,11 +211,11 @@ impl PluginFrontendDto {
 /// Request body for installing a new plugin.
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
 #[schema(example = json!({
-    "slug": "tbz-baumkataster",
-    "name": "TBZ Baumkataster",
+    "slug": "kataster-import",
+    "name": "Kataster-Import",
     "organization_id": "01980000-0000-7000-8000-000000000001",
-    "permissions": ["tree:create"],
-    "required_permissions": ["tree:read"],
+    "permissions": ["sensor:create"],
+    "required_permissions": ["sensor:read"],
     "frontend": { "mode": "none" }
 }))]
 pub struct PluginCreateRequest {

@@ -1,4 +1,4 @@
-//! Vehicle aggregate — watering trucks and trailers in the fleet.
+//! Vehicle aggregate — trucks and trailers in the fleet.
 //!
 //! `archived_at` is part of the aggregate (it carries domain meaning — when a
 //! vehicle was retired), unlike `created_at` / `updated_at` which are
@@ -58,7 +58,7 @@ pub enum VehicleAvailability {
 /// Display-only operational status, derived via [`derive_status`] — never
 /// stored.
 ///
-/// - `Active` — currently assigned to a running watering plan.
+/// - `Active` — currently assigned to a running operation plan.
 /// - `Available` — ready to be assigned.
 /// - `NotAvailable` — temporarily out of service (maintenance, etc.).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
@@ -72,7 +72,7 @@ pub enum VehicleStatus {
 
 /// Derives the status shown to clients. Being on a run is never stored: a
 /// vehicle cannot assert "I am out driving" — it is an observation about the
-/// watering plans it is assigned to.
+/// operation plans it is assigned to.
 ///
 /// `NotAvailable` wins over a running plan. Whoever puts a vehicle into the
 /// workshop knows more than a plan someone forgot to cancel, and the

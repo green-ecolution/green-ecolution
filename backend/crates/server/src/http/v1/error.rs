@@ -12,8 +12,8 @@ use domain::{RepositoryError, routing::RoutingError, shared::error::ValidationIs
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 #[schema(as = ValidationIssue)]
 #[schema(example = json!({
-    "field": "cluster.name",
-    "key": "cluster.name.tooLong",
+    "field": "vehicle.number_plate",
+    "key": "vehicle.number_plate.tooLong",
     "params": { "max": 255, "got": 300 }
 }))]
 pub struct ValidationIssueSchema {
@@ -29,8 +29,8 @@ pub struct ValidationIssueSchema {
 /// JSON regardless of status, so error paths must not fall back to plain text.
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 #[schema(example = json!({
-    "error": "tree is part of a cluster",
-    "code": "conflict.tree_in_cluster"
+    "error": "the target already has a sensor",
+    "code": "conflict.target_already_has_sensor"
 }))]
 pub struct ErrorBody {
     /// Prose for logs and for a client without its own wording. May be

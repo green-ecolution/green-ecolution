@@ -63,7 +63,7 @@ impl From<OperationPlanStatus> for PlanStatus {
 #[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct PlanListParams {
     /// Required: plans always belong to exactly one module.
-    #[param(example = "irrigation")]
+    #[param(example = "example")]
     pub module: String,
     /// Page number to retrieve (1-based).
     #[param(default = 1, minimum = 1, example = 1)]
@@ -121,7 +121,7 @@ pub struct PlanResponse {
     #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
     pub id: Uuid,
     /// Module the plan belongs to.
-    #[schema(example = "irrigation")]
+    #[schema(example = "example")]
     pub module: String,
     /// Timestamp when the plan was created (RFC 3339).
     #[schema(example = "2024-08-10T09:00:00+00:00")]
@@ -133,7 +133,7 @@ pub struct PlanResponse {
     #[schema(example = "2024-08-15T06:00:00+00:00")]
     pub date: String,
     /// Human-readable description of the plan.
-    #[schema(example = "Bewässerungsplan Stadtpark Nord")]
+    #[schema(example = "Tour Stadtpark Nord")]
     pub description: String,
     /// Current status of the plan.
     pub status: PlanStatus,
@@ -243,7 +243,7 @@ pub struct PlanInListResponse {
     #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
     pub id: Uuid,
     /// Module the plan belongs to.
-    #[schema(example = "irrigation")]
+    #[schema(example = "example")]
     pub module: String,
     /// Timestamp when the plan was created (RFC 3339).
     #[schema(example = "2024-08-10T09:00:00+00:00")]
@@ -255,7 +255,7 @@ pub struct PlanInListResponse {
     #[schema(example = "2024-08-15T06:00:00+00:00")]
     pub date: String,
     /// Human-readable description of the plan.
-    #[schema(example = "Bewässerungsplan Stadtpark Nord")]
+    #[schema(example = "Tour Stadtpark Nord")]
     pub description: String,
     /// Current status of the plan.
     pub status: PlanStatus,
@@ -331,13 +331,13 @@ impl From<PlanInListDetailView> for PlanInListResponse {
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct PlanCreateRequest {
     /// Module the plan belongs to.
-    #[schema(example = "irrigation")]
+    #[schema(example = "example")]
     pub module: String,
     /// Scheduled date and time of the run (RFC 3339).
     #[schema(example = "2024-08-15T06:00:00+00:00")]
     pub date: String,
     /// Human-readable description of the plan.
-    #[schema(example = "Bewässerungsplan Stadtpark Nord")]
+    #[schema(example = "Tour Stadtpark Nord")]
     pub description: String,
     /// Identifier of the transporter vehicle to use.
     #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
@@ -383,7 +383,7 @@ pub struct PlanUpdateRequest {
     #[schema(example = "2024-08-15T06:00:00+00:00")]
     pub date: String,
     /// Human-readable description of the plan.
-    #[schema(example = "Bewässerungsplan Stadtpark Nord")]
+    #[schema(example = "Tour Stadtpark Nord")]
     pub description: String,
     /// Updated status of the plan.
     pub status: PlanStatus,
@@ -430,7 +430,7 @@ pub struct PlanUpdateRequest {
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct PlanRouteRequest {
     /// Module whose stops are routed.
-    #[schema(example = "irrigation")]
+    #[schema(example = "example")]
     pub module: String,
     /// Stops to include in the route, as the module identifies them.
     #[schema(example = json!(["0190a8e9-7c4f-7000-8000-000000000000"]))]

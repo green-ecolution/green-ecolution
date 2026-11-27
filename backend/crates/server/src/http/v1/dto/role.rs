@@ -14,7 +14,7 @@ use crate::service::{Malformed, ServiceError};
     "organization_id": "01980000-0000-7000-8000-000000000001",
     "name": "Administrator",
     "description": "Voller Zugriff auf alle Ressourcen",
-    "permissions": ["tree:read", "tree:create"],
+    "permissions": ["sensor:read", "sensor:create"],
     "is_template": false,
     "template_key": "administrator",
     "created_at": "2024-06-15T10:30:00+00:00"
@@ -32,7 +32,7 @@ pub struct RoleResponse {
     /// Whether this role is a global template (immutable, not assignable).
     pub is_template: bool,
     /// Which delivered template this role still matches verbatim, e.g.
-    /// `tree_care`. Null once someone edits the name or description, or for a
+    /// `observer`. Null once someone edits the name or description, or for a
     /// hand-made role. A client may translate `name` and `description` while
     /// this is set, and must show them verbatim once it is null.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -58,7 +58,7 @@ impl From<&RoleView> for RoleResponse {
 
 /// Request body for creating a role, either from scratch or as a copy of an existing role/template.
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
-#[schema(example = json!({ "name": "Gießtrupp", "permissions": ["tree:read", "tree:update"] }))]
+#[schema(example = json!({ "name": "Außendienst", "permissions": ["sensor:read", "sensor:update"] }))]
 pub struct RoleCreateRequest {
     /// Required unless `copy_from_role_id` is set (in which case it renames the copy).
     pub name: Option<String>,
@@ -71,7 +71,7 @@ pub struct RoleCreateRequest {
 
 /// Request body for replacing a role's name, description and permission set.
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
-#[schema(example = json!({ "name": "Gießtrupp Nord", "description": "Bewässerung Nordbezirk", "permissions": ["tree:read", "sensor:read"] }))]
+#[schema(example = json!({ "name": "Außendienst Nord", "description": "Außendienst Nordbezirk", "permissions": ["vehicle:read", "sensor:read"] }))]
 pub struct RoleUpdateRequest {
     pub name: String,
     pub description: Option<String>,

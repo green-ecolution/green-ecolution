@@ -114,7 +114,7 @@ pub fn physical_range(ability: SensorAbilityName, unit: SensorAbilityUnit) -> Op
 }
 
 /// Largest change per hour still considered real. Generous on purpose:
-/// irrigation raises soil moisture fast and must not be flagged. `None`
+/// a downpour raises soil moisture fast and must not be flagged. `None`
 /// disables the rule for that ability.
 pub fn jump_limit_per_hour(ability: SensorAbilityName) -> Option<f64> {
     match ability {

@@ -105,7 +105,7 @@ pub async fn list_templates(
 #[utoipa::path(get, path = "/permissions", tag = "Roles",
     operation_id = "listPermissions",
     summary = "List the permission catalog",
-    description = "Returns every grantable permission as `<resource>:<action>`, e.g. `tree:read`.",
+    description = "Returns every grantable permission as `<resource>:<action>`, e.g. `sensor:read`.",
     responses(
         (status = 200, description = "The permission catalog", body = Vec<String>),
         (status = 401, description = "Unauthorized", body = ErrorBody),
