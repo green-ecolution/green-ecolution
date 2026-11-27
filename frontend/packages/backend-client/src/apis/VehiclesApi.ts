@@ -80,6 +80,7 @@ export interface ListVehiclesRequest {
     drivingLicense?: Array<DrivingLicense>;
     archive?: ListVehiclesArchiveEnum;
     sort?: ListVehiclesSortEnum;
+    capacityKind?: string | null;
     order?: ListVehiclesOrderEnum;
 }
 
@@ -333,7 +334,7 @@ export class VehiclesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a paginated list of active vehicles. Optional `q` parameter case-insensitively filters by number plate, model or description. Optional filter parameters (status, type, driving_license, archive) narrow the result; array parameters are repeatable. Optional `sort` (number_plate, water_capacity, model, type) and `order` (asc, desc) control the result order; the default is number_plate ascending.
+     * Returns a paginated list of active vehicles. Optional `q` parameter case-insensitively filters by number plate, model or description. Optional filter parameters (status, type, driving_license, archive) narrow the result; array parameters are repeatable. Optional `sort` (number_plate, capacity, model, type) and `order` (asc, desc) control the result order; the default is number_plate ascending. `sort=capacity` needs `capacity_kind` and orders by that kind\'s amount, 0 where a vehicle has none.
      * List all vehicles
      */
     async listVehiclesRaw(requestParameters: ListVehiclesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ListResponseVehicleResponse>> {
@@ -371,6 +372,10 @@ export class VehiclesApi extends runtime.BaseAPI {
             queryParameters['sort'] = requestParameters['sort'];
         }
 
+        if (requestParameters['capacityKind'] != null) {
+            queryParameters['capacity_kind'] = requestParameters['capacityKind'];
+        }
+
         if (requestParameters['order'] != null) {
             queryParameters['order'] = requestParameters['order'];
         }
@@ -391,7 +396,7 @@ export class VehiclesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a paginated list of active vehicles. Optional `q` parameter case-insensitively filters by number plate, model or description. Optional filter parameters (status, type, driving_license, archive) narrow the result; array parameters are repeatable. Optional `sort` (number_plate, water_capacity, model, type) and `order` (asc, desc) control the result order; the default is number_plate ascending.
+     * Returns a paginated list of active vehicles. Optional `q` parameter case-insensitively filters by number plate, model or description. Optional filter parameters (status, type, driving_license, archive) narrow the result; array parameters are repeatable. Optional `sort` (number_plate, capacity, model, type) and `order` (asc, desc) control the result order; the default is number_plate ascending. `sort=capacity` needs `capacity_kind` and orders by that kind\'s amount, 0 where a vehicle has none.
      * List all vehicles
      */
     async listVehicles(requestParameters: ListVehiclesRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ListResponseVehicleResponse> {
@@ -512,7 +517,7 @@ export type ListVehiclesArchiveEnum = typeof ListVehiclesArchiveEnum[keyof typeo
  */
 export const ListVehiclesSortEnum = {
     NumberPlate: 'number_plate',
-    WaterCapacity: 'water_capacity',
+    Capacity: 'capacity',
     Model: 'model',
     Type: 'type'
 } as const;

@@ -19,7 +19,6 @@
     "archiveOnly": "Nur archivierte",
     "filterNoOptions": "Keine Auswahl vorhanden.",
     "sortNumberPlate": "Kennzeichen",
-    "sortWaterCapacity": "Wasserkapazität",
     "sortModel": "Modell",
     "sortType": "Typ",
     "resultCount_one": "{count} Fahrzeug",
@@ -31,12 +30,10 @@
   "card": {
     "statusSrLabel": "Status: ",
     "numberPlateSrLabel": "Kennzeichen: ",
-    "waterCapacitySrLabel": "Wasserkapazität: ",
+    "capacitySrLabel": "{label}: ",
+    "capacityValue": "{value} {unit}",
     "typeSrLabel": "Fahrzeug-Typ: ",
     "drivingLicenseSrLabel": "Benötigte Führerscheinklasse: ",
-    "waterCapacityValue": "{value} Liter",
-    "cargoVolumeSrLabel": "Laderaum: ",
-    "cargoVolumeValue": "{value} Liter",
     "archivedBadge": "Archiviert"
   },
   "detail": {
@@ -58,16 +55,13 @@
     "widthLabel": "Breite des Fahrzeugs",
     "widthValue": "{value} Meter",
     "numberPlateLabel": "Kennzeichen",
-    "waterCapacityLabel": "Wasserkapazität",
-    "waterCapacityValue": "{value} Liter",
-    "cargoVolumeLabel": "Laderaum",
-    "cargoVolumeValue": "{value} Liter",
+    "capacityValue": "{value} {unit}",
     "lengthLabel": "Länge des Fahrzeugs",
     "lengthValue": "{value} Meter",
     "weightLabel": "Gewicht des Fahrzeugs",
     "weightValue": "{value} Tonnen",
     "activeNotice": "Dieses Fahrzeug ist einem laufenden Einsatzplan zugeordnet.",
-    "wateringPlansLinkLabel": "Zu den Einsatzplänen",
+    "plansLinkLabel": "Zu den Einsatzplänen",
     "notFoundBackLabel": "Zur Fahrzeugliste"
   },
   "update": {
@@ -108,16 +102,8 @@
     "capacity": {
       "legend": "Kapazität",
       "hint": "Mindestens eine Kapazität angeben.",
-      "unit": "Liter",
       "usedBy": "für {label}",
-      "water": {
-        "label": "Wassertank",
-        "placeholder": "Fassungsvermögen"
-      },
-      "cargo_volume": {
-        "label": "Laderaum",
-        "placeholder": "Fassungsvermögen"
-      }
+      "placeholder": "Fassungsvermögen"
     }
   }
 }

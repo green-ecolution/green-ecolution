@@ -531,5 +531,16 @@
   "roles": {
     "tree_care": "Baumpflege",
     "route_planning": "Routenplanung"
+  },
+  "capacity": {
+    "label": "Wasser",
+    "vehicleField": "Wassertank",
+    "unit": "Liter",
+    "stationAction": "Wasser auffüllen",
+    "demand": "Benötigtes Wasser",
+    "transporter": "Wassertank des Fahrzeugs",
+    "transporterUnused": "Bleibt leer, nur der Anhänger führt Wasser",
+    "transporterUsedFormLabel": "Wassertank des Fahrzeugs mitnutzen",
+    "transporterUsedHint": "Abwählen, wenn nur der Anhänger Wasser mitführt. Die Route rechnet dann allein mit dessen Fassungsvermögen."
   }
 }

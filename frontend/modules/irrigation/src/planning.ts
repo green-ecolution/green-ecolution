@@ -1,6 +1,7 @@
 import { lazy } from 'react'
 import { FolderClosed } from 'lucide-react'
 import type { ModulePlanning } from '@/modules/types'
+import { WATER } from './capacity'
 import { irrigationRoots } from './api/roots'
 
 // Lazy for the same reason as the map slots: the manifest sits in the core
@@ -31,7 +32,7 @@ export const irrigationPlanning: ModulePlanning = {
     routeErrorAlert: 'irrigation:planning.texts.routeErrorAlert',
     routePreviewAriaLabel: 'irrigation:planning.texts.routePreviewAriaLabel',
   },
-  capacityKind: 'water',
+  capacityKind: WATER,
   labelKey: 'irrigation:label',
   stopsLabelKey: 'irrigation:planning.stopsLabel',
   stopCountLabelKey: 'irrigation:planning.stopCountLabel',

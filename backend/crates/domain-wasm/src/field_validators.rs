@@ -1,4 +1,4 @@
-use domain::capacity::Liters;
+use domain::capacity::Amount;
 use domain::region::RegionName;
 use domain::sensor::SensorId;
 use domain::settings::{DefectStreak, MapBounds, MapView, SensorOfflineAfter, ZoomLevel};
@@ -134,14 +134,16 @@ pub fn validate_vehicle_dimension(
     }
 }
 
-#[wasm_bindgen(js_name = validateWaterCapacity)]
-pub fn validate_water_capacity(liters: f64) -> Result<JsValue, JsError> {
-    finish(Liters::new(liters), "waterCapacity")
+pub(crate) fn capacity_amount_issue(amount: f64) -> Option<ValidationIssue> {
+    Amount::new(amount)
+        .err()
+        .map(|err| ValidationIssue::from_error(&err, "amount"))
 }
 
-#[wasm_bindgen(js_name = validateCargoVolumeCapacity)]
-pub fn validate_cargo_volume_capacity(liters: f64) -> Result<JsValue, JsError> {
-    finish(Liters::new(liters), "cargoVolumeCapacity")
+/// The range check modules hand the vehicle form for their capacity kinds.
+#[wasm_bindgen(js_name = validateCapacityAmount)]
+pub fn validate_capacity_amount(amount: f64) -> Result<JsValue, JsError> {
+    report(capacity_amount_issue(amount))
 }
 
 #[wasm_bindgen(js_name = validateDistance)]
@@ -255,6 +257,15 @@ pub fn defect_streak_max() -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_negative_amount_has_a_translated_key() {
+        let issue = capacity_amount_issue(-1.0).expect("negative amounts are refused");
+        assert_eq!(issue.path, "amount");
+        assert_eq!(issue.key, "capacity.amount.outOfRange");
+        assert!(capacity_amount_issue(0.0).is_none());
+        assert!(capacity_amount_issue(6000.0).is_none());
+    }
 
     #[test]
     fn sensor_offline_after_reports_its_range_in_hours() {

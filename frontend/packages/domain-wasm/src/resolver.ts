@@ -25,6 +25,22 @@ function normaliseForWasm(values: unknown): unknown {
   return values
 }
 
+// React Hook Form looks an error up along its field path, so `capacities.water`
+// has to sit at `errors.capacities.water`, not under a dotted key.
+function setAtPath(target: Record<string, unknown>, path: string, error: FieldError): void {
+  const segments = path.split('.')
+  const last = segments.pop() as string
+  let node = target
+  for (const segment of segments) {
+    const next = node[segment]
+    node = (next !== null && typeof next === 'object' ? next : (node[segment] = {})) as Record<
+      string,
+      unknown
+    >
+  }
+  node[last] = error
+}
+
 /**
  * Turns a draft validator of the WASM build into a React Hook Form resolver.
  * wasm-bindgen types those validators as `(input: any) => any`; what they
@@ -39,12 +55,12 @@ export function draftResolver<TForm extends FieldValues>(
     if (issues.length === 0) {
       return { values, errors: {} }
     }
-    const errors: Record<string, FieldError> = {}
+    const errors: Record<string, unknown> = {}
     for (const issue of issues) {
-      errors[issue.path] = {
+      setAtPath(errors, issue.path, {
         type: issue.key,
         message: translateIssue(issue, translate),
-      }
+      })
     }
     // RHF's FieldErrors<TForm> uses statically-keyed types; runtime issue.path
     // is dynamic, so the structurally-equivalent record needs one boundary cast.

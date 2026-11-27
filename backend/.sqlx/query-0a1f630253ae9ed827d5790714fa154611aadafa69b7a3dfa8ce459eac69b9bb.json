@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, updated_at,\n                      archived_at,\n                      number_plate,\n                      description,\n                      COALESCE((SELECT jsonb_object_agg(kind, liters)\n                                FROM vehicle_capacities WHERE vehicle_id = vehicles.id),\n                               '{}'::jsonb) AS \"capacities!: Value\",\n                      type AS \"vehicle_type: VehicleType\",\n                      availability AS \"availability: VehicleAvailability\",\n                      model,\n                      driving_license AS \"driving_license: DrivingLicense\",\n                      height, width, length, weight,\n                      provider,\n                      additional_informations AS \"additional_info: Value\",\n                      organization_id,\n                      EXISTS (SELECT 1 FROM operation_plan_vehicles opv\n                              JOIN operation_plans op ON op.id = opv.plan_id\n                              WHERE opv.vehicle_id = vehicles.id\n                                AND op.status = 'active') AS \"on_active_plan!: bool\"\n            FROM vehicles WHERE id = $1",
+  "query": "SELECT id, updated_at,\n                      archived_at,\n                      number_plate,\n                      description,\n                      COALESCE((SELECT jsonb_object_agg(kind, amount)\n                                FROM vehicle_capacities WHERE vehicle_id = vehicles.id),\n                               '{}'::jsonb) AS \"capacities!: Value\",\n                      type AS \"vehicle_type: VehicleType\",\n                      availability AS \"availability: VehicleAvailability\",\n                      model,\n                      driving_license AS \"driving_license: DrivingLicense\",\n                      height, width, length, weight,\n                      provider,\n                      additional_informations AS \"additional_info: Value\",\n                      organization_id,\n                      EXISTS (SELECT 1 FROM operation_plan_vehicles opv\n                              JOIN operation_plans op ON op.id = opv.plan_id\n                              WHERE opv.vehicle_id = vehicles.id\n                                AND op.status = 'active') AS \"on_active_plan!: bool\"\n            FROM vehicles WHERE id = ANY($1::uuid[])",
   "describe": {
     "columns": [
       {
@@ -128,7 +128,7 @@
     ],
     "parameters": {
       "Left": [
-        "Uuid"
+        "UuidArray"
       ]
     },
     "nullable": [
@@ -152,5 +152,5 @@
       null
     ]
   },
-  "hash": "f58f65322b2214bbb51443b863b97882d4ab0e62b6db7de6a4afd8b6d6e60216"
+  "hash": "0a1f630253ae9ed827d5790714fa154611aadafa69b7a3dfa8ce459eac69b9bb"
 }

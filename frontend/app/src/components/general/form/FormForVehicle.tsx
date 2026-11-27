@@ -12,9 +12,8 @@ import {
   Label,
   cn,
 } from '@green-ecolution/ui'
-import { FORM_CAPACITY_KINDS } from '@/hooks/form/useVehicleForm'
-import { useActiveModules } from '@/modules/useActiveModules'
-import { capacityDisplay } from '@/lib/capacity'
+import { capacityOwnerOf } from '@/modules/capacities'
+import type { ModuleCapacityKind } from '@/modules/types'
 import { useVehicleTypeOptions } from '@/hooks/details/useDetailsForVehicleType'
 import { useDrivingLicenseOptions } from '@/hooks/details/useDetailsForDrivingLicense'
 import { useVehicleAvailabilityOptions } from '@/hooks/details/useDetailsForVehicleStatus'
@@ -22,14 +21,12 @@ import { Controller, SubmitHandler, useFormContext, useFormState } from 'react-h
 import { useTranslation } from 'react-i18next'
 import { parseDecimalInput } from '@/lib/utils'
 
-type CapacityKind = (typeof FORM_CAPACITY_KINDS)[number]
-
-const EMPTY_CAPACITIES_KEY = 'vehicle.capacities.empty'
-
 interface FormForVehicleProps {
   displayError: boolean
   errorMessage?: string
   onSubmit: SubmitHandler<VehicleForm>
+  /** The kinds of the modules active in the vehicle's organization; none hides the section. */
+  capacities: readonly ModuleCapacityKind[]
 }
 
 // The API rejects strings for these fields, so the raw input has to be parsed
@@ -41,22 +38,15 @@ const asOptionalNumber = {
   setValueAs: (value: unknown) => (value === '' ? undefined : parseDecimalInput(value)),
 } as const
 
-const CAPACITY_FIELD = {
-  water: 'waterCapacity',
-  cargo_volume: 'cargoVolumeCapacity',
-} as const
-
-const CapacityField = ({ kind, modules }: { kind: CapacityKind; modules: string[] }) => {
-  const { t } = useTranslation('vehicle')
+const CapacityField = ({ capacity }: { capacity: ModuleCapacityKind }) => {
+  const { t, i18n } = useTranslation('vehicle')
   const { register, control } = useFormContext<VehicleForm>()
   const { errors } = useFormState({ control })
-  const name = CAPACITY_FIELD[kind]
+  const { kind, icon: Icon, texts } = capacity
   const id = `vehicle-capacity-${kind}`
-  const Icon = capacityDisplay[kind].icon
-  const error = errors[name]
-  // The "at least one" error is reported on the water field but belongs to the group.
-  const ownError = error?.type === EMPTY_CAPACITIES_KEY ? undefined : error?.message
-  const describedBy = [modules.length > 0 ? `${id}-modules` : null, ownError ? `${id}-error` : null]
+  const owner = capacityOwnerOf(kind)
+  const ownError = errors.capacities?.[kind]?.message
+  const describedBy = [owner ? `${id}-modules` : null, ownError ? `${id}-error` : null]
     .filter(Boolean)
     .join(' ')
 
@@ -64,24 +54,24 @@ const CapacityField = ({ kind, modules }: { kind: CapacityKind; modules: string[
     <div className="flex flex-col gap-y-2">
       <Label htmlFor={id} className={cn('flex items-center gap-2', ownError && 'text-destructive')}>
         <Icon className="size-4" aria-hidden />
-        {t(`form.capacity.${kind}.label`)}
+        {i18n.t(texts.vehicleField)}
       </Label>
       <InputGroup>
         <InputGroupInput
           id={id}
           type="number"
-          placeholder={t(`form.capacity.${kind}.placeholder`)}
+          placeholder={t('form.capacity.placeholder')}
           aria-invalid={!!ownError}
           aria-describedby={describedBy || undefined}
-          {...register(name, asOptionalNumber)}
+          {...register(`capacities.${kind}`, asOptionalNumber)}
         />
         <InputGroupAddon align="inline-end">
-          <InputGroupText>{t('form.capacity.unit')}</InputGroupText>
+          <InputGroupText>{i18n.t(texts.unit)}</InputGroupText>
         </InputGroupAddon>
       </InputGroup>
-      {modules.length > 0 && (
+      {owner && (
         <p id={`${id}-modules`} className="text-sm text-muted-foreground">
-          {t('form.capacity.usedBy', { label: modules.join(', ') })}
+          {t('form.capacity.usedBy', { label: i18n.t(owner.labelKey) })}
         </p>
       )}
       {ownError && (
@@ -99,23 +89,14 @@ const CapacityField = ({ kind, modules }: { kind: CapacityKind; modules: string[
 }
 
 const FormForVehicle = (props: FormForVehicleProps) => {
-  const { t, i18n } = useTranslation(['vehicle', 'common'])
+  const { t } = useTranslation(['vehicle', 'common'])
   const { register, handleSubmit, control } = useFormContext<VehicleForm>()
   const { errors } = useFormState({ control })
   const vehicleTypeOptions = useVehicleTypeOptions()
   const vehicleAvailabilityOptions = useVehicleAvailabilityOptions()
   const drivingLicenseOptions = useDrivingLicenseOptions()
-  const { manifests } = useActiveModules()
-
-  const planningKinds = new Set(manifests.map((m) => m.planning?.capacityKind))
-  const plannedKinds = FORM_CAPACITY_KINDS.filter((kind) => planningKinds.has(kind))
-  // Without a planning module every kind stays editable, so a vehicle never becomes locked.
-  const visibleKinds = plannedKinds.length > 0 ? plannedKinds : FORM_CAPACITY_KINDS
-  const planningModules = (kind: CapacityKind) =>
-    manifests
-      .filter((m) => m.planning?.capacityKind === kind)
-      .map((m) => i18n.t(m.planning!.labelKey))
-  const capacitiesEmpty = errors.waterCapacity?.type === EMPTY_CAPACITIES_KEY
+  // The "at least one" issue belongs to the group, not to a field.
+  const capacitiesError = (errors.capacities as { message?: string } | undefined)?.message
 
   return (
     <form
@@ -170,27 +151,29 @@ const FormForVehicle = (props: FormForVehicleProps) => {
           />
         )}
       />
-      <fieldset
-        className="flex flex-col gap-y-4 lg:col-span-2"
-        aria-describedby="vehicle-capacities-hint"
-      >
-        <legend className="mb-1 font-lato text-base font-semibold text-dark">
-          {t('form.capacity.legend')}
-        </legend>
-        <p id="vehicle-capacities-hint" className="text-sm text-muted-foreground">
-          {t('form.capacity.hint')}
-        </p>
-        {capacitiesEmpty && (
-          <p role="alert" aria-live="assertive" className="text-sm text-destructive">
-            {errors.waterCapacity?.message}
+      {props.capacities.length > 0 && (
+        <fieldset
+          className="flex flex-col gap-y-4 lg:col-span-2"
+          aria-describedby="vehicle-capacities-hint"
+        >
+          <legend className="mb-1 font-lato text-base font-semibold text-dark">
+            {t('form.capacity.legend')}
+          </legend>
+          <p id="vehicle-capacities-hint" className="text-sm text-muted-foreground">
+            {t('form.capacity.hint')}
           </p>
-        )}
-        <div className="flex flex-col gap-6 lg:grid lg:grid-cols-2 lg:gap-x-11">
-          {visibleKinds.map((kind) => (
-            <CapacityField key={kind} kind={kind} modules={planningModules(kind)} />
-          ))}
-        </div>
-      </fieldset>
+          {capacitiesError && (
+            <p role="alert" aria-live="assertive" className="text-sm text-destructive">
+              {capacitiesError}
+            </p>
+          )}
+          <div className="flex flex-col gap-6 lg:grid lg:grid-cols-2 lg:gap-x-11">
+            {props.capacities.map((capacity) => (
+              <CapacityField key={capacity.kind} capacity={capacity} />
+            ))}
+          </div>
+        </fieldset>
+      )}
       <Controller
         name="drivingLicense"
         control={control}

@@ -7,8 +7,23 @@ import {
   VehicleStatus,
   VehicleType,
 } from '@green-ecolution/backend-client'
-import VehicleCard from './VehicleCard'
 import type { Vehicle } from '@/api/backendApi'
+import type { ModuleCapacityKind } from '@/modules/types'
+import { manifestOf } from '@/test/moduleFixtures'
+
+const water = manifestOf('irrigation').capacities![0]
+const cargo = manifestOf('waste').capacities![0]
+const offered = vi.fn((): ModuleCapacityKind[] => [water, cargo])
+const offeredFor = vi.fn()
+vi.mock('@/modules/capacities', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/modules/capacities')>()),
+  useCapacityKinds: (organizationId: string | undefined) => {
+    offeredFor(organizationId)
+    return offered()
+  },
+}))
+
+const { default: VehicleCard } = await import('./VehicleCard')
 
 vi.mock('@tanstack/react-router', () => ({
   Link: ({ children }: { children: ReactNode }) => <a href="/">{children}</a>,
@@ -56,7 +71,23 @@ describe('VehicleCard', () => {
     )
 
     expect(screen.getByText(/laderaum/i)).toBeInTheDocument()
-    expect(screen.queryByText(/wasserkapazität/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/wassertank/i)).not.toBeInTheDocument()
     expect(screen.getByText('6000 Liter')).toBeInTheDocument()
+  })
+
+  it('shows only the kinds of the modules active in its organization', () => {
+    offered.mockReturnValueOnce([cargo])
+
+    render(
+      <VehicleCard
+        vehicle={vehicleFixture({ capacities: { water: 1000, cargo_volume: 6000, sand: 3 } })}
+        query=""
+      />,
+    )
+
+    expect(offeredFor).toHaveBeenCalledWith('org-1')
+    expect(screen.getByText('6000 Liter')).toBeInTheDocument()
+    expect(screen.queryByText('1000 Liter')).not.toBeInTheDocument()
+    expect(screen.queryByText(/sand/i)).not.toBeInTheDocument()
   })
 })

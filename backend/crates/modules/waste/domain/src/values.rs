@@ -1,4 +1,3 @@
-use domain::capacity::Liters;
 use domain::shared::error::ValidationError;
 
 domain::newtype_nonempty! {
@@ -33,7 +32,7 @@ impl BinDepth {
 
 /// Capacity of a container in liters.
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct BinVolume(Liters);
+pub struct BinVolume(f64);
 
 impl BinVolume {
     pub const MIN: f64 = 1.0;
@@ -48,11 +47,11 @@ impl BinVolume {
                 got: liters,
             });
         }
-        Ok(Self(Liters::new(liters)?))
+        Ok(Self(liters))
     }
 
     pub fn liters(&self) -> f64 {
-        self.0.value()
+        self.0
     }
 }
 

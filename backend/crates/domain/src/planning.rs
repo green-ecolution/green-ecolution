@@ -45,7 +45,7 @@ pub struct ResolvedStop {
     pub label: String,
     /// Stops without a position are skipped when routing.
     pub location: Option<Coordinate>,
-    /// In liters of the provider's capacity kind.
+    /// An amount of the provider's capacity kind.
     pub demand: f64,
 }
 

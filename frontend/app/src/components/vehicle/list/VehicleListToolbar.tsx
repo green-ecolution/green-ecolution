@@ -16,7 +16,8 @@ import ActiveFilterChips, {
 } from '@/components/general/list/ActiveFilterChips'
 import { useVehicleStatusDetails } from '@/hooks/details/useDetailsForVehicleStatus'
 import { useVehicleTypeLabel } from '@/hooks/details/useDetailsForVehicleType'
-import { useVehicleListSearch } from './useVehicleListSearch'
+import { useCapacityKinds } from '@/modules/capacities'
+import { capacitySortOption, sortOptionOf, useVehicleListSearch } from './useVehicleListSearch'
 
 interface VehicleListToolbarProps {
   filteredRecords: number
@@ -25,7 +26,8 @@ interface VehicleListToolbarProps {
 }
 
 const VehicleListToolbar = ({ filteredRecords, totalRecords }: VehicleListToolbarProps) => {
-  const { t } = useTranslation('vehicle')
+  const { t, i18n } = useTranslation('vehicle')
+  const capacities = useCapacityKinds(undefined)
   const { search, setQuery, setSort, setFilter, setArchive, resetFilters } = useVehicleListSearch()
   const getVehicleStatusDetails = useVehicleStatusDetails()
   const getVehicleTypeLabel = useVehicleTypeLabel()
@@ -42,9 +44,12 @@ const VehicleListToolbar = ({ filteredRecords, totalRecords }: VehicleListToolba
     value: license,
     label: license,
   }))
-  const sortOptions: { value: ListVehiclesSortEnum; label: string }[] = [
+  const sortOptions: { value: string; label: string }[] = [
     { value: ListVehiclesSortEnum.NumberPlate, label: t('list.sortNumberPlate') },
-    { value: ListVehiclesSortEnum.WaterCapacity, label: t('list.sortWaterCapacity') },
+    ...capacities.map(({ kind, texts }) => ({
+      value: capacitySortOption(kind),
+      label: i18n.t(texts.vehicleField),
+    })),
     { value: ListVehiclesSortEnum.Model, label: t('list.sortModel') },
     { value: ListVehiclesSortEnum.Type, label: t('list.sortType') },
   ]
@@ -156,7 +161,7 @@ const VehicleListToolbar = ({ filteredRecords, totalRecords }: VehicleListToolba
         sort={
           <ListSortMenu
             options={sortOptions}
-            field={search.sort ?? ListVehiclesSortEnum.NumberPlate}
+            field={sortOptionOf(search)}
             direction={search.order ?? 'asc'}
             onChange={setSort}
           />

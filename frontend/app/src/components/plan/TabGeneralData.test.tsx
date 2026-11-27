@@ -89,4 +89,17 @@ describe('TabGeneralData', () => {
     )
     expect(screen.getByText('Benötigtes Wasser').nextElementSibling?.textContent).toBe('160 Liter')
   })
+
+  it('leaves out the capacity rows of a kind no module declares', () => {
+    const trailerOnly = planResponse({
+      trailer: { numberPlate: 'FL-TR 1' } as never,
+      transporterCapacityUsed: false,
+      totalDemand: 160,
+    })
+    render(<TabGeneralData plan={trailerOnly} planning={probePlanning({ capacityKind: 'sand' })} />)
+
+    expect(screen.queryByText(/^Benötigtes/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/des Fahrzeugs$/)).not.toBeInTheDocument()
+    expect(screen.getByText('Zusätzlicher Anhänger')).toBeInTheDocument()
+  })
 })

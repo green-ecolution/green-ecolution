@@ -15,21 +15,19 @@ import {
   FormField,
   Label,
 } from '@green-ecolution/ui'
-import type { CapacityKindDto, StartPointResponse } from '@/api/backendApi'
-import { capacityDisplay } from '@/lib/capacity'
+import type { StartPointResponse } from '@/api/backendApi'
+import { useCapacityKinds } from '@/modules/capacities'
 import DraggableMarker from '@/components/map-gl/DraggableMarker'
 import MapPreview from '@/components/map-gl/MapPreview'
 
 const NAME_MAX_LENGTH = 255
-
-const CAPACITY_KINDS = Object.keys(capacityDisplay) as CapacityKindDto[]
 
 export interface StationPayload {
   name: string
   lat: number
   lon: number
   organizationId?: string
-  replenishes: CapacityKindDto[]
+  replenishes: string[]
 }
 
 interface StationDialogProps {
@@ -45,7 +43,7 @@ interface StationDialogProps {
 
 interface FormValues {
   name: string
-  replenishes: CapacityKindDto[]
+  replenishes: string[]
   lat: number | null
   lon: number | null
 }
@@ -63,7 +61,9 @@ const StationForm = ({
   onSubmit,
   onCancel,
 }: FormProps) => {
-  const { t } = useTranslation(['settings', 'common'])
+  const { t, i18n } = useTranslation(['settings', 'common'])
+  // A stored kind no active module offers has no checkbox and is submitted unchanged.
+  const offered = useCapacityKinds(station?.organizationId ?? organizationId)
 
   const schema = useMemo(
     () =>
@@ -73,7 +73,7 @@ const StationForm = ({
           .trim()
           .min(1, t('stations.dialog.nameRequired'))
           .max(NAME_MAX_LENGTH, t('stations.dialog.nameTooLong')),
-        replenishes: z.array(z.enum(['water', 'cargo_volume'])),
+        replenishes: z.array(z.string()),
         lat: z
           .number()
           .nullable()
@@ -136,8 +136,7 @@ const StationForm = ({
             <legend className="mb-1 text-sm font-medium">
               {t('stations.dialog.replenishesLegend')}
             </legend>
-            {CAPACITY_KINDS.map((kind) => {
-              const { icon: Icon } = capacityDisplay[kind]
+            {offered.map(({ kind, icon: Icon, texts }) => {
               const id = `station-kind-${kind}`
               return (
                 <div key={kind} className="flex items-center gap-2">
@@ -152,7 +151,7 @@ const StationForm = ({
                   />
                   <Label htmlFor={id} className="flex items-center gap-2 font-normal">
                     <Icon className="size-4 text-dark-600" aria-hidden />
-                    {t(`stations.dialog.replenishes.${kind}`)}
+                    {i18n.t(texts.stationAction)}
                   </Label>
                 </div>
               )

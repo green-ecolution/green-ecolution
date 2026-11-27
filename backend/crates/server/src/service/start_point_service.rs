@@ -1,8 +1,9 @@
-use std::sync::Arc;
+use std::{collections::BTreeSet, sync::Arc};
 
 use domain::{
     Id,
     authorization::Visibility,
+    capacity::CapacityCatalog,
     organization::Organization,
     start_point::{
         StartPoint, StartPointDraft, StartPointReader, StartPointUpdate, StartPointWriter,
@@ -14,11 +15,20 @@ use super::ServiceError;
 pub struct StartPointService {
     reader: Arc<dyn StartPointReader>,
     writer: Arc<dyn StartPointWriter>,
+    capacities: Arc<CapacityCatalog>,
 }
 
 impl StartPointService {
-    pub fn new(reader: Arc<dyn StartPointReader>, writer: Arc<dyn StartPointWriter>) -> Self {
-        Self { reader, writer }
+    pub fn new(
+        reader: Arc<dyn StartPointReader>,
+        writer: Arc<dyn StartPointWriter>,
+        capacities: Arc<CapacityCatalog>,
+    ) -> Self {
+        Self {
+            reader,
+            writer,
+            capacities,
+        }
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
@@ -33,6 +43,8 @@ impl StartPointService {
 
     #[tracing::instrument(level = "debug", skip_all)]
     pub async fn create(&self, draft: StartPointDraft) -> Result<StartPoint, ServiceError> {
+        self.capacities
+            .admit(&draft.replenishes, &BTreeSet::new())?;
         Ok(self.writer.save_new(draft).await?)
     }
 
@@ -43,6 +55,8 @@ impl StartPointService {
         update: StartPointUpdate,
     ) -> Result<StartPoint, ServiceError> {
         let mut sp = self.reader.by_id(id).await?;
+        self.capacities
+            .admit(&update.replenishes, sp.replenishes())?;
         sp.rename(update.name);
         sp.relocate(update.coordinate);
         sp.set_replenishes(update.replenishes);

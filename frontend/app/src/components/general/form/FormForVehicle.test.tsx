@@ -7,19 +7,16 @@ import { FormProvider, useForm, useFormState } from 'react-hook-form'
 import { vehicleDraftResolver } from '@/schema/vehicleSchema'
 import { ReactNode } from 'react'
 import { FORM_VALIDATION_MODE } from '@/hooks/form/useEntityForm'
-import { NEW_VEHICLE_DEFAULTS } from '@/hooks/form/useVehicleForm'
+import { NEW_VEHICLE_DEFAULTS, vehicleCapacityDefaults } from '@/hooks/form/useVehicleForm'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from '@green-ecolution/ui'
 import { VehicleType, DrivingLicense, VehicleAvailability } from '@green-ecolution/backend-client'
-import type { ModuleManifest } from '@/modules/types'
+import type { ModuleCapacityKind } from '@/modules/types'
+import { manifestOf } from '@/test/moduleFixtures'
 
-const planningManifest = (key: string, capacityKind: string, labelKey: string) =>
-  ({ key, planning: { capacityKind, labelKey } }) as unknown as ModuleManifest
-
-const activeManifests = vi.fn((): ModuleManifest[] => [])
-vi.mock('@/modules/useActiveModules', () => ({
-  useActiveModules: () => ({ manifests: activeManifests(), isActive: () => true }),
-}))
+const water = manifestOf('irrigation').capacities![0]
+const cargo = manifestOf('waste').capacities![0]
+let offered: ModuleCapacityKind[] = [water, cargo]
 
 function TestWrapper({
   children,
@@ -34,7 +31,7 @@ function TestWrapper({
 
   const methods = useForm<VehicleForm>({
     defaultValues,
-    resolver: vehicleDraftResolver<VehicleForm>((key) => key),
+    resolver: vehicleDraftResolver<VehicleForm>((key) => key, offered),
     mode: FORM_VALIDATION_MODE,
   })
 
@@ -56,7 +53,7 @@ const defaultFormValues: VehicleForm = {
   width: 0,
   length: 0,
   weight: 0,
-  waterCapacity: 0,
+  capacities: { water: 0, cargo_volume: undefined },
   description: '',
 }
 
@@ -65,13 +62,13 @@ describe('FormForVehicle', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    activeManifests.mockReturnValue([])
+    offered = [water, cargo]
   })
 
   it('renders all form fields', () => {
     render(
       <TestWrapper defaultValues={defaultFormValues}>
-        <FormForVehicle displayError={false} onSubmit={mockOnSubmit} />
+        <FormForVehicle displayError={false} onSubmit={mockOnSubmit} capacities={offered} />
       </TestWrapper>,
     )
 
@@ -93,7 +90,7 @@ describe('FormForVehicle', () => {
 
     render(
       <TestWrapper defaultValues={defaultFormValues}>
-        <FormForVehicle displayError={false} onSubmit={mockOnSubmit} />
+        <FormForVehicle displayError={false} onSubmit={mockOnSubmit} capacities={offered} />
       </TestWrapper>,
     )
 
@@ -111,7 +108,7 @@ describe('FormForVehicle', () => {
 
     render(
       <TestWrapper defaultValues={defaultFormValues}>
-        <FormForVehicle displayError={false} onSubmit={mockOnSubmit} />
+        <FormForVehicle displayError={false} onSubmit={mockOnSubmit} capacities={offered} />
       </TestWrapper>,
     )
 
@@ -130,7 +127,7 @@ describe('FormForVehicle', () => {
 
     render(
       <TestWrapper defaultValues={defaultFormValues}>
-        <FormForVehicle displayError={false} onSubmit={mockOnSubmit} />
+        <FormForVehicle displayError={false} onSubmit={mockOnSubmit} capacities={offered} />
       </TestWrapper>,
     )
 
@@ -150,6 +147,7 @@ describe('FormForVehicle', () => {
           displayError={true}
           errorMessage="Ein Fehler ist aufgetreten"
           onSubmit={mockOnSubmit}
+          capacities={offered}
         />
       </TestWrapper>,
     )
@@ -164,7 +162,7 @@ describe('FormForVehicle', () => {
 
     render(
       <TestWrapper defaultValues={defaultFormValues}>
-        <FormForVehicle displayError={false} onSubmit={mockOnSubmit} />
+        <FormForVehicle displayError={false} onSubmit={mockOnSubmit} capacities={offered} />
       </TestWrapper>,
     )
 
@@ -190,13 +188,13 @@ describe('FormForVehicle', () => {
       width: 2.0,
       length: 6.0,
       weight: 3.5,
-      waterCapacity: 1000,
+      capacities: { water: 1000 },
       description: '',
     }
 
     render(
       <TestWrapper defaultValues={validValues}>
-        <FormForVehicle displayError={false} onSubmit={mockOnSubmit} />
+        <FormForVehicle displayError={false} onSubmit={mockOnSubmit} capacities={offered} />
       </TestWrapper>,
     )
 
@@ -210,7 +208,7 @@ describe('FormForVehicle', () => {
 
     render(
       <TestWrapper defaultValues={defaultFormValues}>
-        <FormForVehicle displayError={false} onSubmit={mockOnSubmit} />
+        <FormForVehicle displayError={false} onSubmit={mockOnSubmit} capacities={offered} />
       </TestWrapper>,
     )
 
@@ -229,7 +227,7 @@ describe('FormForVehicle', () => {
 
     render(
       <TestWrapper defaultValues={defaultFormValues}>
-        <FormForVehicle displayError={false} onSubmit={mockOnSubmit} />
+        <FormForVehicle displayError={false} onSubmit={mockOnSubmit} capacities={offered} />
       </TestWrapper>,
     )
 
@@ -245,7 +243,7 @@ describe('FormForVehicle', () => {
 
     render(
       <TestWrapper defaultValues={defaultFormValues}>
-        <FormForVehicle displayError={false} onSubmit={mockOnSubmit} />
+        <FormForVehicle displayError={false} onSubmit={mockOnSubmit} capacities={offered} />
       </TestWrapper>,
     )
 
@@ -273,13 +271,13 @@ describe('FormForVehicle', () => {
       width: 2.0,
       length: 6.0,
       weight: 3.5,
-      waterCapacity: 1000,
+      capacities: { water: 1000 },
       description: '',
     }
 
     render(
       <TestWrapper defaultValues={validValues}>
-        <FormForVehicle displayError={false} onSubmit={mockOnSubmit} />
+        <FormForVehicle displayError={false} onSubmit={mockOnSubmit} capacities={offered} />
       </TestWrapper>,
     )
 
@@ -300,60 +298,43 @@ describe('FormForVehicle', () => {
 
     const submitted = mockOnSubmit.mock.calls[0][0] as VehicleForm
     expect(submitted.height).toBe(1.88)
-    expect(submitted.waterCapacity).toBe(1500)
+    expect(submitted.capacities.water).toBe(1500)
     expect(submitted.width).toBe(2)
     expect(submitted.length).toBe(6)
     expect(submitted.weight).toBe(3.5)
   })
 
-  it('offers both capacities in one group when no planning module is active', () => {
+  it('shows one field per kind of the modules active in the organization', () => {
     render(
       <TestWrapper defaultValues={defaultFormValues}>
-        <FormForVehicle displayError={false} onSubmit={mockOnSubmit} />
+        <FormForVehicle displayError={false} onSubmit={mockOnSubmit} capacities={offered} />
       </TestWrapper>,
     )
 
     const group = screen.getByRole('group', { name: /kapazität/i })
     expect(within(group).getByLabelText(/wassertank/i)).toBeInTheDocument()
     expect(within(group).getByLabelText(/laderaum/i)).toBeInTheDocument()
-    expect(within(group).getByText('Mindestens eine Kapazität angeben.')).toBeInTheDocument()
+    expect(within(group).getAllByText('Liter')).toHaveLength(2)
+    expect(within(group).getByText('für Bewässerung')).toBeInTheDocument()
+    expect(within(group).getByText('für Abfall')).toBeInTheDocument()
   })
 
-  it('shows only the capacity of the active planning module', () => {
-    activeManifests.mockReturnValue([planningManifest('a', 'water', 'vehicle:entity.name')])
+  it('shows only the kinds it is offered', () => {
+    offered = [water]
 
     render(
       <TestWrapper defaultValues={defaultFormValues}>
-        <FormForVehicle displayError={false} onSubmit={mockOnSubmit} />
+        <FormForVehicle displayError={false} onSubmit={mockOnSubmit} capacities={offered} />
       </TestWrapper>,
     )
 
     expect(screen.getByLabelText(/wassertank/i)).toBeInTheDocument()
     expect(screen.queryByLabelText(/laderaum/i)).not.toBeInTheDocument()
-    expect(screen.getByText('für Fahrzeug')).toBeInTheDocument()
   })
 
-  it('names the module behind each capacity when both are planned', () => {
-    activeManifests.mockReturnValue([
-      planningManifest('a', 'water', 'vehicle:entity.name'),
-      planningManifest('b', 'cargo_volume', 'vehicle:list.title'),
-    ])
-
-    render(
-      <TestWrapper defaultValues={defaultFormValues}>
-        <FormForVehicle displayError={false} onSubmit={mockOnSubmit} />
-      </TestWrapper>,
-    )
-
-    expect(screen.getByLabelText(/wassertank/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/laderaum/i)).toBeInTheDocument()
-    expect(screen.getByText('für Fahrzeug')).toBeInTheDocument()
-    expect(screen.getByText('für Fahrzeuge')).toBeInTheDocument()
-  })
-
-  it('still submits the stored value of a hidden capacity', async () => {
+  it('shows no capacity section without an offered kind', async () => {
     const user = userEvent.setup()
-    activeManifests.mockReturnValue([planningManifest('a', 'water', 'vehicle:entity.name')])
+    offered = []
 
     render(
       <TestWrapper
@@ -365,27 +346,29 @@ describe('FormForVehicle', () => {
           width: 2,
           length: 6,
           weight: 3.5,
-          waterCapacity: 1000,
-          cargoVolumeCapacity: 4000,
+          capacities: {},
         }}
       >
-        <FormForVehicle displayError={false} onSubmit={mockOnSubmit} />
+        <FormForVehicle displayError={false} onSubmit={mockOnSubmit} capacities={offered} />
       </TestWrapper>,
     )
 
+    expect(screen.queryByRole('group', { name: /kapazität/i })).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /speichern/i }))
-
     await waitFor(() => expect(mockOnSubmit).toHaveBeenCalled())
-    const submitted = mockOnSubmit.mock.calls[0][0] as VehicleForm
-    expect(submitted.cargoVolumeCapacity).toBe(4000)
   })
 
-  it('asks for at least one capacity when both are empty', async () => {
+  it('asks for at least one capacity when every offered kind is empty', async () => {
     const user = userEvent.setup()
 
     render(
-      <TestWrapper defaultValues={{ ...defaultFormValues, waterCapacity: undefined }}>
-        <FormForVehicle displayError={false} onSubmit={mockOnSubmit} />
+      <TestWrapper
+        defaultValues={{
+          ...defaultFormValues,
+          capacities: { water: undefined, cargo_volume: undefined },
+        }}
+      >
+        <FormForVehicle displayError={false} onSubmit={mockOnSubmit} capacities={offered} />
       </TestWrapper>,
     )
 
@@ -396,20 +379,49 @@ describe('FormForVehicle', () => {
     expect(mockOnSubmit).not.toHaveBeenCalled()
   })
 
-  it('shows the empty-capacities error even when the water field is hidden', async () => {
+  it('saves a vehicle whose only capacity belongs to a kind that is not offered', async () => {
     const user = userEvent.setup()
-    activeManifests.mockReturnValue([planningManifest('b', 'cargo_volume', 'vehicle:entity.name')])
+    offered = [water]
 
     render(
-      <TestWrapper defaultValues={{ ...defaultFormValues, waterCapacity: undefined }}>
-        <FormForVehicle displayError={false} onSubmit={mockOnSubmit} />
+      <TestWrapper
+        defaultValues={{
+          ...defaultFormValues,
+          numberPlate: 'HH-AB-1234',
+          model: 'Sprinter',
+          height: 2.5,
+          width: 2,
+          length: 6,
+          weight: 3.5,
+          capacities: { water: undefined, cargo_volume: 16000 },
+        }}
+      >
+        <FormForVehicle displayError={false} onSubmit={mockOnSubmit} capacities={offered} />
       </TestWrapper>,
     )
 
     await user.click(screen.getByRole('button', { name: /speichern/i }))
 
-    const group = screen.getByRole('group', { name: /kapazität/i })
-    expect(await within(group).findByRole('alert')).toHaveTextContent('vehicle.capacities.empty')
+    await waitFor(() => expect(mockOnSubmit).toHaveBeenCalled())
+    const submitted = mockOnSubmit.mock.calls[0][0] as VehicleForm
+    expect(submitted.capacities.cargo_volume).toBe(16000)
+  })
+
+  it("reports the module validator's issue at the field", async () => {
+    const user = userEvent.setup()
+
+    render(
+      <TestWrapper defaultValues={{ ...defaultFormValues, capacities: { water: -5 } }}>
+        <FormForVehicle displayError={false} onSubmit={mockOnSubmit} capacities={offered} />
+      </TestWrapper>,
+    )
+
+    await user.click(screen.getByRole('button', { name: /speichern/i }))
+
+    const field = screen.getByLabelText(/wassertank/i)
+    await waitFor(() => expect(field).toHaveAttribute('aria-invalid', 'true'))
+    expect(screen.getByText('capacity.amount.outOfRange')).toBeInTheDocument()
+    expect(mockOnSubmit).not.toHaveBeenCalled()
   })
 
   describe('untouched create form', () => {
@@ -420,20 +432,19 @@ describe('FormForVehicle', () => {
 
     // A dirty flag here makes leaving the empty form ask "Seite verlassen?".
     it.each([
-      ['only water is planned', [planningManifest('a', 'water', 'vehicle:entity.name')]],
-      [
-        'both capacities are planned',
-        [
-          planningManifest('a', 'water', 'vehicle:entity.name'),
-          planningManifest('b', 'cargo_volume', 'vehicle:entity.name'),
-        ],
-      ],
-    ])('is not dirty after typing and deleting when %s', async (_, manifests) => {
-      activeManifests.mockReturnValue(manifests)
+      ['only water is offered', [water]],
+      ['both capacities are offered', [water, cargo]],
+      ['no kind is offered', []],
+    ])('is not dirty after typing and deleting when %s', async (_, kinds) => {
+      offered = kinds
+      const defaults = {
+        ...NEW_VEHICLE_DEFAULTS,
+        capacities: vehicleCapacityDefaults(kinds),
+      } as VehicleForm
 
       render(
-        <TestWrapper defaultValues={NEW_VEHICLE_DEFAULTS as VehicleForm}>
-          <FormForVehicle displayError={false} onSubmit={mockOnSubmit} />
+        <TestWrapper defaultValues={defaults}>
+          <FormForVehicle displayError={false} onSubmit={mockOnSubmit} capacities={offered} />
           <DirtyProbe />
         </TestWrapper>,
       )

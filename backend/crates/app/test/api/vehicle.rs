@@ -96,14 +96,101 @@ async fn updating_a_vehicle_replaces_its_capacities() {
     assert_eq!(fetched["capacities"], json!({ "cargo_volume": 500.0 }));
 }
 
+async fn store_capacity(app: &TestApp, vehicle: Uuid, kind: &str, amount: f64) {
+    sqlx::query("INSERT INTO vehicle_capacities (vehicle_id, kind, amount) VALUES ($1, $2, $3)")
+        .bind(vehicle)
+        .bind(kind)
+        .bind(amount)
+        .execute(&app.db_pool)
+        .await
+        .unwrap();
+}
+
+async fn capacities_of(app: &TestApp, vehicle: Uuid) -> serde_json::Value {
+    let body: serde_json::Value = app
+        .get(&format!("/api/v1/vehicles/{vehicle}"))
+        .await
+        .json()
+        .await
+        .unwrap();
+    body["capacities"].clone()
+}
+
 #[tokio::test]
-async fn an_unknown_capacity_kind_is_rejected() {
+async fn a_new_undeclared_kind_is_refused() {
     let app = spawn_app().await;
     let mut body = vehicle_json("FL-CAP 3");
     body["capacities"] = json!({ "sand": 10.0 });
 
     let res = app.post_json("/api/v1/vehicles", &body).await;
-    assert!(res.status().is_client_error());
+    assert_eq!(res.status(), 422);
+    let body: serde_json::Value = res.json().await.unwrap();
+    assert_eq!(body["code"], "capacity.unknown_kind");
+}
+
+#[tokio::test]
+async fn a_kind_in_the_wrong_format_is_a_bad_request() {
+    let app = spawn_app().await;
+    let mut body = vehicle_json("FL-CAP 4");
+    body["capacities"] = json!({ "Water": 10.0 });
+
+    let res = app.post_json("/api/v1/vehicles", &body).await;
+    assert_eq!(res.status(), 400);
+    let body: serde_json::Value = res.json().await.unwrap();
+    assert_eq!(body["code"], "request.validation_failed");
+}
+
+#[tokio::test]
+async fn a_stored_kind_no_module_declares_is_returned_unchanged() {
+    let app = spawn_app().await;
+    let id = create_vehicle_with(&app, json!({ "water": 1000.0 })).await;
+    store_capacity(&app, id, "sand", 12.5).await;
+
+    assert_eq!(
+        capacities_of(&app, id).await,
+        json!({ "water": 1000.0, "sand": 12.5 })
+    );
+}
+
+#[tokio::test]
+async fn a_stored_undeclared_kind_may_be_sent_back() {
+    let app = spawn_app().await;
+    let id = create_vehicle_with(&app, json!({ "water": 1000.0 })).await;
+    store_capacity(&app, id, "sand", 12.5).await;
+    let mut body = vehicle_json("FL-CAP 5");
+    body["capacities"] = json!({ "water": 1200.0, "sand": 12.5 });
+
+    let res = app.put_json(&format!("/api/v1/vehicles/{id}"), &body).await;
+    assert_eq!(res.status(), 200, "{}", res.text().await.unwrap());
+    assert_eq!(
+        capacities_of(&app, id).await,
+        json!({ "water": 1200.0, "sand": 12.5 })
+    );
+}
+
+#[tokio::test]
+async fn a_stored_undeclared_kind_may_be_dropped() {
+    let app = spawn_app().await;
+    let id = create_vehicle_with(&app, json!({ "water": 1000.0 })).await;
+    store_capacity(&app, id, "sand", 12.5).await;
+    let mut body = vehicle_json("FL-CAP 6");
+    body["capacities"] = json!({ "water": 1000.0 });
+
+    let res = app.put_json(&format!("/api/v1/vehicles/{id}"), &body).await;
+    assert_eq!(res.status(), 200);
+    assert_eq!(capacities_of(&app, id).await, json!({ "water": 1000.0 }));
+}
+
+#[tokio::test]
+async fn an_undeclared_kind_cannot_be_added_on_update() {
+    let app = spawn_app().await;
+    let id = create_vehicle_with(&app, json!({ "water": 1000.0 })).await;
+    let mut body = vehicle_json("FL-CAP 7");
+    body["capacities"] = json!({ "water": 1000.0, "gravel": 3.0 });
+
+    let res = app.put_json(&format!("/api/v1/vehicles/{id}"), &body).await;
+    assert_eq!(res.status(), 422);
+    assert_eq!(capacities_of(&app, id).await, json!({ "water": 1000.0 }));
 }
 
 #[tokio::test]
@@ -531,18 +618,6 @@ async fn seed_vehicle_with_license(
     uuid::Uuid::parse_str(created["id"].as_str().unwrap()).unwrap()
 }
 
-async fn seed_vehicle_with_capacity(app: &TestApp, plate: &str, capacity: f64) -> uuid::Uuid {
-    let mut body = vehicle_json(plate);
-    body["capacities"] = serde_json::json!({ "water": capacity });
-    let created: serde_json::Value = app
-        .post_json("/api/v1/vehicles", &body)
-        .await
-        .json()
-        .await
-        .unwrap();
-    uuid::Uuid::parse_str(created["id"].as_str().unwrap()).unwrap()
-}
-
 /// Creates a watering plan for `vehicle_id` and starts it, so the vehicle's
 /// derived status reads `active`. Mirrors the plan-lifecycle calls in
 /// `vehicle_status_follows_the_plan_it_is_assigned_to`.
@@ -733,28 +808,73 @@ async fn vehicle_list_filters_by_driving_license() {
     assert!(!ids.contains(&b.to_string().as_str()));
 }
 
-#[tokio::test]
-async fn vehicle_list_sorts_by_water_capacity_descending() {
-    let app = spawn_app().await;
-    seed_vehicle_with_capacity(&app, "FL-GE 100", 2000.0).await;
-    seed_vehicle_with_capacity(&app, "FL-GE 200", 8000.0).await;
+async fn seed_vehicle_with(app: &TestApp, plate: &str, capacities: serde_json::Value) {
+    let mut body = vehicle_json(plate);
+    body["capacities"] = capacities;
+    let res = app.post_json("/api/v1/vehicles", &body).await;
+    assert_eq!(res.status(), 201, "{}", res.text().await.unwrap());
+}
 
-    let body: serde_json::Value = app
-        .get("/api/v1/vehicles?sort=water_capacity&order=desc")
-        .await
-        .json()
-        .await
-        .unwrap();
-
-    let plates: Vec<&str> = body["data"]
+async fn plates_of(app: &TestApp, query: &str) -> Vec<String> {
+    let res = app.get(&format!("/api/v1/vehicles?{query}")).await;
+    assert_eq!(res.status(), 200, "{}", res.text().await.unwrap());
+    let body: serde_json::Value = res.json().await.unwrap();
+    body["data"]
         .as_array()
         .unwrap()
         .iter()
-        .map(|v| v["number_plate"].as_str().unwrap())
-        .collect();
-    // Fixtures deliberately disagree with the default plate order, so a sort
-    // that silently did nothing would fail here.
-    assert_eq!(plates, vec!["FL-GE 200", "FL-GE 100"]);
+        .map(|v| v["number_plate"].as_str().unwrap().to_string())
+        .collect()
+}
+
+#[tokio::test]
+async fn vehicle_list_sorts_by_the_capacity_of_one_kind() {
+    let app = spawn_app().await;
+    seed_vehicle_with(
+        &app,
+        "FL-GE 100",
+        json!({ "water": 9000.0, "cargo_volume": 2000.0 }),
+    )
+    .await;
+    seed_vehicle_with(
+        &app,
+        "FL-GE 200",
+        json!({ "water": 1000.0, "cargo_volume": 8000.0 }),
+    )
+    .await;
+    seed_vehicle_with(&app, "FL-GE 300", json!({ "water": 5000.0 })).await;
+
+    // Fixtures deliberately disagree with the plate order and between the
+    // kinds, so a sort that ignored the kind would fail here.
+    assert_eq!(
+        plates_of(&app, "sort=capacity&capacity_kind=cargo_volume&order=desc").await,
+        vec!["FL-GE 200", "FL-GE 100", "FL-GE 300"]
+    );
+    assert_eq!(
+        plates_of(&app, "sort=capacity&capacity_kind=water&order=desc").await,
+        vec!["FL-GE 100", "FL-GE 300", "FL-GE 200"]
+    );
+}
+
+#[tokio::test]
+async fn sorting_by_capacity_needs_a_kind() {
+    let app = spawn_app().await;
+
+    let res = app.get("/api/v1/vehicles?sort=capacity").await;
+
+    assert_eq!(res.status(), 400);
+}
+
+#[tokio::test]
+async fn sorting_by_an_unknown_kind_lists_everything_at_zero() {
+    let app = spawn_app().await;
+    seed_vehicle_with(&app, "FL-GE 300", json!({ "water": 1.0 })).await;
+    seed_vehicle_with(&app, "FL-GE 100", json!({ "water": 2.0 })).await;
+
+    assert_eq!(
+        plates_of(&app, "sort=capacity&capacity_kind=sand&order=desc").await,
+        vec!["FL-GE 100", "FL-GE 300"]
+    );
 }
 
 #[tokio::test]

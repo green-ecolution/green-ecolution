@@ -14,7 +14,7 @@ pub mod targets;
 
 use std::sync::Arc;
 
-use domain::{authorization::ResourceKey, module::ModuleKey};
+use domain::{authorization::ResourceKey, capacity::CapacityKindSpec, module::ModuleKey};
 use server::module::{Module, ModuleBuildError, ModuleContext, ModuleRoutes, ModuleRuntime};
 use waste_domain::settings::FullThreshold;
 
@@ -68,6 +68,10 @@ impl Module for WasteModule {
 
     fn resources(&self) -> &'static [ResourceKey] {
         &resources::ALL
+    }
+
+    fn capacity_kinds(&self) -> Vec<CapacityKindSpec> {
+        vec![waste_domain::capacity_kind_spec()]
     }
 
     fn migrations(&self) -> Vec<sqlx::migrate::Migration> {

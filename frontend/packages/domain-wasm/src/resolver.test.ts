@@ -49,6 +49,19 @@ describe('draftResolver', () => {
     })
   })
 
+  it('nests a dotted issue path so React Hook Form finds the error', async () => {
+    const resolver = draftResolver<ThingForm>(
+      () => [issue({ path: 'capacities.water', key: 'capacity.amount.outOfRange' })],
+      (key) => `text:${key}`,
+    )
+
+    const result = await resolver(form, undefined, options)
+    const errors = result.errors as Record<string, Record<string, { message?: string }>>
+
+    expect(errors.capacities.water.message).toBe('text:capacity.amount.outOfRange')
+    expect(result.errors).not.toHaveProperty(['capacities.water'])
+  })
+
   it('shows the key when the translator has no text', async () => {
     const resolver = draftResolver<ThingForm>(
       () => [issue()],

@@ -22,11 +22,7 @@
     "loadingLabel": "Loading operation plan …",
     "routeLengthLabel": "Route length",
     "startPointLabel": "Start point",
-    "demandLabel": {
-      "water": "Water required",
-      "cargo_volume": "Cargo volume required"
-    },
-    "demandValue": "{value} liters",
+    "demandValue": "{value} {unit}",
     "transporterLabel": "Transporter",
     "archivedVehicleValue": "{numberPlate} (Archived)",
     "trailerLabel": "Additional trailer",
@@ -42,18 +38,7 @@
     "notFoundBackLabel": "To the operation plan list",
     "routePreviewAriaLabel": "Map with the route and stops for this plan",
     "routePreviewLoadingLabel": "Loading map …",
-    "transporterCapacity": {
-      "water": {
-        "label": "Vehicle water tank",
-        "used": "In use",
-        "unused": "Stays empty, only the trailer carries water"
-      },
-      "cargo_volume": {
-        "label": "Vehicle cargo space",
-        "used": "In use",
-        "unused": "Stays empty, only the trailer is loaded"
-      }
-    }
+    "transporterCapacityUsed": "In use"
   },
   "update": {
     "backLabel": "Back to the operation plan",
@@ -96,17 +81,7 @@
     "createLeaveMessage": "Do you really want to leave this page? Your entries for creating the operation plan will be lost if you leave now.",
     "updateLeaveMessage": "Do you really want to leave this page? Your changes to the operation plan will be lost if you leave now.",
     "createSuccessMessage": "The operation plan was created successfully.",
-    "updateSuccessMessage": "The operation plan was updated successfully.",
-    "transporterCapacityUsed": {
-      "water": {
-        "label": "Use the vehicle's water tank",
-        "hint": "Clear this if only the trailer carries water. The route then plans with the trailer's capacity alone."
-      },
-      "cargo_volume": {
-        "label": "Use the vehicle's cargo space",
-        "hint": "Clear this if only the trailer is loaded. The route then plans with the trailer's capacity alone."
-      }
-    }
+    "updateSuccessMessage": "The operation plan was updated successfully."
   },
   "create": {
     "backLabel": "To all operation plans",

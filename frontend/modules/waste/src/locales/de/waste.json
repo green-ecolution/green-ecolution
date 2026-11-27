@@ -330,5 +330,16 @@
   },
   "roles": {
     "waste_collection": "Abfallsammlung"
+  },
+  "capacity": {
+    "label": "Laderaum",
+    "vehicleField": "Laderaum",
+    "unit": "Liter",
+    "stationAction": "Laderaum entladen",
+    "demand": "Benötigtes Ladevolumen",
+    "transporter": "Laderaum des Fahrzeugs",
+    "transporterUnused": "Bleibt leer, nur der Anhänger lädt",
+    "transporterUsedFormLabel": "Laderaum des Fahrzeugs mitnutzen",
+    "transporterUsedHint": "Abwählen, wenn nur der Anhänger geladen wird. Die Route rechnet dann allein mit dessen Fassungsvermögen."
   }
 }

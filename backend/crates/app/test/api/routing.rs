@@ -459,6 +459,70 @@ async fn create_and_list_start_point() {
 }
 
 #[tokio::test]
+async fn a_station_refuses_a_new_undeclared_kind() {
+    let streamlet = mock_streamlet(ResponseTemplate::new(200).set_body_json(streamlet_ok())).await;
+    let app = spawn_app_with_routing(&streamlet.uri()).await;
+
+    let resp = app
+        .post_json(
+            "/api/v1/routing/start-points",
+            &serde_json::json!({"name": "Kieswerk", "lat": 54.75, "lon": 9.43, "replenishes": ["sand"]}),
+        )
+        .await;
+    assert_eq!(resp.status().as_u16(), 422);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(body["code"], "capacity.unknown_kind");
+}
+
+#[tokio::test]
+async fn a_station_keeps_a_stored_kind_no_module_declares() {
+    let streamlet = mock_streamlet(ResponseTemplate::new(200).set_body_json(streamlet_ok())).await;
+    let app = spawn_app_with_routing(&streamlet.uri()).await;
+    let created: serde_json::Value = app
+        .post_json(
+            "/api/v1/routing/start-points",
+            &serde_json::json!({"name": "Hof", "lat": 54.75, "lon": 9.43, "replenishes": ["water"]}),
+        )
+        .await
+        .json()
+        .await
+        .unwrap();
+    let id = created["id"].as_str().unwrap();
+    sqlx::query("UPDATE depots SET replenishes = '{water,sand}' WHERE id = $1::uuid")
+        .bind(id)
+        .execute(&app.db_pool)
+        .await
+        .unwrap();
+
+    let resp = app
+        .put_json(
+            &format!("/api/v1/routing/start-points/{id}"),
+            &serde_json::json!({"name": "Hof", "lat": 54.75, "lon": 9.43, "replenishes": ["water", "sand"]}),
+        )
+        .await;
+    assert_eq!(
+        resp.status().as_u16(),
+        200,
+        "{}",
+        resp.text().await.unwrap()
+    );
+
+    let list: serde_json::Value = app
+        .get("/api/v1/routing/start-points")
+        .await
+        .json()
+        .await
+        .unwrap();
+    let station = list
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|p| p["id"] == id)
+        .unwrap();
+    assert_eq!(station["replenishes"], serde_json::json!(["sand", "water"]));
+}
+
+#[tokio::test]
 async fn set_default_moves_default_flag() {
     let streamlet = mock_streamlet(ResponseTemplate::new(200).set_body_json(streamlet_ok())).await;
     let app = spawn_app_with_routing(&streamlet.uri()).await;

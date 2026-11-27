@@ -11,7 +11,7 @@ ON CONFLICT (organization_id, module_key) DO UPDATE SET released = TRUE, enabled
 INSERT INTO vehicles (id, number_plate, description, type, availability, driving_license, model, width, height, length, weight, organization_id) VALUES
   ('019e3fcb-2a51-7601-8000-000000000601'::uuid, 'FL-GE-601', 'Abfallsammelfahrzeug für Innenstadt und Stadtteile', 'transporter', 'available', 'C', 'Mercedes Econic 2630', 2.55, 3.40, 9.30, 26.0, '01980000-0000-7000-8000-000000000002');
 
-INSERT INTO vehicle_capacities (vehicle_id, kind, liters) VALUES
+INSERT INTO vehicle_capacities (vehicle_id, kind, amount) VALUES
   ('019e3fcb-2a51-7601-8000-000000000601'::uuid, 'cargo_volume', 16000.0),
   -- the flatbed from 99_demo_data.sql can take a few bins as well
   ('019e3fcb-2a51-73cf-b612-cd0ccdac6f0d'::uuid, 'cargo_volume', 3000.0);

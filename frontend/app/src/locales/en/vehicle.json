@@ -19,7 +19,6 @@
     "archiveOnly": "Archived only",
     "filterNoOptions": "No options available.",
     "sortNumberPlate": "Number plate",
-    "sortWaterCapacity": "Water capacity",
     "sortModel": "Model",
     "sortType": "Type",
     "resultCount_one": "{count} vehicle",
@@ -31,12 +30,10 @@
   "card": {
     "statusSrLabel": "Status: ",
     "numberPlateSrLabel": "Number plate: ",
-    "waterCapacitySrLabel": "Water capacity: ",
+    "capacitySrLabel": "{label}: ",
+    "capacityValue": "{value} {unit}",
     "typeSrLabel": "Vehicle type: ",
     "drivingLicenseSrLabel": "Required driving licence class: ",
-    "waterCapacityValue": "{value} liters",
-    "cargoVolumeSrLabel": "Cargo volume: ",
-    "cargoVolumeValue": "{value} liters",
     "archivedBadge": "Archived"
   },
   "detail": {
@@ -58,16 +55,13 @@
     "widthLabel": "Vehicle width",
     "widthValue": "{value} meters",
     "numberPlateLabel": "Number plate",
-    "waterCapacityLabel": "Water capacity",
-    "waterCapacityValue": "{value} liters",
-    "cargoVolumeLabel": "Cargo volume",
-    "cargoVolumeValue": "{value} liters",
+    "capacityValue": "{value} {unit}",
     "lengthLabel": "Vehicle length",
     "lengthValue": "{value} meters",
     "weightLabel": "Vehicle weight",
     "weightValue": "{value} tons",
-    "activeNotice": "This vehicle is assigned to a watering plan that is currently running.",
-    "wateringPlansLinkLabel": "To the watering plans",
+    "activeNotice": "This vehicle is assigned to an operation plan that is currently running.",
+    "plansLinkLabel": "To the operation plans",
     "notFoundBackLabel": "To the vehicle list"
   },
   "update": {
@@ -108,16 +102,8 @@
     "capacity": {
       "legend": "Capacity",
       "hint": "Enter at least one capacity.",
-      "unit": "Liters",
       "usedBy": "for {label}",
-      "water": {
-        "label": "Water tank",
-        "placeholder": "Capacity"
-      },
-      "cargo_volume": {
-        "label": "Cargo space",
-        "placeholder": "Capacity"
-      }
+      "placeholder": "Capacity"
     }
   }
 }

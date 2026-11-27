@@ -429,7 +429,7 @@ update it in the same change.
 Finally, add an integration test per filter and per sort option in
 `backend/crates/app/test/api/`, following the existing naming
 (`vehicle_list_searches_plate_model_and_description`,
-`vehicle_list_filters_by_derived_status`, `vehicle_list_sorts_by_water_capacity_descending`,
+`vehicle_list_filters_by_derived_status`, `vehicle_list_sorts_by_the_capacity_of_one_kind`,
 `vehicle_list_can_include_and_isolate_archived_vehicles`). These are what actually catch a
 wrong column name or a sort direction applied to the wrong expression.
 
@@ -609,7 +609,14 @@ instead of knowing concrete kinds.
 
 `PlanningProvider` (in `domain/src/planning.rs`) lets a module plan with the generic
 operation plans: it names the capacity kind, the resource that guards its plans and
-resolves stops to the objects behind them. The providers are collected in the
+resolves stops to the objects behind them. The capacity kind must be one the module
+declares itself in `Module::capacity_kinds()` (a `CapacityKindSpec` with the key, the
+display unit and whether a tour of that kind must end replenished, i.e. unload before it
+returns); startup rejects a kind declared twice and a planning provider whose kind its
+module does not declare. The core declares no capacity kind and only ever compares
+amounts within one kind. Vehicles and stations accept the declared kinds; a stored kind
+no registered module declares is kept and returned unchanged, but cannot be added anew
+(422 `capacity.unknown_kind`). The providers are collected in the
 `PlanningRegistry` (`backend/crates/server/src/service/`). A module that deletes an
 object which can be a stop must call `OperationPlanService::remove_stop`, so no plan
 keeps a dangling stop.
@@ -663,8 +670,12 @@ A module package consists of:
 - `src/manifest.tsx`: the `ModuleManifest` (type in `frontend/app/src/modules/types.ts`)
   as the default export, with `key` (equal to the directory name), `order` (where the module
   sorts among the others), navigation, route permissions, resources, role templates,
-  statistics, map, planning, sensor target and settings slots, and the module's i18n
-  namespaces. `roleTemplates` gives the roles the module's migrations deliver their
+  statistics, map, planning, capacity kinds, sensor target and settings slots, and the
+  module's i18n namespaces. `capacities` gives each capacity kind the module declares in
+  the backend its icon, wording (unit, vehicle field, station action, plan texts) and a
+  range check for one amount; vehicle form, vehicle card and station dialog show the kinds
+  of the modules active in the organization at hand, and a planning module's
+  `capacityKind` must be one of its own `capacities`. `roleTemplates` gives the roles the module's migrations deliver their
   translated name and icon (without an entry a role shows its stored name), and
   `map.navSection` says under which sidebar headline the map link appears while the module
   is the first one drawing on the map (`assets` by default).

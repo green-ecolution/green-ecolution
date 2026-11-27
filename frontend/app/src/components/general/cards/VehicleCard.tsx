@@ -7,7 +7,7 @@ import { Badge, ListCard } from '@green-ecolution/ui'
 import { useVehicleStatusDetails } from '@/hooks/details/useDetailsForVehicleStatus'
 import { useVehicleTypeLabel } from '@/hooks/details/useDetailsForVehicleType'
 import { highlightMatch } from '@/lib/highlightMatch'
-import { capacityDisplay } from '@/lib/capacity'
+import { shownCapacities, useCapacityKinds } from '@/modules/capacities'
 
 interface VehicleCardProps {
   vehicle: Vehicle
@@ -15,7 +15,8 @@ interface VehicleCardProps {
 }
 
 const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, query = '' }) => {
-  const { t } = useTranslation('vehicle')
+  const { t, i18n } = useTranslation('vehicle')
+  const capacities = shownCapacities(useCapacityKinds(vehicle.organizationId), vehicle.capacities)
   const getVehicleStatusDetails = useVehicleStatusDetails()
   const getVehicleTypeLabel = useVehicleTypeLabel()
   const statusDetails = getVehicleStatusDetails(vehicle.status)
@@ -52,20 +53,15 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, query = '' }) => {
             <span className="sr-only">{t('card.typeSrLabel')}</span>
             {getVehicleTypeLabel(vehicle.type)}
           </span>
-          {vehicle.capacities.water !== undefined && (
-            <span className="flex items-center gap-2">
-              <capacityDisplay.water.icon aria-hidden className="size-4" />
-              <span className="sr-only">{t('card.waterCapacitySrLabel')}</span>
-              {t('card.waterCapacityValue', { value: vehicle.capacities.water })}
+          {capacities.map(({ capacity, amount }) => (
+            <span key={capacity.kind} className="flex items-center gap-2">
+              <capacity.icon aria-hidden className="size-4" />
+              <span className="sr-only">
+                {t('card.capacitySrLabel', { label: i18n.t(capacity.texts.vehicleField) })}
+              </span>
+              {t('card.capacityValue', { value: amount, unit: i18n.t(capacity.texts.unit) })}
             </span>
-          )}
-          {vehicle.capacities.cargo_volume !== undefined && (
-            <span className="flex items-center gap-2">
-              <capacityDisplay.cargo_volume.icon aria-hidden className="size-4" />
-              <span className="sr-only">{t('card.cargoVolumeSrLabel')}</span>
-              {t('card.cargoVolumeValue', { value: vehicle.capacities.cargo_volume })}
-            </span>
-          )}
+          ))}
           {/* Secondary fact, dropped as the card narrows so the row never wraps. */}
           <span className="hidden items-center gap-2 @min-[30rem]:flex">
             <IdCard aria-hidden className="size-4" />

@@ -6,6 +6,7 @@ import { irrigationSettingsSection } from './components/settings/settingsSection
 import { IRRIGATION } from './lib/targets'
 import { irrigationMap } from './map'
 import { irrigationPlanning } from './planning'
+import { waterCapacity } from './capacity'
 import { EVALUATION_READ, irrigationResources } from './resources'
 import { treeSensorTarget } from './sensorTargets'
 
@@ -81,6 +82,7 @@ export const irrigationManifest: ModuleManifest = {
   },
   map: irrigationMap,
   planning: irrigationPlanning,
+  capacities: [waterCapacity],
   targets: [treeSensorTarget],
   settingsSection: irrigationSettingsSection,
   // Lazy like the other slots; the series exists for any soil-moisture sensor,

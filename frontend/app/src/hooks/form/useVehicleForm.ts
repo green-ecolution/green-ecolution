@@ -8,11 +8,11 @@ import { vehicleDraftResolver, type VehicleForm } from '@/schema/vehicleSchema'
 import { DefaultValues } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { EntityFormConfig, useEntityForm } from './useEntityForm'
+import type { ModuleCapacityKind } from '@/modules/types'
 
-export const FORM_CAPACITY_KINDS = ['water', 'cargo_volume'] as const
-
-// Every field the form can register needs a key here, the optional ones included:
-// a registered field missing from the defaults marks the untouched form as dirty.
+// Every field the form can register needs a key here, the optional ones included
+// (capacities through `vehicleCapacityDefaults`): a registered field missing from
+// the defaults marks the untouched form as dirty.
 export const NEW_VEHICLE_DEFAULTS: DefaultValues<VehicleForm> = {
   numberPlate: '',
   model: '',
@@ -24,36 +24,33 @@ export const NEW_VEHICLE_DEFAULTS: DefaultValues<VehicleForm> = {
   width: 2,
   length: 6,
   weight: 3.5,
-  waterCapacity: 300,
-  cargoVolumeCapacity: undefined,
 }
 
-const toRequest = (
-  { waterCapacity, cargoVolumeCapacity, ...fields }: VehicleForm,
-  capacities: Record<string, number> = {},
-) => {
-  const untouched = Object.fromEntries(
-    Object.entries(capacities).filter(
-      ([kind]) => !(FORM_CAPACITY_KINDS as readonly string[]).includes(kind),
+/** Stored amounts stay in the form state, so a kind no module offers goes back unchanged. */
+export const vehicleCapacityDefaults = (
+  offered: readonly ModuleCapacityKind[],
+  stored: Record<string, number> = {},
+): Record<string, number | undefined> => ({
+  ...Object.fromEntries(offered.map(({ kind }) => [kind, undefined])),
+  ...stored,
+})
+
+const toRequest = ({ capacities, ...fields }: VehicleForm) => ({
+  ...fields,
+  capacities: Object.fromEntries(
+    Object.entries(capacities ?? {}).filter(
+      (entry): entry is [string, number] => typeof entry[1] === 'number',
     ),
-  )
-  return {
-    ...fields,
-    capacities: {
-      ...untouched,
-      ...(waterCapacity !== undefined ? { water: waterCapacity } : {}),
-      ...(cargoVolumeCapacity !== undefined ? { cargo_volume: cargoVolumeCapacity } : {}),
-    },
-  }
-}
+  ),
+})
 
 export const useVehicleForm = (
   mutationType: 'create' | 'update',
   opts: {
     vehicleId?: string
     initForm?: DefaultValues<VehicleForm>
-    /** Capacities of the loaded vehicle; kinds the form does not edit are sent back unchanged. */
-    capacities?: Record<string, number>
+    /** The capacity kinds the form shows and validates. */
+    offered?: readonly ModuleCapacityKind[]
     disableNavigationBlock?: boolean
   },
 ) => {
@@ -62,13 +59,13 @@ export const useVehicleForm = (
 
   const vehicleConfig: EntityFormConfig<VehicleForm, VehicleForm, VehicleForm, Vehicle> = {
     formType: VEHICLE_FORM,
-    resolver: vehicleDraftResolver<VehicleForm>(translate),
+    resolver: vehicleDraftResolver<VehicleForm>(translate, opts.offered ?? []),
 
     createFn: (body) => vehicleApi.createVehicle({ vehicleCreateRequest: toRequest(body) }),
     updateFn: (id, body) =>
       vehicleApi.updateVehicle({
         vehicleId: id,
-        vehicleUpdateRequest: toRequest(body, opts.capacities),
+        vehicleUpdateRequest: toRequest(body),
       }),
 
     // Plans embed their transporter and trailer.

@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react'
 import { getRouteApi } from '@tanstack/react-router'
-import { ListVehiclesArchiveEnum, type ListVehiclesSortEnum } from '@green-ecolution/backend-client'
+import { ListVehiclesArchiveEnum, ListVehiclesSortEnum } from '@green-ecolution/backend-client'
 import type { SortDirection } from '@/components/general/list/ListSortMenu'
 
 // getRouteApi instead of importing Route: the route module imports this hook,
@@ -8,6 +8,23 @@ import type { SortDirection } from '@/components/general/list/ListSortMenu'
 const routeApi = getRouteApi('/_protected/vehicles/')
 
 type VehicleSearch = ReturnType<typeof routeApi.useSearch>
+
+const CAPACITY_SORT = 'capacity:'
+
+/**
+ * The toolbar offers one sort option per capacity kind; the URL keeps the kind
+ * in its own parameter, as the API expects it.
+ */
+export function sortOptionOf(search: { sort?: string; capacityKind?: string }): string {
+  if (search.sort === ListVehiclesSortEnum.Capacity) {
+    return search.capacityKind
+      ? `${CAPACITY_SORT}${search.capacityKind}`
+      : ListVehiclesSortEnum.NumberPlate
+  }
+  return search.sort ?? ListVehiclesSortEnum.NumberPlate
+}
+
+export const capacitySortOption = (kind: string) => `${CAPACITY_SORT}${kind}`
 
 export const useVehicleListSearch = () => {
   const rawSearch = routeApi.useSearch()
@@ -41,8 +58,18 @@ export const useVehicleListSearch = () => {
   )
 
   const setSort = useCallback(
-    (field: ListVehiclesSortEnum, direction: SortDirection) =>
-      patch({ sort: field, order: direction }),
+    (option: string, direction: SortDirection) =>
+      option.startsWith(CAPACITY_SORT)
+        ? patch({
+            sort: ListVehiclesSortEnum.Capacity,
+            capacityKind: option.slice(CAPACITY_SORT.length),
+            order: direction,
+          })
+        : patch({
+            sort: option as ListVehiclesSortEnum,
+            capacityKind: undefined,
+            order: direction,
+          }),
     [patch],
   )
 

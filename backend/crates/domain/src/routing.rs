@@ -4,7 +4,7 @@
 //! portable value types; a server-side adapter implements it.
 
 use crate::{
-    capacity::{CapacityKind, Liters},
+    capacity::{Amount, CapacityKind},
     planning::StopRef,
     shared::{coordinates::Coordinate, distance::Distance},
     vehicle::{Vehicle, VehicleDimension},
@@ -43,7 +43,7 @@ pub trait TurnByTurnRouter: Send + Sync {
     async fn route(&self, request: TurnByTurnRequest) -> Result<TurnByTurnRoute, RoutingError>;
 }
 
-/// One stop to visit, with its demand in liters of the route's capacity kind.
+/// One stop to visit, with its demand in the route's capacity kind.
 #[derive(Debug, Clone)]
 pub struct RouteStop {
     pub stop: StopRef,
@@ -76,7 +76,7 @@ pub struct OptimizedRoute {
 pub struct RouteRequest<'a> {
     pub transporter: &'a Vehicle,
     pub kind: CapacityKind,
-    pub capacity: Liters,
+    pub capacity: Amount,
     pub stops: &'a [RouteStop],
     pub depot: Coordinate,
     /// Only stations that restore `kind`.

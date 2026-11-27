@@ -114,7 +114,7 @@ ermittelt sie Streckenlänge, benötigte Wassermenge, Anzahl nötiger Nachfüllu
 Wasserdepot und die voraussichtliche Fahrzeit. Solange der Einsatzplan noch Geplant ist,
 löst jede inhaltliche Änderung automatisch eine neue Berechnung aus. Konnte keine Route
 berechnet werden, weist die Detailseite des Einsatzplans darauf hin und schlägt vor zu
-prüfen, ob das gewählte Fahrzeug über ausreichend Wasserkapazität für die gewählten
+prüfen, ob das gewählte Fahrzeug über einen ausreichend großen Wassertank für die gewählten
 Bewässerungsgruppen verfügt. Liegt eine Route vor, lädst du sie über
 **Route herunterladen** als GPX-Datei herunter und siehst sie zusätzlich im Reiter
 **Route** auf einer interaktiven Karte.

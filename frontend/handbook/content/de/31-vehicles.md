@@ -10,7 +10,7 @@ routes: ['/vehicles', '/vehicles/$vehicleId', '/vehicles/new']
 
 Die Seite **Fahrzeuge** zeigt jedes Fahrzeug mit seinem Kennzeichen und seinem Modell.
 Ein farbiger Punkt davor steht für den Status; verweilst du mit dem Zeiger darauf, nennt
-die Anwendung ihn beim Namen. Darunter stehen der Fahrzeugtyp und die erfasste Kapazität (Wasser, Laderaum oder beides), und
+die Anwendung ihn beim Namen. Darunter stehen der Fahrzeugtyp und die erfassten Kapazitäten der Fachmodule, die in der Organisation des Fahrzeugs aktiv sind, etwa Wassertank oder Laderaum, und
 ist das Fenster breit genug, ergänzt dieselbe Zeile die erforderliche Führerscheinklasse;
 auf schmalen Bildschirmen entfällt sie wieder, damit die Zeile nicht umbricht. Ein
 archiviertes Fahrzeug trägt zusätzlich die Kennzeichnung **Archiviert**. Ein Klick auf
@@ -26,7 +26,9 @@ archivierte** wählst, um ausschließlich archivierte Fahrzeuge zu sehen, oder *
 archivierte**, um sie zusammen mit den aktiven anzuzeigen; ein erneuter Klick auf die
 gewählte Option oder das Entfernen ihres Chips bringt dich zurück zur Standardansicht mit
 ausschließlich aktiven Fahrzeugen. Über das Sortiermenü ordnest du die Liste nach
-Kennzeichen, Wasserkapazität, Modell oder Fahrzeugtyp, jeweils auf- oder absteigend. Jede
+Kennzeichen, Modell, Fahrzeugtyp oder nach einer Kapazität, jeweils auf- oder absteigend.
+Für jede Kapazität, die ein aktives Fachmodul anbietet, gibt es einen eigenen Eintrag, etwa
+Wassertank oder Laderaum; Fahrzeuge ohne diese Kapazität zählen dabei mit null. Jede
 gesetzte Auswahl erscheint darunter als entfernbarer Chip, daneben ein Link, der alle
 Filter auf einmal zurücksetzt, sowie die Anzahl der gefundenen Fahrzeuge.
 
@@ -36,7 +38,7 @@ Filter auf einmal zurücksetzt, sowie die Anzahl der gefundenen Fahrzeuge.
 
 Auf der Seite **Fahrzeuge** legst du ein neues Fahrzeug über
 **Neues Fahrzeug erstellen** an. Pflichtangaben sind Kennzeichen, Fahrzeugmodell,
-Fahrzeugtyp (Transporter oder Anhänger), mindestens eine Kapazität (Wasser oder Laderaum), die Verfügbarkeit, die
+Fahrzeugtyp (Transporter oder Anhänger), mindestens eine Kapazität, sofern ein Fachmodul eine anbietet (siehe [Kapazitäten](./vehicles.md#kapazitaten)), die Verfügbarkeit, die
 erforderliche Führerscheinklasse sowie Höhe, Breite, Länge und Gewicht des Fahrzeugs;
 eine kurze Beschreibung ist optional. Kennzeichen müssen eindeutig sein, ein bereits
 vergebenes Kennzeichen weist die Anwendung zurück. Die Abmessungen braucht sie, um bei
@@ -77,11 +79,26 @@ hat, und lässt sich nicht absenden.
 
 ## Kapazitäten
 
-Im Formular stehen die Kapazitäten gebündelt im Abschnitt „Kapazität“. Jedes Feld nimmt Liter entgegen und nennt darunter das Fachmodul, das diese Kapazität für seine Touren nutzt, etwa „für Leerung“. Der Wassertank dient der Bewässerung, der Laderaum den Leerungstouren. Der Abschnitt zeigt nur die Kapazitäten der Fachmodule, die für deine Organisation aktiv sind; ist keines aktiv, erscheinen beide Felder. Ein ausgeblendetes Feld behält seinen gespeicherten Wert, er geht beim Speichern nicht verloren. Ein Fahrzeug trägt mindestens eine Kapazität und darf auch beide haben; lässt du ein Feld leer, hat das Fahrzeug diese Kapazität nicht. Fehlt jede Angabe, weist das Formular die Eingabe mit dem Hinweis „Mindestens eine Kapazität angeben.“ zurück.
+Welche Kapazitäten ein Fahrzeug haben kann, bestimmen die Fachmodule. Die Bewässerung
+bringt den Wassertank mit, der Abfall den Laderaum für seine Leerungstouren. Im Formular
+stehen die Kapazitäten gebündelt im Abschnitt „Kapazität“, und zwar nur die der
+Fachmodule, die in der Organisation des Fahrzeugs aktiv sind. Beim Anlegen ist das die
+Organisation, in der du gerade arbeitest. Jedes Feld zeigt seine Einheit, bei beiden
+heutigen Kapazitäten Liter, und nennt darunter das Fachmodul, zu dem es gehört, etwa „für
+Abfall“. Die Felder starten leer; lässt du eines leer, hat das Fahrzeug diese Kapazität
+nicht.
 
-### Wasserkapazität
+Werden Kapazitäten angeboten, braucht ein Fahrzeug mindestens eine davon; fehlt jede
+Angabe, weist das Formular die Eingabe mit dem Hinweis „Mindestens eine Kapazität
+angeben.“ zurück. Eine bereits gespeicherte Kapazität zählt dabei mit, auch wenn ihr
+Feld gerade nicht erscheint. Ist in der Organisation kein Fachmodul mit Kapazität aktiv, entfällt
+der Abschnitt ganz, und das Fahrzeug lässt sich ohne Kapazität speichern. Ein gespeicherter
+Wert, für den gerade kein Feld erscheint, etwa weil sein Fachmodul abgeschaltet ist,
+bleibt beim Speichern unverändert erhalten.
 
-Die Wasserkapazität eines Fahrzeugs gibt in Litern an, wie viel Wasser es fasst. Bei der
+### Wassertank
+
+Der Wassertank eines Fahrzeugs gibt in Litern an, wie viel Wasser es fasst. Bei der
 Auswahl der Bewässerungsgruppen für einen Einsatzplan zählt die Kapazität von Transporter
 und, falls einer verknüpft ist, Anhänger zusammen; Gruppen, deren Bäume zusammen mehr
 Wasser benötigen, als diese Summe hergibt, lassen sich für den Einsatz nicht auswählen,

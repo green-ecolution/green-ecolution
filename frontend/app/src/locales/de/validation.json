@@ -20,11 +20,8 @@
       "tooShort": "Modell muss mindestens {min} Zeichen lang sein.",
       "tooLong": "Modell darf maximal {max} Zeichen lang sein."
     },
-    "water_capacity": {
-      "invalidFormat": "Wasserkapazität muss eine Zahl sein."
-    },
-    "cargo_volume_capacity": {
-      "invalidFormat": "Laderaum muss eine Zahl sein."
+    "capacity": {
+      "invalidFormat": "Die Kapazität muss eine Zahl sein."
     },
     "capacities": {
       "empty": "Mindestens eine Kapazität angeben."
@@ -57,8 +54,10 @@
       "invalidFormat": "Kein korrekter Fahrzeugstatus."
     }
   },
-  "water_capacity": {
-    "outOfRange": "Wasserkapazität muss zwischen {min} und {max} Liter liegen."
+  "capacity": {
+    "amount": {
+      "outOfRange": "Die Kapazität darf nicht negativ sein."
+    }
   },
   "plan": {
     "stop_ids": {

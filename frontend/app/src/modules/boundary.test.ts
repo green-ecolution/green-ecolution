@@ -97,8 +97,17 @@ function forbidden(
     manifests.flatMap(({ resources }) => (resources ?? []).map(({ key }) => key)),
     (any) => new RegExp(`\\b(${any}):(${ACTIONS})\\b`),
   )
+  // As a literal, a key segment or a property: `'water'`, `kind.water`, `capacities.water`.
+  derive(
+    'names a capacity kind of a module',
+    capacityKinds(manifests),
+    (any) => new RegExp(`['"\`.](${any})\\b`),
+  )
   return rules
 }
+
+const capacityKinds = (manifests: readonly ModuleManifest[]) =>
+  manifests.flatMap(({ capacities }) => (capacities ?? []).map(({ kind }) => kind))
 
 function sourceFiles(dir: string): string[] {
   return readdirSync(dir).flatMap((entry) => {
@@ -197,6 +206,18 @@ describe('core boundary', () => {
       (section) => textAt(core, section) !== undefined,
     )
     expect(offenders.map((section) => `validation.json: ${section}`)).toEqual([])
+  })
+
+  it.each(languages)('no %s core catalog names a capacity kind of a module', (language) => {
+    const kinds = new Set(capacityKinds(moduleManifests))
+    const offenders = readdirSync(path.join(LOCALES, language))
+      .filter((file) => file.endsWith('.json'))
+      .flatMap((file) =>
+        leafKeys(coreCatalog(language, file.replace(/\.json$/, '')))
+          .filter((key) => key.split('.').some((segment) => kinds.has(segment)))
+          .map((key) => `${file}: ${key}`),
+      )
+    expect(offenders).toEqual([])
   })
 
   it.each(languages)('the %s settings catalog names no role template of a module', (language) => {

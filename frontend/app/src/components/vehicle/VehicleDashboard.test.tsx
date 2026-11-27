@@ -31,6 +31,14 @@ vi.mock('@/lib/auth/authSessionContext', () => ({
   useAuthSession: () => ({ isAuthenticated: true, accessToken: null }),
 }))
 
+vi.mock('@/modules/capacities', async (importOriginal) => {
+  const { manifestOf } = await import('@/test/moduleFixtures')
+  return {
+    ...(await importOriginal<typeof import('@/modules/capacities')>()),
+    useCapacityKinds: () => manifestOf('irrigation').capacities,
+  }
+})
+
 const { default: VehicleDashboard } = await import('./VehicleDashboard')
 const { vehicleApi } = await import('@/api/backendApi')
 
@@ -79,6 +87,14 @@ describe('VehicleDashboard actions', () => {
       organization: orgs[0],
       roles: [{ id: 'r', name: 'Rolle', organizationId: 'root', permissions: ['vehicle:update'] }],
     })
+  })
+
+  it('lists the capacities of the kinds its organization offers', async () => {
+    permissions.mockReturnValue(new Set(['vehicle:read']))
+    renderDashboard()
+    expect((await screen.findByText('Wassertank')).nextElementSibling?.textContent).toBe(
+      '2000 Liter',
+    )
   })
 
   it('renders no actions without vehicle:update', async () => {

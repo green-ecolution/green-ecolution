@@ -3,7 +3,12 @@ import UnsavedChangesDialog from '@/components/general/form/UnsavedChangesDialog
 import BackLink from '@/components/general/links/BackLink'
 import { VehicleForm } from '@/schema/vehicleSchema'
 import { createFileRoute } from '@tanstack/react-router'
-import { NEW_VEHICLE_DEFAULTS, useVehicleForm } from '@/hooks/form/useVehicleForm'
+import {
+  NEW_VEHICLE_DEFAULTS,
+  useVehicleForm,
+  vehicleCapacityDefaults,
+} from '@/hooks/form/useVehicleForm'
+import { useCapacityKinds } from '@/modules/capacities'
 import { FormProvider } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 
@@ -13,8 +18,10 @@ export const Route = createFileRoute('/_protected/vehicles/_formular/new/')({
 
 function NewVehicle() {
   const { t } = useTranslation('vehicle')
+  const offered = useCapacityKinds(undefined)
   const { mutate, isError, error, form, navigationBlocker } = useVehicleForm('create', {
-    initForm: NEW_VEHICLE_DEFAULTS,
+    initForm: { ...NEW_VEHICLE_DEFAULTS, capacities: vehicleCapacityDefaults(offered) },
+    offered,
   })
   const onSubmit = (data: VehicleForm) => {
     mutate({ ...data })
@@ -36,6 +43,7 @@ function NewVehicle() {
             onSubmit={onSubmit}
             displayError={isError}
             errorMessage={error?.message}
+            capacities={offered}
           />
         </FormProvider>
       </section>

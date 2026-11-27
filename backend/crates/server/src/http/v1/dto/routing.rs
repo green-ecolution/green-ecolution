@@ -10,7 +10,6 @@ use domain::{
     start_point::{StartPoint, StartPointDraft, StartPointName, StartPointUpdate},
 };
 
-use super::vehicle::CapacityKindDto;
 use crate::service::ServiceError;
 
 /// Named departure/return point for routes. `replenishes` lists the capacity
@@ -22,7 +21,8 @@ pub struct StartPointResponse {
     pub lat: f64,
     pub lon: f64,
     pub is_default: bool,
-    pub replenishes: Vec<CapacityKindDto>,
+    /// Capacity kinds a vehicle restores here.
+    pub replenishes: Vec<String>,
     /// Organization this start point belongs to.
     #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000")]
     pub organization_id: String,
@@ -36,7 +36,11 @@ impl From<&StartPoint> for StartPointResponse {
             lat: value.coordinate.latitude(),
             lon: value.coordinate.longitude(),
             is_default: value.is_default(),
-            replenishes: value.replenishes().iter().map(|k| (*k).into()).collect(),
+            replenishes: value
+                .replenishes()
+                .iter()
+                .map(ToString::to_string)
+                .collect(),
             organization_id: value.organization_id().to_string(),
         }
     }
@@ -51,8 +55,8 @@ pub struct StartPointRequest {
     pub lat: f64,
     #[schema(example = 9.434803531218018)]
     pub lon: f64,
-    #[schema(example = json!(["water"]))]
-    pub replenishes: Vec<CapacityKindDto>,
+    #[schema(example = json!(["example_kind"]))]
+    pub replenishes: Vec<String>,
     /// Organization this start point belongs to. Defaults to the acting
     /// user's own organization (or the root organization in the demo bypass).
     #[schema(example = "0190a8e9-7c4f-7000-8000-000000000000", nullable)]
@@ -69,8 +73,11 @@ impl StartPointRequest {
         StartPointName::new(self.name.clone()).map_err(ServiceError::from)
     }
 
-    fn replenishes(&self) -> BTreeSet<CapacityKind> {
-        self.replenishes.iter().map(|k| (*k).into()).collect()
+    fn replenishes(&self) -> Result<BTreeSet<CapacityKind>, ServiceError> {
+        self.replenishes
+            .iter()
+            .map(|kind| CapacityKind::new(kind).map_err(ServiceError::from))
+            .collect()
     }
 
     pub fn into_draft(
@@ -80,7 +87,7 @@ impl StartPointRequest {
         Ok(StartPointDraft {
             name: self.name()?,
             coordinate: self.coordinate()?,
-            replenishes: self.replenishes(),
+            replenishes: self.replenishes()?,
             organization_id,
         })
     }
@@ -89,7 +96,7 @@ impl StartPointRequest {
         Ok(StartPointUpdate {
             name: self.name()?,
             coordinate: self.coordinate()?,
-            replenishes: self.replenishes(),
+            replenishes: self.replenishes()?,
         })
     }
 }

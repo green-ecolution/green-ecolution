@@ -12,7 +12,9 @@ import { useTranslation } from 'react-i18next'
 import { VehicleForm } from '@/schema/vehicleSchema'
 import FormForVehicle from '../general/form/FormForVehicle'
 import UnsavedChangesDialog from '../general/form/UnsavedChangesDialog'
-import { useVehicleForm } from '@/hooks/form/useVehicleForm'
+import { useVehicleForm, vehicleCapacityDefaults } from '@/hooks/form/useVehicleForm'
+import { useCapacityKinds } from '@/modules/capacities'
+import { useSuspenseQuery } from '@tanstack/react-query'
 
 interface VehicleUpdateProps {
   vehicleId: string
@@ -20,6 +22,8 @@ interface VehicleUpdateProps {
 
 const VehicleUpdate = ({ vehicleId }: VehicleUpdateProps) => {
   const { t } = useTranslation('vehicle')
+  const { data: vehicle } = useSuspenseQuery(vehicleQueries.detail(vehicleId))
+  const offered = useCapacityKinds(vehicle.organizationId)
   const { initForm, loadedData } = useInitFormQuery<Vehicle, VehicleForm>(
     vehicleQueries.detail(vehicleId),
     (data) => ({
@@ -32,15 +36,14 @@ const VehicleUpdate = ({ vehicleId }: VehicleUpdateProps) => {
       length: data.length,
       weight: data.weight,
       model: data.model,
-      waterCapacity: data.capacities.water,
-      cargoVolumeCapacity: data.capacities.cargo_volume,
+      capacities: vehicleCapacityDefaults(offered, data.capacities),
       description: data.description,
     }),
   )
   const { mutate, isError, error, form, navigationBlocker } = useVehicleForm('update', {
     vehicleId,
     initForm,
-    capacities: loadedData.capacities,
+    offered,
   })
   const onSubmit: SubmitHandler<VehicleForm> = (data) => {
     mutate(data)
@@ -73,6 +76,7 @@ const VehicleUpdate = ({ vehicleId }: VehicleUpdateProps) => {
             onSubmit={onSubmit}
             displayError={isError}
             errorMessage={error?.message}
+            capacities={offered}
           />
         </FormProvider>
       </section>

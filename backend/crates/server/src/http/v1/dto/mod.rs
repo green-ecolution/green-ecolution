@@ -193,9 +193,9 @@ pub enum VehicleStatus {
 #[serde(rename_all = "snake_case")]
 #[schema(example = "transporter")]
 pub enum VehicleType {
-    /// Self-propelled vehicle with water tank.
+    /// Self-propelled vehicle.
     Transporter,
-    /// Towed water tank attached to a transporter.
+    /// Towed unit attached to a transporter.
     Trailer,
 }
 

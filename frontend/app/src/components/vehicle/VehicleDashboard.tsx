@@ -25,13 +25,15 @@ import { useVehicleStatusDetails } from '@/hooks/details/useDetailsForVehicleSta
 import { useVehicleTypeLabel } from '@/hooks/details/useDetailsForVehicleType'
 import { useHasPermission } from '@/lib/auth/useHasPermission'
 import { useInvalidateQueryRoots } from '@/lib/queryInvalidation'
+import { shownCapacities, useCapacityKinds } from '@/modules/capacities'
 
 interface VehicleDashboardProps {
   vehicle: Vehicle
 }
 
 const VehicleDashboard = ({ vehicle }: VehicleDashboardProps) => {
-  const { t } = useTranslation(['vehicle', 'common'])
+  const { t, i18n } = useTranslation(['vehicle', 'common'])
+  const capacities = shownCapacities(useCapacityKinds(vehicle.organizationId), vehicle.capacities)
   const getVehicleStatusDetails = useVehicleStatusDetails()
   const getVehicleTypeLabel = useVehicleTypeLabel()
   const statusDetails = getVehicleStatusDetails(vehicle.status)
@@ -80,22 +82,10 @@ const VehicleDashboard = ({ vehicle }: VehicleDashboardProps) => {
       label: t('detail.numberPlateLabel'),
       value: vehicle?.numberPlate ?? noData,
     },
-    ...(vehicle.capacities.water !== undefined
-      ? [
-          {
-            label: t('detail.waterCapacityLabel'),
-            value: t('detail.waterCapacityValue', { value: vehicle.capacities.water }),
-          },
-        ]
-      : []),
-    ...(vehicle.capacities.cargo_volume !== undefined
-      ? [
-          {
-            label: t('detail.cargoVolumeLabel'),
-            value: t('detail.cargoVolumeValue', { value: vehicle.capacities.cargo_volume }),
-          },
-        ]
-      : []),
+    ...capacities.map(({ capacity, amount }) => ({
+      label: i18n.t(capacity.texts.vehicleField),
+      value: t('detail.capacityValue', { value: amount, unit: i18n.t(capacity.texts.unit) }),
+    })),
     {
       label: t('detail.lengthLabel'),
       value: vehicle?.length ? t('detail.lengthValue', { value: vehicle.length }) : noData,
@@ -160,7 +150,7 @@ const VehicleDashboard = ({ vehicle }: VehicleDashboardProps) => {
           <div className="flex items-center justify-between">
             <p className="text-lg font-semibold">{t('detail.activeNotice')}</p>
             <GeneralLink
-              label={t('detail.wateringPlansLinkLabel')}
+              label={t('detail.plansLinkLabel')}
               link={{
                 to: '/plans',
               }}

@@ -104,7 +104,10 @@ impl<'de> Deserialize<'de> for LooseU32 {
 }
 
 /// Build a `ValidationIssue` for a numeric field whose input was unparsable.
-pub(crate) fn invalid_number_issue(field: &'static str, path: &'static str) -> ValidationIssue {
+pub(crate) fn invalid_number_issue(
+    field: &'static str,
+    path: impl Into<String>,
+) -> ValidationIssue {
     use domain::shared::error::ValidationError;
     ValidationIssue::from_error(
         &ValidationError::InvalidFormat {

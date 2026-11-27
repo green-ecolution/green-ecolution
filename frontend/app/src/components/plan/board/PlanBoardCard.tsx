@@ -5,8 +5,8 @@ import type { PlanInListResponse } from '@green-ecolution/backend-client'
 import type { User } from '@/api/backendApi'
 import { usePlanStatusDetails } from '@/hooks/details/useDetailsForPlanStatus'
 import { columnForStatus } from '@/lib/planBoard'
-import { formatLiters } from '@/lib/utils'
-import { capacityDisplay } from '@/lib/capacity'
+import { formatAmount } from '@/lib/utils'
+import { capacityKindOf } from '@/modules/capacities'
 import type { ModulePlanning } from '@/modules/types'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -38,7 +38,7 @@ const PlanBoardCard = ({ plan, planning, users, assignSlot, cardState }: PlanBoa
   const { t, i18n } = useTranslation('plan')
   const dateLocale = useDateLocale()
   const { stopIcon: StopIcon } = planning
-  const { icon: DemandIcon, demandLabelKey } = capacityDisplay[planning.capacityKind]
+  const capacity = capacityKindOf(planning.capacityKind)
 
   return (
     <KanbanCard state={cardState}>
@@ -70,10 +70,16 @@ const PlanBoardCard = ({ plan, planning, users, assignSlot, cardState }: PlanBoa
             <StopIcon className="size-3" />
             {i18n.t(planning.stopCountKey, { count: plan.stops.length })}
           </Badge>
-          <Badge variant="muted" className="gap-1 tabular-nums" title={t(demandLabelKey)}>
-            <DemandIcon className="size-3" />
-            {formatLiters(plan.totalDemand)}
-          </Badge>
+          {capacity && (
+            <Badge
+              variant="muted"
+              className="gap-1 tabular-nums"
+              title={i18n.t(capacity.texts.demand)}
+            >
+              <capacity.icon className="size-3" />
+              {`${formatAmount(plan.totalDemand)} ${i18n.t(capacity.texts.unit)}`}
+            </Badge>
+          )}
           <Badge variant="muted" className="gap-1">
             <Truck className="size-3" />
             {plan.transporter.numberPlate}

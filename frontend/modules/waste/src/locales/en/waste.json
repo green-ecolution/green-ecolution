@@ -330,5 +330,16 @@
   },
   "roles": {
     "waste_collection": "Waste collection"
+  },
+  "capacity": {
+    "label": "Cargo volume",
+    "vehicleField": "Cargo space",
+    "unit": "liters",
+    "stationAction": "Unload cargo",
+    "demand": "Cargo volume required",
+    "transporter": "Vehicle cargo space",
+    "transporterUnused": "Stays empty, only the trailer is loaded",
+    "transporterUsedFormLabel": "Use the vehicle's cargo space",
+    "transporterUsedHint": "Clear this if only the trailer is loaded. The route then plans with the trailer's capacity alone."
   }
 }

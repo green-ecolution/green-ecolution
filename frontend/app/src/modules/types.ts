@@ -1,8 +1,8 @@
 import type { ComponentType, ReactNode } from 'react'
 import type { QueryClient, QueryKey, UseQueryOptions } from '@tanstack/react-query'
 import type { z } from 'zod'
+import type { ValidationIssue } from '@green-ecolution/domain-wasm'
 import type {
-  CapacityKindDto,
   PlanInListResponse,
   PlanResponse,
   SensorResponse,
@@ -111,7 +111,8 @@ export interface ModulePlanning {
   /** Names every plan on the system info page while it is the only active planning module. */
   plansLabelKey?: I18nKey
   texts?: ModulePlanTexts
-  capacityKind: CapacityKindDto
+  /** Must be one of the module's own `capacities`. */
+  capacityKind: string
   labelKey: I18nKey
   stopsLabelKey: I18nKey
   stopCountLabelKey: I18nKey
@@ -245,6 +246,30 @@ export interface ModuleRoleTemplate {
   icon: ComponentType<{ className?: string }>
 }
 
+/** How a capacity kind is named wherever the core shows it. */
+export interface ModuleCapacityTexts {
+  /** Station badge and screen reader prefix, e.g. "Wasser". */
+  label: I18nKey
+  /** The vehicle's field and sort entry, e.g. "Wassertank". */
+  vehicleField: I18nKey
+  unit: I18nKey
+  /** What a station offers for the kind, e.g. "Wasser auffüllen". */
+  stationAction: I18nKey
+  demand: I18nKey
+  transporter: I18nKey
+  transporterUnused: I18nKey
+  transporterUsedFormLabel: I18nKey
+  transporterUsedHint: I18nKey
+}
+
+export interface ModuleCapacityKind {
+  kind: string
+  icon: ComponentType<{ className?: string }>
+  /** Range check of one amount; the core only checks that it is a number. */
+  validate: (amount: number) => ValidationIssue | null
+  texts: ModuleCapacityTexts
+}
+
 export interface ModuleManifest {
   key: string
   /** Sorts the modules wherever their order shows: error lookup, dashboard texts, chart colors. Ties fall back to the key. */
@@ -265,6 +290,8 @@ export interface ModuleManifest {
   statistics?: Readonly<Record<string, ModuleStatistic>>
   map?: ModuleMap
   planning?: ModulePlanning
+  /** Capacity kinds the module declares in the backend, as vehicles and stations show them. */
+  capacities?: readonly ModuleCapacityKind[]
   targets?: readonly ModuleTarget[]
   settingsSection?: ModuleSettingsSection
   /** Rendered on every sensor's detail page; the module decides itself whether it has something to show. */

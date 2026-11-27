@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id,\n                      archived_at AS \"archived_at: DateTime<chrono::Utc>\",\n                      number_plate,\n                      description,\n                      COALESCE((SELECT jsonb_object_agg(kind, liters)\n                                FROM vehicle_capacities WHERE vehicle_id = vehicles.id),\n                               '{}'::jsonb) AS \"capacities!: Value\",\n                      type AS \"vehicle_type: VehicleType\",\n                      availability AS \"availability: VehicleAvailability\",\n                      model,\n                      driving_license AS \"driving_license: DrivingLicense\",\n                      height, width, length, weight,\n                      provider,\n                      additional_informations AS \"additional_info: Value\",\n                      organization_id\n            FROM vehicles WHERE id = $1",
+  "query": "SELECT id,\n                      archived_at AS \"archived_at: DateTime<chrono::Utc>\",\n                      number_plate,\n                      description,\n                      COALESCE((SELECT jsonb_object_agg(kind, amount)\n                                FROM vehicle_capacities WHERE vehicle_id = vehicles.id),\n                               '{}'::jsonb) AS \"capacities!: Value\",\n                      type AS \"vehicle_type: VehicleType\",\n                      availability AS \"availability: VehicleAvailability\",\n                      model,\n                      driving_license AS \"driving_license: DrivingLicense\",\n                      height, width, length, weight,\n                      provider,\n                      additional_informations AS \"additional_info: Value\",\n                      organization_id\n            FROM vehicles WHERE id = $1",
   "describe": {
     "columns": [
       {
@@ -140,5 +140,5 @@
       false
     ]
   },
-  "hash": "31d775a14c72a930745e3128fd7641ba0ed08a2bda137c26ccbdb1b5357b9472"
+  "hash": "9da0fb26684af1a1af86dd38813793430912ab2acb622fe398cd86dff4a97074"
 }
