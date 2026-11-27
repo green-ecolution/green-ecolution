@@ -429,7 +429,7 @@ update it in the same change.
 Finally, add an integration test per filter and per sort option in
 `backend/crates/app/test/api/`, following the existing naming
 (`vehicle_list_searches_plate_model_and_description`,
-`vehicle_list_filters_by_derived_status`, `vehicle_list_sorts_by_water_capacity_descending`,
+`vehicle_list_filters_by_derived_status`, `vehicle_list_sorts_by_the_capacity_of_one_kind`,
 `vehicle_list_can_include_and_isolate_archived_vehicles`). These are what actually catch a
 wrong column name or a sort direction applied to the wrong expression.
 

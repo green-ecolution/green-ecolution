@@ -296,6 +296,9 @@ pub struct VehicleListParams {
     pub archive: Option<ArchiveParam>,
     #[param(nullable, inline)]
     pub sort: Option<VehicleSortParam>,
+    /// Capacity kind to sort by; required with `sort=capacity`.
+    #[param(nullable)]
+    pub capacity_kind: Option<String>,
     #[param(nullable, inline)]
     pub order: Option<SortOrderParam>,
 }
@@ -322,18 +325,29 @@ impl From<ArchiveParam> for ArchiveFilterKind {
 #[serde(rename_all = "snake_case")]
 pub enum VehicleSortParam {
     NumberPlate,
-    WaterCapacity,
+    /// Needs `capacity_kind`.
+    Capacity,
     Model,
     Type,
 }
 
-impl From<VehicleSortParam> for VehicleSortField {
-    fn from(value: VehicleSortParam) -> Self {
-        match value {
-            VehicleSortParam::NumberPlate => Self::NumberPlate,
-            VehicleSortParam::WaterCapacity => Self::WaterCapacity,
-            VehicleSortParam::Model => Self::Model,
-            VehicleSortParam::Type => Self::Type,
-        }
+impl VehicleSortParam {
+    pub fn into_field(
+        self,
+        capacity_kind: Option<&str>,
+    ) -> Result<VehicleSortField, crate::service::ServiceError> {
+        Ok(match self {
+            Self::NumberPlate => VehicleSortField::NumberPlate,
+            Self::Capacity => {
+                let kind = capacity_kind.ok_or_else(|| {
+                    crate::service::ServiceError::InvalidInput(
+                        "sort=capacity needs capacity_kind".into(),
+                    )
+                })?;
+                VehicleSortField::Capacity(CapacityKind::new(kind)?)
+            }
+            Self::Model => VehicleSortField::Model,
+            Self::Type => VehicleSortField::Type,
+        })
     }
 }

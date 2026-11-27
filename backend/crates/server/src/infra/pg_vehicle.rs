@@ -169,11 +169,6 @@ const VEHICLE_STATUS_SQL: &str = "CASE \
 
 const VEHICLE_SORT_COLUMNS: SortColumns = &[
     ("number_plate", &["v.number_plate"]),
-    (
-        "water_capacity",
-        &["COALESCE((SELECT vc.amount FROM vehicle_capacities vc \
-            WHERE vc.vehicle_id = v.id AND vc.kind = 'water'), 0)"],
-    ),
     ("model", &["v.model"]),
     ("type", &["v.type"]),
 ];
@@ -358,7 +353,8 @@ impl VehicleReader for PgVehicleRepository {
             })
             .collect();
 
-        let page = ListSpec::new("vehicles v", "v.id")
+        let descending = query.sort.direction.is_descending();
+        let spec = ListSpec::new("vehicles v", "v.id")
             .scope(Predicate::equals(
                 "v.provider",
                 query.provider.as_ref().map(|p| p.as_str().to_owned()),
@@ -378,12 +374,20 @@ impl VehicleReader for PgVehicleRepository {
                 query.driving_licenses,
             ))
             .filter(Predicate::equals("v.type", query.vehicle_type))
-            .filter(Predicate::archived("v.archived_at", archive))
-            .sort(
-                query.sort.field.as_sql_key(),
-                query.sort.direction.is_descending(),
-                VEHICLE_SORT_COLUMNS,
-            )
+            .filter(Predicate::archived("v.archived_at", archive));
+        let spec = match &query.sort.field {
+            domain::vehicle::VehicleSortField::Capacity(kind) => spec
+                .sort_by_value(
+                    "COALESCE((SELECT vc.amount FROM vehicle_capacities vc \
+                     WHERE vc.vehicle_id = v.id AND vc.kind = ",
+                    kind.to_string(),
+                    "), 0)",
+                    descending,
+                )
+                .tiebreak("v.number_plate"),
+            field => spec.sort(field.as_sql_key(), descending, VEHICLE_SORT_COLUMNS),
+        };
+        let page = spec
             .page(pagination)
             .fetch::<VehicleViewRow>(&self.pool, VEHICLE_COLUMNS)
             .await?;

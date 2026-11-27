@@ -27,7 +27,7 @@ use domain::{
     Id,
     authorization::{Action, Permission, ResourceKey},
     shared::{pagination::Pagination, sort::SortDirection},
-    vehicle::{ArchiveFilterKind, VehicleSearchQuery, VehicleSort, VehicleSortField},
+    vehicle::{ArchiveFilterKind, VehicleSearchQuery, VehicleSort},
 };
 
 pub fn routes() -> OpenApiRouter<Arc<AppState>> {
@@ -48,7 +48,8 @@ const VEHICLE_LIST_Q_MAX_LEN: usize = 100;
     description = "Returns a paginated list of active vehicles. \
                    Optional `q` parameter case-insensitively filters by number plate, model or description. \
                    Optional filter parameters (status, type, driving_license, archive) narrow the result; array parameters are repeatable. \
-                   Optional `sort` (number_plate, water_capacity, model, type) and `order` (asc, desc) control the result order; the default is number_plate ascending.",
+                   Optional `sort` (number_plate, capacity, model, type) and `order` (asc, desc) control the result order; the default is number_plate ascending. \
+                   `sort=capacity` needs `capacity_kind` and orders by that kind's amount, 0 where a vehicle has none.",
     params(VehicleListParams),
     responses(
         (status = 200, description = "Paginated list of vehicles", body = ListResponse<VehicleResponse>),
@@ -92,7 +93,11 @@ pub async fn list_vehicles(
         .await?;
 
     let sort = VehicleSort {
-        field: params.sort.map(VehicleSortField::from).unwrap_or_default(),
+        field: params
+            .sort
+            .map(|sort| sort.into_field(params.capacity_kind.as_deref()))
+            .transpose()?
+            .unwrap_or_default(),
         direction: params.order.map(SortDirection::from).unwrap_or_default(),
     };
 

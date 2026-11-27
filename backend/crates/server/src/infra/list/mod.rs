@@ -36,6 +36,7 @@ pub struct ListSpec<'a> {
     scope: Vec<Predicate>,
     filters: Vec<Predicate>,
     sort: Option<(&'a str, bool, SortColumns)>,
+    sort_by_value: Option<(&'a str, String, &'a str, bool)>,
     tiebreak: Option<&'a str>,
     pagination: Pagination,
 }
@@ -53,6 +54,7 @@ impl<'a> ListSpec<'a> {
             scope: Vec::new(),
             filters: Vec::new(),
             sort: None,
+            sort_by_value: None,
             tiebreak: None,
             pagination: Pagination::default(),
         }
@@ -96,6 +98,20 @@ impl<'a> ListSpec<'a> {
 
     pub fn sort(mut self, key: &'a str, descending: bool, columns: SortColumns) -> Self {
         self.sort = Some((key, descending, columns));
+        self
+    }
+
+    /// Orders by `before <value> after`, with `value` bound rather than
+    /// spliced in, for a sort that depends on caller input such as a key.
+    /// Takes precedence over `sort`.
+    pub fn sort_by_value(
+        mut self,
+        before: &'a str,
+        value: String,
+        after: &'a str,
+        descending: bool,
+    ) -> Self {
+        self.sort_by_value = Some((before, value, after, descending));
         self
     }
 
@@ -163,7 +179,18 @@ impl<'a> ListSpec<'a> {
         if let Some(group_by) = self.group_by {
             qb.push(" GROUP BY ").push(group_by);
         }
-        if let Some((key, descending, columns)) = self.sort {
+        if let Some((before, value, after, descending)) = &self.sort_by_value {
+            qb.push(" ORDER BY ")
+                .push(*before)
+                .push_bind(value.clone())
+                .push(*after)
+                .push(if *descending { " DESC" } else { " ASC" })
+                .push(" NULLS LAST, ");
+            if let Some(tiebreak) = self.tiebreak {
+                qb.push(tiebreak).push(" ASC, ");
+            }
+            qb.push(self.primary_key).push(" ASC");
+        } else if let Some((key, descending, columns)) = self.sort {
             push_order_by(
                 &mut qb,
                 key,
@@ -282,6 +309,23 @@ mod tests {
         let sql = spec().page_sql("v.id, v.model");
 
         assert!(sql.contains("ORDER BY v.model ASC NULLS LAST, v.id ASC"));
+    }
+
+    #[test]
+    fn a_sort_by_a_bound_value_keeps_the_value_out_of_the_sql() {
+        let sql = ListSpec::new("vehicles v", "v.id")
+            .sort_by_value("f(v.id, ", "x'); DROP TABLE v; --".to_string(), ")", true)
+            .tiebreak("v.number_plate")
+            .page(Pagination::default())
+            .page_sql("v.id");
+
+        assert!(
+            sql.ends_with(
+                "ORDER BY f(v.id, $1) DESC NULLS LAST, v.number_plate ASC, v.id ASC LIMIT $2 OFFSET $3"
+            ),
+            "{sql}"
+        );
+        assert!(!sql.contains("DROP"));
     }
 
     #[test]
