@@ -77,12 +77,6 @@ export interface UserRegisterRequest {
      */
     organizationId: string;
     /**
-     * Password for the new account.
-     * @type {string}
-     * @memberof UserRegisterRequest
-     */
-    password: string;
-    /**
      * Optional contact phone number.
      * @type {string}
      * @memberof UserRegisterRequest
@@ -124,7 +118,6 @@ export function instanceOfUserRegisterRequest(value: object): value is UserRegis
     if (!('firstName' in value) || value['firstName'] === undefined) return false;
     if (!('lastName' in value) || value['lastName'] === undefined) return false;
     if (!('organizationId' in value) || value['organizationId'] === undefined) return false;
-    if (!('password' in value) || value['password'] === undefined) return false;
     if (!('username' in value) || value['username'] === undefined) return false;
     return true;
 }
@@ -146,7 +139,6 @@ export function UserRegisterRequestFromJSONTyped(json: any, ignoreDiscriminator:
         'firstName': json['first_name'],
         'lastName': json['last_name'],
         'organizationId': json['organization_id'],
-        'password': json['password'],
         'phoneNumber': json['phone_number'] == null ? undefined : json['phone_number'],
         'roleIds': json['role_ids'] == null ? undefined : json['role_ids'],
         'status': json['status'] == null ? undefined : UserStatusFromJSON(json['status']),
@@ -173,7 +165,6 @@ export function UserRegisterRequestToJSONTyped(value?: UserRegisterRequest | nul
         'first_name': value['firstName'],
         'last_name': value['lastName'],
         'organization_id': value['organizationId'],
-        'password': value['password'],
         'phone_number': value['phoneNumber'],
         'role_ids': value['roleIds'],
         'status': UserStatusToJSON(value['status']),

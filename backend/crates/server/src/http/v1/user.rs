@@ -3,7 +3,12 @@ use std::{collections::BTreeSet, sync::Arc};
 use crate::http::v1::error::ErrorBody;
 
 use crate::http::extractors::{Json, Path, Query};
-use axum::{extract::State, http::StatusCode};
+use axum::{
+    extract::State,
+    http::{StatusCode, header},
+    response::IntoResponse,
+};
+use secrecy::ExposeSecret;
 use utoipa_axum::{router::OpenApiRouter, routes};
 use uuid::Uuid;
 
@@ -17,7 +22,8 @@ use crate::{
             role::RoleResponse,
             user::{
                 AssignRoleRequest, ReachableOrganizationResponse, SetOrganizationRequest,
-                UserListParams, UserRegisterRequest, UserResponse, UserUpdateRequest,
+                UserListParams, UserRegisterRequest, UserRegisterResponse, UserResponse,
+                UserUpdateRequest,
             },
         },
         v1::scope::resolve_target_org,
@@ -210,15 +216,16 @@ pub async fn list_users(
 #[utoipa::path(post, path = "/users", tag = "Users",
     operation_id = "createUser",
     summary = "Register a new user",
-    description = "Registers a user in the given organization and assigns the requested roles. Requires user:create in the organization, plus each role's permissions must not exceed the caller's own grants.",
+    description = "Registers a user in the given organization, assigns the requested roles and answers with the password the account starts with. The password is temporary: the person has to change it at the first login. It is shown in this response only. Requires user:create in the organization, plus each role's permissions must not exceed the caller's own grants.",
     request_body = UserRegisterRequest,
     responses(
-        (status = 201, description = "User created", body = UserResponse),
+        (status = 201, description = "User created", body = UserRegisterResponse),
         (status = 400, description = "Invalid input", body = ErrorBody),
         (status = 401, description = "Unauthorized", body = ErrorBody),
         (status = 403, description = "Forbidden", body = ErrorBody),
-        (status = 404, description = "Role not found", body = ErrorBody),
-        (status = 409, description = "Role is a template and cannot be assigned (code `conflict.role_template_not_assignable`)", body = ErrorBody),
+        (status = 404, description = "Organization or role not found", body = ErrorBody),
+        (status = 409, description = "Role is a template and cannot be assigned (code `conflict.role_template_not_assignable`), or the username or e-mail address is taken (code `user.identity_taken`)", body = ErrorBody),
+        (status = 422, description = "Role belongs to another organization (code `organization_mismatch.role_vs_user`)", body = ErrorBody),
         (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
@@ -227,8 +234,9 @@ pub async fn create_user(
     State(state): State<Arc<AppState>>,
     user: AuthUserExtractor,
     Json(req): Json<UserRegisterRequest>,
-) -> Result<(StatusCode, Json<UserResponse>), ServiceError> {
+) -> Result<impl IntoResponse, ServiceError> {
     let entity: DomainUserCreate = req.try_into()?;
+    let organization_id = entity.organization_id;
     state
         .authorization_service
         .require(
@@ -251,7 +259,20 @@ pub async fn create_user(
         }
     }
     let created = state.user_service.register(entity).await?;
-    Ok((StatusCode::CREATED, Json((&created).into())))
+    tracing::info!(
+        actor.id = %user.id,
+        user.id = %created.user.id,
+        organization.id = %organization_id,
+        "user registered"
+    );
+    Ok((
+        StatusCode::CREATED,
+        [(header::CACHE_CONTROL, "no-store")],
+        Json(UserRegisterResponse {
+            user: (&created.user).into(),
+            initial_password: created.initial_password.expose_secret().to_owned(),
+        }),
+    ))
 }
 
 #[utoipa::path(put, path = "/users/{user_id}", tag = "Users",

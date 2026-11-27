@@ -1,4 +1,5 @@
 pub mod health;
+pub mod initial_password;
 pub mod keycloak;
 pub mod list;
 pub mod mqtt;

@@ -86,10 +86,10 @@ const permissionFor = (resource: Resource, action: Action): Permission => `${res
 
 /**
  * Composing "{resource} {verb}" from the four generic action verbs is lossless
- * for 34 of the 36 cells, but two lose a real distinction the generic verb
- * can't carry: inviting a person is not creating one, and removing their
- * access is not deleting them. These two literal overrides take priority
- * over the composed form; everything else still composes — including
+ * except for one cell: removing a person's access is not deleting them, so
+ * `user:delete` takes a literal override. `user:create` has one too, but since
+ * the permission creates the person's account its override reads exactly like
+ * the composed form. Overrides take priority; everything else composes — including
  * a plan resource's create, where the composed "Einsatzplan anlegen" already says
  * everything "planen" would have: the specificity in the old "Einsatz planen"
  * lived in the noun ("Einsatz" denoted the activity itself), and once the

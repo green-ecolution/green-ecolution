@@ -1,4 +1,3 @@
-use secrecy::SecretString;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -7,7 +6,7 @@ use domain::{
     Id,
     organization::Organization,
     role::Role,
-    shared::{email::Email, phone_number::PhoneNumber},
+    shared::{email::Email, error::ValidationError, phone_number::PhoneNumber},
     user::{
         UserCreate as DomainUserCreate, UserProfile as DomainUserProfile,
         UserStatus as DomainUserStatus, UserView as DomainUserView, Username,
@@ -87,7 +86,6 @@ pub struct UserResponse {
     "first_name": "John",
     "last_name": "Doe",
     "email": "john.doe@tbz-flensburg.de",
-    "password": "s3cur3P@ss!",
     "organization_id": "01980000-0000-7000-8000-000000000001",
     "role_ids": [],
     "employee_id": "EMP-042",
@@ -110,9 +108,6 @@ pub struct UserRegisterRequest {
     /// Email address.
     #[schema(example = "john.doe@tbz-flensburg.de")]
     pub email: String,
-    /// Password for the new account.
-    #[schema(example = "s3cur3P@ss!")]
-    pub password: String,
     /// Organization the new user belongs to.
     pub organization_id: Uuid,
     /// Roles to assign to the user (must be org-owned, not templates).
@@ -141,6 +136,15 @@ pub struct UserRegisterRequest {
     #[serde(default)]
     #[schema(example = true, nullable)]
     pub watering_plan_selectable: Option<bool>,
+}
+
+/// A registered user together with the password the account starts with.
+#[derive(Serialize, utoipa::ToSchema)]
+pub struct UserRegisterResponse {
+    pub user: UserResponse,
+    /// Shown exactly once. The person has to change it at the first login.
+    #[schema(example = "Kf7mQ-x2pTz-9wHb4-nRd6s")]
+    pub initial_password: String,
 }
 
 /// Request body for replacing a user's profile data.
@@ -326,11 +330,32 @@ pub struct ClientTokenResponse {
     pub scope: String,
 }
 
+/// The identity provider refuses longer names with a bare 400.
+const NAME_MAX_CHARS: usize = 255;
+
+fn person_name(value: String, field: &'static str) -> Result<String, ValidationError> {
+    let trimmed = value.trim();
+    let len = trimmed.chars().count();
+    if len == 0 {
+        return Err(ValidationError::EmptyString { field });
+    }
+    if len > NAME_MAX_CHARS {
+        return Err(ValidationError::TooLong {
+            field,
+            max: NAME_MAX_CHARS,
+            got: len,
+        });
+    }
+    Ok(trimmed.to_owned())
+}
+
 impl TryFrom<UserRegisterRequest> for DomainUserCreate {
     type Error = ServiceError;
 
     fn try_from(value: UserRegisterRequest) -> Result<Self, Self::Error> {
         let username = Username::new(value.username)?;
+        let first_name = person_name(value.first_name, "user.first_name")?;
+        let last_name = person_name(value.last_name, "user.last_name")?;
         let email = Email::new(value.email)?;
         let role_ids: Vec<Id<Role>> = value.role_ids.into_iter().map(Id::new).collect();
         let avatar_url = value
@@ -348,10 +373,9 @@ impl TryFrom<UserRegisterRequest> for DomainUserCreate {
 
         Ok(Self {
             username,
-            first_name: value.first_name,
-            last_name: value.last_name,
+            first_name,
+            last_name,
             email,
-            password: SecretString::from(value.password),
             organization_id: Id::<Organization>::new(value.organization_id),
             role_ids,
             employee_id: value.employee_id.filter(|s| !s.is_empty()),
@@ -380,6 +404,71 @@ mod tests {
             driving_licenses: Vec::new(),
             watering_plan_selectable,
         }
+    }
+
+    fn register_request(first_name: &str, last_name: &str) -> UserRegisterRequest {
+        UserRegisterRequest {
+            username: "mmustermann".into(),
+            first_name: first_name.into(),
+            last_name: last_name.into(),
+            email: "max@example.com".into(),
+            organization_id: Uuid::now_v7(),
+            role_ids: Vec::new(),
+            employee_id: None,
+            phone_number: None,
+            avatar_url: None,
+            status: None,
+            driving_licenses: Vec::new(),
+            watering_plan_selectable: None,
+        }
+    }
+
+    #[test]
+    fn a_blank_name_is_refused_and_a_padded_one_trimmed() {
+        let blank = DomainUserCreate::try_from(register_request("  ", "Mustermann"));
+        assert!(matches!(
+            blank,
+            Err(ServiceError::Validation(ValidationError::EmptyString {
+                field: "user.first_name"
+            }))
+        ));
+        let blank = DomainUserCreate::try_from(register_request("Max", ""));
+        assert!(matches!(
+            blank,
+            Err(ServiceError::Validation(ValidationError::EmptyString {
+                field: "user.last_name"
+            }))
+        ));
+        let padded = DomainUserCreate::try_from(register_request(" Max ", "Mustermann")).unwrap();
+        assert_eq!(padded.first_name, "Max");
+    }
+
+    #[test]
+    fn a_name_beyond_255_characters_is_refused() {
+        let longest = "ä".repeat(255);
+        let accepted =
+            DomainUserCreate::try_from(register_request(&format!(" {longest} "), "Mustermann"))
+                .unwrap();
+        assert_eq!(accepted.first_name, longest);
+
+        let too_long = DomainUserCreate::try_from(register_request(&"a".repeat(256), "Mustermann"));
+        assert!(matches!(
+            too_long,
+            Err(ServiceError::Validation(ValidationError::TooLong {
+                field: "user.first_name",
+                max: 255,
+                got: 256,
+            }))
+        ));
+        let too_long = DomainUserCreate::try_from(register_request("Max", &"b".repeat(300)));
+        assert!(matches!(
+            too_long,
+            Err(ServiceError::Validation(ValidationError::TooLong {
+                field: "user.last_name",
+                max: 255,
+                got: 300,
+            }))
+        ));
     }
 
     #[test]

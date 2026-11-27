@@ -229,6 +229,10 @@ export {
 } from './components/ui/link-card'
 export type { LinkCardProps, LinkCardFooterProps } from './components/ui/link-card'
 
+// EmptyState
+export { EmptyState } from './components/ui/empty-state'
+export type { EmptyStateProps, EmptyStateBenefit } from './components/ui/empty-state'
+
 // ListCard
 export {
   ListCard,

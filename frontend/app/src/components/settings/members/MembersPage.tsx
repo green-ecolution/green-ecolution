@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useBlocker } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
+import { Plus } from 'lucide-react'
 import type { TFunction } from 'i18next'
 import {
   AlertDialog,
@@ -24,9 +25,12 @@ import { useUserMutations } from '@/hooks/useUserMutations'
 import { useContainerWiderThan } from '@/hooks/useContainerWiderThan'
 import { TWO_PANE_MIN_WIDTH } from '../twoPaneWidth'
 import { statusOf } from '@/lib/httpError'
+import { readAuthBypass } from '@/lib/auth/runtimeConfig'
+import AddMemberDialog from './AddMemberDialog'
 import MemberActionButtons from './MemberActionButtons'
 import MemberDetail from './MemberDetail'
 import MemberList from './MemberList'
+import MembersEmptyState from './MembersEmptyState'
 import { buildTree, flatten } from '../organization/organizationTree'
 import { useSettingsOrganization } from '../organization/useSettingsOrganization'
 import { fullNameOf, isFiltered, phoneNumberIssue } from './memberList'
@@ -68,6 +72,7 @@ const MembersPage = () => {
   const canUpdate = can(['user:update'])
   const canReadRoles = can(['role:read'])
   const canReadOrganizations = can(['organization:read'])
+  const canCreate = can(['user:create']) && !readAuthBypass()
   const { ref: layoutRef, isWide } = useContainerWiderThan<HTMLDivElement>(TWO_PANE_MIN_WIDTH)
 
   const [search, setSearch] = useState('')
@@ -81,6 +86,8 @@ const MembersPage = () => {
   const [pendingSelection, setPendingSelection] = useState<string | null>(null)
   const [pendingClose, setPendingClose] = useState(false)
   const [confirmOrgChange, setConfirmOrgChange] = useState<string | null>(null)
+  const [addOpen, setAddOpen] = useState(false)
+  const [addBusy, setAddBusy] = useState(false)
 
   useEffect(() => {
     const timeout = setTimeout(() => setDebouncedSearch(search.trim()), SEARCH_DEBOUNCE_MS)
@@ -89,7 +96,11 @@ const MembersPage = () => {
 
   const { data: me } = useQuery(userQueries.me())
 
-  const { data: userPage, isLoading: usersLoading } = useQuery(
+  const {
+    data: userPage,
+    isLoading: usersLoading,
+    isFetching: usersFetching,
+  } = useQuery(
     userQueries.list({
       page,
       perPage: PER_PAGE,
@@ -123,14 +134,20 @@ const MembersPage = () => {
     enabled: canReadRoles,
   })
 
+  const { data: ownOrgRoles } = useQuery({
+    ...roleQueries.org(orgId),
+    enabled: canReadRoles,
+  })
+
   const { assignRole, revokeRole, setOrganization, updateProfile } = useUserMutations()
   const draftState = useMemberProfileDraft()
   const { draft, dirty, edit, discard } = draftState
 
+  // Leaving while a person is being added loses the one-time password as well.
   const blocker = useBlocker({
-    shouldBlockFn: () => dirty,
+    shouldBlockFn: () => dirty || addBusy,
     // Also gates the browser's own unload prompt; see useFormNavigationBlocker.
-    enableBeforeUnload: () => dirty,
+    enableBeforeUnload: () => dirty || addBusy,
     withResolver: true,
   })
 
@@ -155,6 +172,16 @@ const MembersPage = () => {
   const organizationList = buildOrganizationRows(visibleOrganizations).flatMap(
     (row) => visibleOrganizations.find((org) => org.id === row.id) ?? [],
   )
+  const ownOrganizationName = visibleOrganizations.find((org) => org.id === orgId)?.name ?? ''
+  const nobodyElseListed =
+    !usersLoading &&
+    userPage !== undefined &&
+    includeDescendants &&
+    page === 1 &&
+    !filtered &&
+    !isFiltered(debouncedSearch, roleFilter) &&
+    members.every((user) => user.id === me?.id)
+  const ownListing = members.find((user) => user.id === me?.id)
   const isSelf = selected !== null && selected.id === me?.id
 
   useEffect(() => {
@@ -183,10 +210,12 @@ const MembersPage = () => {
     // A selection that vanished from an unfiltered list is gone for good (paged
     // away or deleted), so drop it and let the auto-selection take over. With a
     // filter active the selection is only hidden, and the pane offers a reset.
-    if (selectedId === null || selected !== null || usersLoading || filtered) return
+    // Settled data only: a just-added person is missing from the cached page until the refetch lands.
+    if (selectedId === null || selected !== null || usersLoading || usersFetching || filtered)
+      return
     // eslint-disable-next-line react-hooks/set-state-in-effect, react-x/set-state-in-effect -- drops a selection the refreshed list no longer contains
     setSelectedId(null)
-  }, [selectedId, selected, usersLoading, filtered])
+  }, [selectedId, selected, usersLoading, usersFetching, filtered])
 
   const goTo = (userId: string) => {
     setSelectedId(userId)
@@ -248,6 +277,15 @@ const MembersPage = () => {
   const changeRoleFilter = (roleId: string | null) => {
     setRoleFilter(roleId)
     setPage(1)
+  }
+
+  const selectCreated = (user: UserResponse) => {
+    setSearch('')
+    setDebouncedSearch('')
+    setRoleFilter(null)
+    setPage(1)
+    if (dirty) setPendingSelection(user.id)
+    else goTo(user.id)
   }
 
   const resetFilters = () => {
@@ -382,45 +420,84 @@ const MembersPage = () => {
   const targetOrganization = organizationList.find((org) => org.id === confirmOrgChange) ?? null
   const sourceOrganizationName = selected?.organization?.name ?? null
 
+  const detailDrawer = (
+    <Drawer open={detailOpen} onOpenChange={requestClose}>
+      <DrawerContent className="max-h-[90vh]">
+        {/* Content scrolls in its own region; the actions live in a fixed
+        footer below so they stay anchored to the drawer bottom. */}
+        <div className="min-h-0 flex-1 overflow-y-auto p-4">{renderDetail(false)}</div>
+        {draft && dirty && canUpdate && (
+          <DrawerFooter className="flex-col-reverse gap-2 border-t border-dark-200 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
+            <MemberActionButtons
+              saving={updateProfile.isPending}
+              phoneNumberInvalid={phoneNumberIssue(draft.phoneNumber) !== null}
+              onSave={save}
+              onCancel={resetDraft}
+            />
+          </DrawerFooter>
+        )}
+      </DrawerContent>
+    </Drawer>
+  )
+
+  const addButton = (
+    <Button type="button" size="sm" onClick={() => setAddOpen(true)}>
+      <Plus className="size-4" aria-hidden />
+      {t('members.add.button')}
+    </Button>
+  )
+
   return (
     <>
-      {/* Measured, not the branch content, so the ResizeObserver keeps observing
+      {nobodyElseListed ? (
+        <div className="flex flex-col gap-6">
+          <h2 className="font-lato text-2xl font-bold text-dark">{t('nav.members')}</h2>
+          <MembersEmptyState
+            organizationName={ownOrganizationName}
+            variant={ownListing ? 'onlyMe' : 'none'}
+            viewerName={me ? fullNameOf(me) : null}
+            onAdd={canCreate ? () => setAddOpen(true) : undefined}
+            onEditOwnProfile={ownListing ? () => select(ownListing) : undefined}
+          />
+          {/* The own profile opens in the Drawer at every width: there is no list beside it. */}
+          {detailDrawer}
+        </div>
+      ) : (
+        <>
+          {canCreate && <div className="mb-4 flex justify-end">{addButton}</div>}
+          {/* Measured, not the branch content, so the ResizeObserver keeps observing
           across the two-pane <-> Drawer switch instead of losing its element. */}
-      <div ref={layoutRef}>
-        {isWide ? (
-          <div className="grid grid-cols-[300px_minmax(0,1fr)] gap-6">
-            {list}
-            {/* --member-panel-bg lets the sticky action bar blend into its surface. */}
-            <div
-              className="min-w-0"
-              style={{ '--member-panel-bg': 'var(--color-dark-50)' } as CSSProperties}
-            >
-              {renderDetail(true)}
-            </div>
+          <div ref={layoutRef}>
+            {isWide ? (
+              <div className="grid grid-cols-[300px_minmax(0,1fr)] gap-6">
+                {list}
+                {/* --member-panel-bg lets the sticky action bar blend into its surface. */}
+                <div
+                  className="min-w-0"
+                  style={{ '--member-panel-bg': 'var(--color-dark-50)' } as CSSProperties}
+                >
+                  {renderDetail(true)}
+                </div>
+              </div>
+            ) : (
+              <>
+                {list}
+                {detailDrawer}
+              </>
+            )}
           </div>
-        ) : (
-          <>
-            {list}
-            <Drawer open={detailOpen} onOpenChange={requestClose}>
-              <DrawerContent className="max-h-[90vh]">
-                {/* Content scrolls in its own region; the actions live in a fixed
-                    footer below so they stay anchored to the drawer bottom. */}
-                <div className="min-h-0 flex-1 overflow-y-auto p-4">{renderDetail(false)}</div>
-                {draft && dirty && canUpdate && (
-                  <DrawerFooter className="flex-col-reverse gap-2 border-t border-dark-200 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
-                    <MemberActionButtons
-                      saving={updateProfile.isPending}
-                      phoneNumberInvalid={phoneNumberIssue(draft.phoneNumber) !== null}
-                      onSave={save}
-                      onCancel={resetDraft}
-                    />
-                  </DrawerFooter>
-                )}
-              </DrawerContent>
-            </Drawer>
-          </>
-        )}
-      </div>
+        </>
+      )}
+
+      <AddMemberDialog
+        open={addOpen}
+        organizationId={orgId}
+        organizationName={ownOrganizationName}
+        roles={canReadRoles ? (ownOrgRoles ?? []) : null}
+        onOpenChange={setAddOpen}
+        onCreated={selectCreated}
+        onBusyChange={setAddBusy}
+      />
 
       <AlertDialog
         open={confirmOrgChange !== null}
@@ -482,7 +559,9 @@ const MembersPage = () => {
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>{t('common:dialog.unsavedChanges.title')}</AlertDialogTitle>
-              <AlertDialogDescription>{t('members.leaveDescription')}</AlertDialogDescription>
+              <AlertDialogDescription>
+                {t(addBusy ? 'members.add.leaveDescription' : 'members.leaveDescription')}
+              </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel onClick={() => blocker.reset?.()}>

@@ -156,6 +156,7 @@ export * from './TreeUpdateRequest';
 export * from './TreeWithDistanceResponse';
 export * from './UpdateCommentRequest';
 export * from './UserRegisterRequest';
+export * from './UserRegisterResponse';
 export * from './UserResponse';
 export * from './UserStatus';
 export * from './UserUpdateRequest';

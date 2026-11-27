@@ -175,6 +175,7 @@ models/TreeUpdateRequest.ts
 models/TreeWithDistanceResponse.ts
 models/UpdateCommentRequest.ts
 models/UserRegisterRequest.ts
+models/UserRegisterResponse.ts
 models/UserResponse.ts
 models/UserStatus.ts
 models/UserUpdateRequest.ts

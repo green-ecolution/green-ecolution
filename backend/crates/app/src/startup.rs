@@ -180,6 +180,7 @@ impl Application {
             repos.role_writer.clone(),
             repos.organization_reader.clone(),
             repos.organization_writer.clone(),
+            Arc::new(server::infra::initial_password::RandomInitialPassword),
             settings.auth.enabled,
         ));
         let event_bus = Arc::new(server::service::event_bus::DeferredEventBus::new());

@@ -24,7 +24,11 @@ const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
           className={cn(hideLabel && 'sr-only', error && 'text-destructive')}
         >
           {label}
-          {props.required && <span className="text-destructive ml-1">*</span>}
+          {props.required && (
+            <span aria-hidden="true" className="text-destructive ml-1">
+              *
+            </span>
+          )}
         </Label>
         <Input
           ref={ref}
@@ -83,7 +87,11 @@ const TextareaField = React.forwardRef<HTMLTextAreaElement, TextareaFieldProps>(
           className={cn(hideLabel && 'sr-only', error && 'text-destructive')}
         >
           {label}
-          {props.required && <span className="text-destructive ml-1">*</span>}
+          {props.required && (
+            <span aria-hidden="true" className="text-destructive ml-1">
+              *
+            </span>
+          )}
         </Label>
         <Textarea
           ref={ref}

@@ -373,6 +373,49 @@
       "organizationChangeFailed": "The organization could not be changed.",
       "profileSaved": "Saved",
       "profileSaveFailed": "The profile could not be saved."
+    },
+    "add": {
+      "button": "Add person",
+      "title": "Add person",
+      "description": "The person gets their own account in {name}.",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "email": "Email address",
+      "username": "Username",
+      "usernameHint": "This is what the person signs in with.",
+      "roles": "Roles",
+      "rolesHint": "You can also assign roles later.",
+      "submit": "Create person",
+      "firstNameRequired": "Enter a first name.",
+      "lastNameRequired": "Enter a last name.",
+      "identityTaken": "The username or email address is already taken.",
+      "failed": "The person could not be created.",
+      "createdTitle": "{name} has been created",
+      "passwordLabel": "Initial password",
+      "passwordHint": "Hand the initial password over in person. It is only shown now, and the person has to change it at the first sign-in.",
+      "done": "Done",
+      "leaveDescription": "The new person's initial password is only shown in this window. If you leave the page now, it cannot be shown again."
+    },
+    "empty": {
+      "titleOnlyMe": "Nobody but you is in {name} yet",
+      "titleNone": "Nobody is in {name} yet",
+      "description": "Members are everyone who works with Green Ecolution for {name}, for example planning operations, working in the field or driving a vehicle.",
+      "exampleCaption": "What it could look like",
+      "exampleLabel": "Example: you and two more people with the roles Planning and Observer",
+      "exampleLabelNone": "Example: two people with the roles Planning and Observer",
+      "exampleYou": "You",
+      "examplePerson": "New person",
+      "exampleRoleFirst": "Planning",
+      "exampleRoleSecond": "Observer",
+      "benefitsTitle": "What you can do with members",
+      "accessTitle": "Own access",
+      "accessText": "Everyone signs in with their own account.",
+      "rolesTitle": "Assign roles",
+      "rolesText": "A role defines what someone may see and change.",
+      "plansTitle": "Assign to operations",
+      "plansText": "Availability and driving license classes show who can be assigned to an operation plan.",
+      "note": "Good to know: A person always belongs to one organization. You can move them to another one later.",
+      "ownProfile": "Edit your own profile"
     }
   },
   "organization": {
@@ -457,7 +500,23 @@
       "membersWithDirect": "{total}, {direct} of them directly",
       "noContact": "Not set",
       "noModules": "None",
-      "contactUnresolved": "Name not available"
+      "contactUnresolved": "Name not available",
+      "empty": {
+        "title": "{name} has no sub-organizations yet",
+        "description": "A sub-organization is a separate area within {name}, for example a depot, a department or a contracted company.",
+        "exampleCaption": "What it could look like",
+        "exampleLabel": "Example: {name} with the sub-organizations Depot and Contracted company",
+        "exampleFirst": "Depot",
+        "exampleSecond": "Contracted company",
+        "benefitsTitle": "What sub-organizations are for",
+        "teamTitle": "Its own team",
+        "teamText": "Each sub-organization has its own members and its own roles.",
+        "dataTitle": "Separate data",
+        "dataText": "Its members only see what belongs to their own sub-organization, for example vehicles, sensors and operation plans.",
+        "overviewTitle": "Everything in view",
+        "overviewText": "{name} keeps the overview. With the right permissions you still see everything from all sub-organizations.",
+        "note": "Good to know: A sub-organization can be renamed later, but not moved. It can only be deleted while it has no members and no sub-organizations of its own."
+      }
     },
     "overview": {
       "mapViewTitle": "Map view",
@@ -596,12 +655,12 @@
         "description": "Accounts & assignment",
         "hint": {
           "read": "View members and their roles",
-          "create": "Invite new members",
+          "create": "Create new members",
           "update": "Change master data and role assignment",
           "delete": "Revoke access"
         },
         "actionOverrides": {
-          "create": "Invite members",
+          "create": "Create members",
           "delete": "Remove members"
         }
       },

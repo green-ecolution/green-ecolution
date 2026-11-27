@@ -8626,7 +8626,7 @@
           "Users"
         ],
         "summary": "Register a new user",
-        "description": "Registers a user in the given organization and assigns the requested roles. Requires user:create in the organization, plus each role's permissions must not exceed the caller's own grants.",
+        "description": "Registers a user in the given organization, assigns the requested roles and answers with the password the account starts with. The password is temporary: the person has to change it at the first login. It is shown in this response only. Requires user:create in the organization, plus each role's permissions must not exceed the caller's own grants.",
         "operationId": "createUser",
         "requestBody": {
           "content": {
@@ -8644,7 +8644,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserResponse"
+                  "$ref": "#/components/schemas/UserRegisterResponse"
                 }
               }
             }
@@ -8680,7 +8680,7 @@
             }
           },
           "404": {
-            "description": "Role not found",
+            "description": "Organization or role not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -8690,7 +8690,17 @@
             }
           },
           "409": {
-            "description": "Role is a template and cannot be assigned (code `conflict.role_template_not_assignable`)",
+            "description": "Role is a template and cannot be assigned (code `conflict.role_template_not_assignable`), or the username or e-mail address is taken (code `user.identity_taken`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Role belongs to another organization (code `organization_mismatch.role_vs_user`)",
             "content": {
               "application/json": {
                 "schema": {
@@ -16607,7 +16617,6 @@
           "first_name",
           "last_name",
           "email",
-          "password",
           "organization_id"
         ],
         "properties": {
@@ -16653,11 +16662,6 @@
             "type": "string",
             "format": "uuid",
             "description": "Organization the new user belongs to."
-          },
-          "password": {
-            "type": "string",
-            "description": "Password for the new account.",
-            "example": "s3cur3P@ss!"
           },
           "phone_number": {
             "type": [
@@ -16710,12 +16714,29 @@
           "first_name": "John",
           "last_name": "Doe",
           "organization_id": "01980000-0000-7000-8000-000000000001",
-          "password": "s3cur3P@ss!",
           "phone_number": "+49 461 123456",
           "role_ids": [],
           "status": "available",
           "username": "jdoe",
           "watering_plan_selectable": true
+        }
+      },
+      "UserRegisterResponse": {
+        "type": "object",
+        "description": "A registered user together with the password the account starts with.",
+        "required": [
+          "user",
+          "initial_password"
+        ],
+        "properties": {
+          "initial_password": {
+            "type": "string",
+            "description": "Shown exactly once. The person has to change it at the first login.",
+            "example": "Kf7mQ-x2pTz-9wHb4-nRd6s"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserResponse"
+          }
         }
       },
       "UserResponse": {

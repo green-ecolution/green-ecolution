@@ -7,8 +7,9 @@ const assignUserRole = vi.fn()
 const revokeUserRole = vi.fn()
 const setUserOrganization = vi.fn()
 const updateUser = vi.fn()
+const createUser = vi.fn()
 vi.mock('@/api/backendApi', () => ({
-  userApi: { assignUserRole, revokeUserRole, setUserOrganization, updateUser },
+  userApi: { assignUserRole, revokeUserRole, setUserOrganization, updateUser, createUser },
 }))
 
 const showToast = vi.fn()
@@ -44,6 +45,27 @@ describe('useUserMutations', () => {
       assignRoleRequest: { roleId: 'r-1' },
     })
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['users'] })
+  })
+
+  it('refreshes the list and the member counts after adding a person', async () => {
+    createUser.mockResolvedValue({
+      user: { id: 'u-2' },
+      initialPassword: 'Abcde-fghjk-23456-mnpqr',
+    })
+    const { result, invalidate } = setup()
+
+    result.current.createUser.mutate({
+      organizationId: 'o-1',
+      firstName: 'Max',
+      lastName: 'Mustermann',
+      email: 'max@example.com',
+      username: 'mmustermann',
+      roleIds: [],
+    })
+
+    await waitFor(() => expect(result.current.createUser.isSuccess).toBe(true))
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['users'] })
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['organizations'] })
   })
 
   it('does not toast a 403, because it belongs at the role picker', async () => {

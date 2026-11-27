@@ -137,6 +137,17 @@ Eingabe, sondern an einer Bedingung, die das Formular an anderer Stelle erklärt
 Einsatzplan etwa an einer fehlenden Führerscheinklasse der ausgewählten Person, siehe
 [Einsatz anlegen](./watering-plans.md#einsatz-anlegen).
 
+## Eine Person lässt sich nicht hinzufügen
+
+Beim Hinzufügen einer Person meldet der Dialog, der Benutzername oder die E-Mail-Adresse
+sei bereits vergeben, obwohl die Person nicht in der Liste der Mitarbeitenden steht. Das
+kann passieren, wenn ein früherer Versuch unterbrochen wurde: Das Konto existiert dann
+bereits im Anmeldedienst, ohne in der Liste aufzutauchen. Die Anwendung kann ein solches
+Konto weder anzeigen noch entfernen. Wende dich an den Betreiber der Instanz, der es im
+Anmeldedienst zurücksetzt oder entfernt; dasselbe gilt für ein verloren gegangenes
+Startpasswort. Mehr dazu steht unter
+[Eine Person hinzufügen](./settings-team.md#eine-person-hinzufugen).
+
 ## Eine Route lässt sich nicht berechnen
 
 Nach dem Speichern eines Einsatzplans bleibt der Reiter **Route** aus, und die

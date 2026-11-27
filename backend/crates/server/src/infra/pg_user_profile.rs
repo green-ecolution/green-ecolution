@@ -151,4 +151,12 @@ impl UserProfileWriter for PgUserProfileRepository {
         .await?;
         Ok(())
     }
+
+    #[tracing::instrument(level = "trace", skip_all)]
+    async fn delete(&self, id: Uuid) -> Result<(), RepositoryError> {
+        sqlx::query!("DELETE FROM user_profiles WHERE id = $1", id)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
 }

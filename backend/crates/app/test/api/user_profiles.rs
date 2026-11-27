@@ -85,3 +85,43 @@ async fn fresh_profile_row_is_selectable_for_watering_plans() {
     let loaded = repo.by_ids(&[id]).await.unwrap();
     assert!(loaded[0].watering_plan_selectable);
 }
+
+#[tokio::test]
+async fn deleting_a_profile_removes_its_role_assignments() {
+    let app = spawn_app().await;
+    let repo = PgUserProfileRepository::new(app.db_pool.clone());
+    let id = Uuid::now_v7();
+    seed_profile_row(&repo, id).await;
+    let role_id = Uuid::now_v7();
+    sqlx::query(
+        "INSERT INTO roles (id, organization_id, name, permissions) VALUES ($1, $2, $3, '{}')",
+    )
+    .bind(role_id)
+    .bind(Uuid::parse_str(ROOT_ORG).unwrap())
+    .bind(format!("Rolle {role_id}"))
+    .execute(&app.db_pool)
+    .await
+    .unwrap();
+    sqlx::query("INSERT INTO role_assignments (user_id, role_id) VALUES ($1, $2)")
+        .bind(id)
+        .bind(role_id)
+        .execute(&app.db_pool)
+        .await
+        .unwrap();
+
+    repo.delete(id).await.unwrap();
+
+    let profiles: i64 = sqlx::query_scalar("SELECT count(*) FROM user_profiles WHERE id = $1")
+        .bind(id)
+        .fetch_one(&app.db_pool)
+        .await
+        .unwrap();
+    let assignments: i64 =
+        sqlx::query_scalar("SELECT count(*) FROM role_assignments WHERE user_id = $1")
+            .bind(id)
+            .fetch_one(&app.db_pool)
+            .await
+            .unwrap();
+    assert_eq!(profiles, 0);
+    assert_eq!(assignments, 0);
+}

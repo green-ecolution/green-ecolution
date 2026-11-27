@@ -181,7 +181,16 @@
       "invalidFormat": "E-Mail-Adresse ist ungültig."
     },
     "username": {
-      "empty": "Benutzername ist erforderlich."
+      "empty": "Benutzername ist erforderlich.",
+      "tooLong": "Benutzername darf maximal {max} Zeichen lang sein."
+    },
+    "first_name": {
+      "empty": "Vorname ist erforderlich.",
+      "tooLong": "Vorname darf maximal {max} Zeichen lang sein."
+    },
+    "last_name": {
+      "empty": "Nachname ist erforderlich.",
+      "tooLong": "Nachname darf maximal {max} Zeichen lang sein."
     },
     "phone_number": {
       "empty": "Telefonnummer ist erforderlich.",
