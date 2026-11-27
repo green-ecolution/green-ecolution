@@ -37,7 +37,7 @@ crate::newtype_nonempty! {
 
 crate::newtype_nonempty! {
     /// Identifies which delivered template a role descends from, e.g.
-    /// `tree_care`. Present only while name and description are still the ones
+    /// `observer`. Present only while name and description are still the ones
     /// that shipped, which is what lets a client translate them.
     RoleTemplateKey, "role.template_key", 1, 64
 }

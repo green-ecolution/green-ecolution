@@ -3,7 +3,7 @@ slug: watering-plans
 title: Einsatzpläne
 part: planning
 summary: Das Board verstehen, einen Einsatz anlegen und seine Route festlegen, und wie ein Einsatzplan seinen Zustandsablauf bis zur Auswertung durchläuft.
-routes: ['/plans', '/plans/$wateringPlanId', '/plans/new', '/map/watering-plan/select/cluster']
+routes: ['/plans', '/plans/$planId', '/plans/new', '/map/watering-plan/select/cluster']
 ---
 
 ## Das Board verstehen

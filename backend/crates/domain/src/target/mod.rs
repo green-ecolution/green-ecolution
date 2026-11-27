@@ -1,4 +1,4 @@
-//! References from the core to objects a module owns, such as a waste bin. The core never interprets the id; it asks the owning module's
+//! References from the core to objects a module owns. The core never interprets the id; it asks the owning module's
 //! catalog.
 
 use std::{collections::HashMap, fmt};

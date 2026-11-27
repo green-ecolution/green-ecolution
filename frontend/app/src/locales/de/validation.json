@@ -1,20 +1,4 @@
 {
-  "tree": {
-    "species": {
-      "empty": "Art ist erforderlich.",
-      "tooShort": "Art muss mindestens {min} Zeichen lang sein.",
-      "tooLong": "Art darf maximal {max} Zeichen lang sein."
-    },
-    "number": {
-      "empty": "Baumnummer ist erforderlich.",
-      "tooShort": "Baumnummer muss mindestens {min} Zeichen lang sein.",
-      "tooLong": "Baumnummer darf maximal {max} Zeichen lang sein."
-    },
-    "planting_year": {
-      "outOfRange": "Pflanzjahr muss zwischen {min} und {max} liegen.",
-      "invalidFormat": "Pflanzjahr muss eine ganze Zahl sein."
-    }
-  },
   "coordinate": {
     "latitude": {
       "outOfRange": "Breitengrad muss zwischen {min} und {max} liegen (war {got}).",
@@ -23,21 +7,6 @@
     "longitude": {
       "outOfRange": "Längengrad muss zwischen {min} und {max} liegen (war {got}).",
       "invalidFormat": "Längengrad muss eine Zahl sein."
-    }
-  },
-  "cluster": {
-    "name": {
-      "empty": "Name ist erforderlich.",
-      "tooShort": "Name muss mindestens {min} Zeichen lang sein.",
-      "tooLong": "Name darf maximal {max} Zeichen lang sein."
-    },
-    "address": {
-      "empty": "Adresse ist erforderlich.",
-      "tooShort": "Adresse muss mindestens {min} Zeichen lang sein.",
-      "tooLong": "Adresse darf maximal {max} Zeichen lang sein."
-    },
-    "soil_condition": {
-      "invalidFormat": "Keine korrekte Bodenbeschaffenheit."
     }
   },
   "vehicle": {
@@ -91,7 +60,7 @@
   "water_capacity": {
     "outOfRange": "Wasserkapazität muss zwischen {min} und {max} Liter liegen."
   },
-  "watering_plan": {
+  "plan": {
     "stop_ids": {
       "empty": "Wähle mindestens einen Stopp aus."
     },
@@ -116,31 +85,7 @@
       "empty": "Es muss ein Startpunkt ausgewählt werden."
     }
   },
-  "waste_bin": {
-    "number": {
-      "empty": "Behälternummer ist erforderlich.",
-      "tooLong": "Behälternummer darf maximal {max} Zeichen lang sein."
-    },
-    "volume": {
-      "outOfRange": "Volumen muss zwischen {min} und {max} Litern liegen.",
-      "invalidFormat": "Das Volumen muss eine Zahl sein."
-    },
-    "depth": {
-      "outOfRange": "Tiefe muss zwischen {min} und {max} cm liegen.",
-      "invalidFormat": "Die Tiefe muss eine ganze Zahl sein."
-    }
-  },
   "settings": {
-    "water_demand": {
-      "outOfRange": "Wasserbedarf muss zwischen {min} und {max} Liter liegen."
-    },
-    "just_watered_ttl": {
-      "outOfRange": "Nachwirkzeit muss zwischen {min} und {max} liegen."
-    },
-    "full_threshold": {
-      "outOfRange": "Voll-Schwelle muss zwischen {min} und {max} Prozent liegen.",
-      "invalidFormat": "Die Voll-Schwelle muss eine ganze Zahl sein."
-    },
     "map_view": {
       "invalidFormat": "Der Mittelpunkt muss innerhalb des gewählten Ausschnitts liegen."
     },

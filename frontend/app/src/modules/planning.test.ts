@@ -79,17 +79,17 @@ describe('keepUnresolvedStops', () => {
 describe('planTextKey', () => {
   it('takes the wording the plan module gives', () => {
     const planning = probePlanning({ texts: { listDescription: 'irrigation:label' } })
-    expect(planTextKey(planning, 'listDescription', 'wateringPlan:list.description')).toBe(
+    expect(planTextKey(planning, 'listDescription', 'plan:list.description')).toBe(
       'irrigation:label',
     )
   })
 
   it('keeps the core text the module leaves out, and without a module', () => {
-    expect(
-      planTextKey(probePlanning(), 'createDescription', 'wateringPlan:create.description'),
-    ).toBe('wateringPlan:create.description')
-    expect(planTextKey(undefined, 'createDescription', 'wateringPlan:create.description')).toBe(
-      'wateringPlan:create.description',
+    expect(planTextKey(probePlanning(), 'createDescription', 'plan:create.description')).toBe(
+      'plan:create.description',
+    )
+    expect(planTextKey(undefined, 'createDescription', 'plan:create.description')).toBe(
+      'plan:create.description',
     )
   })
 })

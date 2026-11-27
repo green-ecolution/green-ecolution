@@ -53,6 +53,13 @@ describe('DataTabContent', () => {
     expect(screen.getByText('Bewässerungspläne')).toBeInTheDocument()
   })
 
+  it('marks the plan figure with the icon of the plan board, whatever the module', () => {
+    const { container } = render(<DataTabContent statsData={stats} />)
+
+    expect(container.querySelector('.lucide-arrow-left-right')).not.toBeNull()
+    expect(container.querySelector('.lucide-droplets')).toBeNull()
+  })
+
   it('shows no irrigation figures when the module is not active', () => {
     activeManifests.mockReturnValue([])
     render(<DataTabContent statsData={stats} />)

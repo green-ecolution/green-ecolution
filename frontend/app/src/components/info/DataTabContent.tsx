@@ -10,7 +10,7 @@ import {
 } from '@green-ecolution/ui'
 import type { DataStatisticsResponse } from '@green-ecolution/backend-client'
 import { Link } from '@tanstack/react-router'
-import { ArrowRight, Database, Droplets, Radio, Truck } from 'lucide-react'
+import { ArrowLeftRight, ArrowRight, Database, Radio, Truck } from 'lucide-react'
 import { Bar, BarChart, XAxis, YAxis, Cell } from 'recharts'
 import { useTranslation } from 'react-i18next'
 import { useNumberFormatter } from '@/lib/i18n/useFormatters'
@@ -19,7 +19,7 @@ import { useActiveModules } from '@/modules/useActiveModules'
 import type { I18nKey } from '@/modules/types'
 import HeroStatCard from './HeroStatCard'
 
-// Bar colors for module statistics in manifest order; the first two are the former tree and group bars.
+// Bar colors for module statistics in manifest order.
 const MODULE_FILLS = [
   'hsl(142, 76%, 36%)',
   'hsl(142, 60%, 45%)',
@@ -198,7 +198,7 @@ const DataTabContent = ({ statsData }: DataTabContentProps) => {
           href="/vehicles"
         />
         <DataStatCard
-          icon={<Droplets className="size-5" />}
+          icon={<ArrowLeftRight className="size-5" />}
           label={plansLabelKey ? translate(plansLabelKey) : t('data.stat.plansLabel')}
           value={statsData?.planCount ?? 0}
           subtitle={t('data.stat.plansSubtitle')}

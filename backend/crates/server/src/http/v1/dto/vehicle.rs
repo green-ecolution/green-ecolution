@@ -62,7 +62,7 @@ fn into_liters(
         .collect()
 }
 
-/// Represents a watering vehicle used for urban green-space irrigation.
+/// A vehicle operation plans can be carried out with.
 #[derive(Debug, Serialize, utoipa::ToSchema)]
 pub struct VehicleResponse {
     /// Unique identifier of the vehicle.
@@ -78,7 +78,7 @@ pub struct VehicleResponse {
     #[schema(example = "FL-GE 123")]
     pub number_plate: String,
     /// Human-readable description of the vehicle.
-    #[schema(example = "Großes Bewässerungsfahrzeug für den Innenstadtbereich")]
+    #[schema(example = "Großes Fahrzeug für den Innenstadtbereich")]
     pub description: String,
     /// Capacity in liters per kind. A kind that is absent means the vehicle
     /// does not offer it.
@@ -88,9 +88,9 @@ pub struct VehicleResponse {
     #[schema(example = "MAN TGE 3.180")]
     pub model: String,
     /// Operational status. Read-only: derived from `availability` and the
-    /// watering plans the vehicle is assigned to.
+    /// operation plans the vehicle is assigned to.
     pub status: VehicleStatus,
-    /// Whether the vehicle may be assigned to a watering plan.
+    /// Whether the vehicle may be assigned to an operation plan.
     pub availability: VehicleAvailability,
     /// Type/category of the vehicle.
     #[serde(rename = "type")]
@@ -156,14 +156,14 @@ impl From<&VehicleView> for VehicleResponse {
     }
 }
 
-/// Request body for creating a new watering vehicle.
+/// Request body for creating a new vehicle.
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct VehicleCreateRequest {
     /// Official license plate number of the vehicle.
     #[schema(example = "FL-GE 123")]
     pub number_plate: String,
     /// Human-readable description of the vehicle.
-    #[schema(example = "Großes Bewässerungsfahrzeug für den Innenstadtbereich")]
+    #[schema(example = "Großes Fahrzeug für den Innenstadtbereich")]
     pub description: Option<String>,
     /// Capacity in liters per kind. A kind that is absent means the vehicle
     /// does not offer it.
@@ -172,7 +172,7 @@ pub struct VehicleCreateRequest {
     /// Manufacturer and model name.
     #[schema(example = "MAN TGE 3.180")]
     pub model: String,
-    /// Whether the vehicle may be assigned to a watering plan.
+    /// Whether the vehicle may be assigned to an operation plan.
     pub availability: VehicleAvailability,
     /// Type/category of the vehicle.
     #[serde(rename = "type")]
@@ -206,14 +206,14 @@ pub struct VehicleCreateRequest {
     pub organization_id: Option<uuid::Uuid>,
 }
 
-/// Request body for updating an existing watering vehicle.
+/// Request body for updating an existing vehicle.
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct VehicleUpdateRequest {
     /// Official license plate number of the vehicle.
     #[schema(example = "FL-GE 123")]
     pub number_plate: String,
     /// Human-readable description of the vehicle.
-    #[schema(example = "Großes Bewässerungsfahrzeug für den Innenstadtbereich")]
+    #[schema(example = "Großes Fahrzeug für den Innenstadtbereich")]
     pub description: Option<String>,
     /// Capacity in liters per kind. A kind that is absent means the vehicle
     /// does not offer it.
@@ -222,7 +222,7 @@ pub struct VehicleUpdateRequest {
     /// Manufacturer and model name.
     #[schema(example = "MAN TGE 3.180")]
     pub model: String,
-    /// Whether the vehicle may be assigned to a watering plan.
+    /// Whether the vehicle may be assigned to an operation plan.
     pub availability: VehicleAvailability,
     /// Type/category of the vehicle.
     #[serde(rename = "type")]

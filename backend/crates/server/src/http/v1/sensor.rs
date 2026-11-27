@@ -356,7 +356,7 @@ async fn require_sensor_target_update(
     operation_id = "activateSensor",
     summary = "Activate a prepared sensor by attaching it to a target",
     description = "Transitions a sensor from `Prepared` to `Offline` and attaches it to \
-        the given target, e.g. a tree. Idempotent if the sensor is already attached to the same target.",
+        the given target, an object of a module. Idempotent if the sensor is already attached to the same target.",
     params(("sensor_id" = String, Path, description = "Sensor ID (EUI)")),
     request_body = ActivateSensorRequest,
     responses(
@@ -364,7 +364,7 @@ async fn require_sensor_target_update(
         (status = 403, description = "Missing sensor:update or update on the target in the owning organization, or the target's module is disabled (code `module.disabled`)", body = ErrorBody),
         (status = 404, description = "Sensor or target not found", body = ErrorBody),
         (status = 409, description = "Sensor already activated or attached elsewhere, or the target already carries another sensor (codes `conflict.sensor_already_activated`, `sensor.already_attached`, `conflict.target_already_has_sensor`)", body = ErrorBody),
-        (status = 422, description = "The target takes no sensors or refuses this one, or belongs to a different organization (codes `target.not_accepted`, `tree.not_yet_planted`, `organization_mismatch.sensor_vs_target`)", body = ErrorBody),
+        (status = 422, description = "The target takes no sensors or refuses this one, or belongs to a different organization (codes `target.not_accepted`, `organization_mismatch.sensor_vs_target` or a code of the target's module)", body = ErrorBody),
         (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]
@@ -394,7 +394,7 @@ pub async fn activate_sensor(
         (status = 403, description = "Missing sensor:update or update on the target in the owning organization, or the target's module is disabled (code `module.disabled`)", body = ErrorBody),
         (status = 404, description = "Sensor or target not found", body = ErrorBody),
         (status = 409, description = "Sensor not activated, or the target already carries another sensor (codes `conflict.sensor_not_activated`, `conflict.target_already_has_sensor`)", body = ErrorBody),
-        (status = 422, description = "The target takes no sensors or refuses this one, or belongs to a different organization (codes `target.not_accepted`, `tree.not_yet_planted`, `organization_mismatch.sensor_vs_target`)", body = ErrorBody),
+        (status = 422, description = "The target takes no sensors or refuses this one, or belongs to a different organization (codes `target.not_accepted`, `organization_mismatch.sensor_vs_target` or a code of the target's module)", body = ErrorBody),
         (status = 500, description = "Internal server error", body = ErrorBody),
     )
 )]

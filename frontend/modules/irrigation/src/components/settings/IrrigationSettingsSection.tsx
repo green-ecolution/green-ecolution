@@ -9,6 +9,7 @@ import {
 } from '@green-ecolution/domain-wasm'
 import SettingValueField from '@/components/settings/organization/SettingValueField'
 import { useIssueTranslator } from '@/lib/i18n/validation'
+import { IRRIGATION } from '../../lib/targets'
 import type { ModuleSettingsSectionProps } from '@/modules/types'
 import { hoursOf, type IrrigationSettingsDraft } from './useIrrigationSettingsDraft'
 
@@ -17,7 +18,7 @@ const IrrigationSettingsSection = ({
   locked,
 }: ModuleSettingsSectionProps<IrrigationSettingsDraft>) => {
   const { t } = useTranslation('irrigation')
-  const translate = useIssueTranslator()
+  const translate = useIssueTranslator(IRRIGATION)
   const { server, draft, issues } = state
   if (!server || !draft) return null
 

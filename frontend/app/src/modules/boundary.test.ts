@@ -10,6 +10,7 @@ import {
 } from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
+import { VALIDATION_KEYS } from '@green-ecolution/domain-wasm'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { MODULE_BUILDS } from '../../modules.config'
 import type { ModuleBuild } from './buildConfig'
@@ -17,6 +18,7 @@ import { moduleManifests } from './registry'
 import type { ModuleManifest } from './types'
 
 const SRC = path.resolve(import.meta.dirname, '..')
+const LOCALES = path.join(SRC, 'locales')
 const MODULE_PACKAGES = path.resolve(SRC, '../../modules')
 // Fixtures and MSW handlers are test code like the *.test files: they stand in
 // for a backend that has a module registered.
@@ -118,6 +120,54 @@ function reachesModulePackage(file: string, source: string, modulePackages: stri
   })
 }
 
+interface Catalog {
+  [key: string]: string | Catalog
+}
+
+function leafKeys(node: Catalog | string | undefined, prefix = ''): string[] {
+  if (node === undefined) return []
+  if (typeof node === 'string') return [prefix]
+  return Object.entries(node).flatMap(([key, child]) =>
+    leafKeys(child, prefix ? `${prefix}.${key}` : key),
+  )
+}
+
+function textAt(catalog: Catalog, key: string): Catalog | string | undefined {
+  return key
+    .split('.')
+    .reduce<Catalog | string | undefined>(
+      (node, part) => (typeof node === 'object' ? node[part] : undefined),
+      catalog,
+    )
+}
+
+/**
+ * The sections of the validation texts that belong to the modules: for every
+ * module key the shortest prefix no core key starts with. A core key a module
+ * words for itself yields none, so that stays allowed.
+ */
+function moduleOwnedSections(moduleKeys: readonly string[], coreKeys: readonly string[]): string[] {
+  const inCore = (prefix: string) =>
+    coreKeys.some((key) => key === prefix || key.startsWith(`${prefix}.`))
+  const owned = moduleKeys.flatMap((key) => {
+    const parts = key.split('.')
+    const prefixes = parts.map((_, index) => parts.slice(0, index + 1).join('.'))
+    return prefixes.filter((prefix) => !inCore(prefix)).slice(0, 1)
+  })
+  return [...new Set(owned)].sort()
+}
+
+function moduleCatalogs(moduleRoot: string, language: string): Catalog[] {
+  const dir = path.join(moduleRoot, 'src/locales', language)
+  if (!existsSync(dir)) return []
+  return readdirSync(dir)
+    .filter((entry) => entry.endsWith('.json'))
+    .map((entry) => JSON.parse(readFileSync(path.join(dir, entry), 'utf8')) as Catalog)
+}
+
+const coreCatalog = (language: string, namespace: string) =>
+  JSON.parse(readFileSync(path.join(LOCALES, language, `${namespace}.json`), 'utf8')) as Catalog
+
 describe('core boundary', () => {
   const files = sourceFiles(SRC).filter((f) => !COMPOSITION_ROOTS.has(path.relative(SRC, f)))
 
@@ -134,6 +184,27 @@ describe('core boundary', () => {
       reachesModulePackage(f, readFileSync(f, 'utf8'), MODULE_PACKAGES),
     )
     expect(offenders.map((f) => path.relative(SRC, f))).toEqual([])
+  })
+
+  const languages = readdirSync(LOCALES)
+
+  it.each(languages)('the %s validation catalog holds no section of a module', (language) => {
+    const moduleKeys = MODULE_BUILDS.flatMap(({ root }) =>
+      moduleCatalogs(root, language).flatMap(({ validation }) => leafKeys(validation)),
+    )
+    const core = coreCatalog(language, 'validation')
+    const offenders = moduleOwnedSections(moduleKeys, VALIDATION_KEYS).filter(
+      (section) => textAt(core, section) !== undefined,
+    )
+    expect(offenders.map((section) => `validation.json: ${section}`)).toEqual([])
+  })
+
+  it.each(languages)('the %s settings catalog names no role template of a module', (language) => {
+    const core = coreCatalog(language, 'settings')
+    const offenders = moduleManifests
+      .flatMap(({ roleTemplates }) => (roleTemplates ?? []).map(({ key }) => key))
+      .filter((key) => textAt(core, `roles.templateName.${key}`) !== undefined)
+    expect(offenders.map((key) => `settings.json: roles.templateName.${key}`)).toEqual([])
   })
 })
 
@@ -202,6 +273,35 @@ describe('derived terms', () => {
     expect(reachesModulePackage(core, "import.meta.glob('../locales/*/index.ts')", packages)).toBe(
       false,
     )
+  })
+
+  it("takes a section for a module's own from the first part the core does not know", () => {
+    const core = ['plan.stop_ids.empty', 'settings.map_view.out_of_range']
+
+    expect(
+      moduleOwnedSections(
+        ['thing.name.empty', 'thing.name.tooLong', 'settings.thing_limit.out_of_range'],
+        core,
+      ),
+    ).toEqual(['settings.thing_limit', 'thing'])
+  })
+
+  it('leaves a core key a module words for itself to the core', () => {
+    expect(moduleOwnedSections(['plan.stop_ids.empty'], ['plan.stop_ids.empty'])).toEqual([])
+  })
+
+  it('reads the catalogs of a module per language and tolerates a module without them', () => {
+    file('with/src/locales/de/things.json', '{"validation":{"thing":{"empty":"x"}}}')
+    file('with/src/locales/de/index.ts')
+    file('without/src/manifest.tsx')
+
+    expect(
+      moduleCatalogs(path.join(dir, 'with'), 'de').flatMap(({ validation }) =>
+        leafKeys(validation),
+      ),
+    ).toEqual(['thing.empty'])
+    expect(moduleCatalogs(path.join(dir, 'with'), 'en')).toEqual([])
+    expect(moduleCatalogs(path.join(dir, 'without'), 'de')).toEqual([])
   })
 
   it('forbids nothing derived when there is no module', () => {

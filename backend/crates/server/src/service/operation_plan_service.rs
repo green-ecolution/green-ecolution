@@ -472,7 +472,7 @@ impl OperationPlanService {
     }
 
     /// Called by a module in the same flow that deletes the object behind `stop`.
-    /// Mirrors the cascade the irrigation tables used to have: finished plans lose
+    /// Mirrors a foreign-key cascade: finished plans lose
     /// the entry and its amount as well.
     #[tracing::instrument(level = "debug", skip_all, fields(%module, %stop))]
     pub async fn remove_stop(

@@ -160,26 +160,26 @@ pub enum DrivingLicense {
     CE,
 }
 
-/// Whether a watering vehicle may be assigned at all. Set by hand; the only
+/// Whether a vehicle may be assigned at all. Set by hand; the only
 /// part of a vehicle's state the system cannot observe for itself.
 #[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
 #[schema(example = "available")]
 pub enum VehicleAvailability {
-    /// Vehicle may be assigned to a watering plan.
+    /// Vehicle may be assigned to an operation plan.
     Available,
     /// Vehicle is temporarily out of service (e.g. maintenance).
     #[serde(rename = "not_available", alias = "not available")]
     NotAvailable,
 }
 
-/// Operational status of a watering vehicle. Read-only: derived from the
-/// vehicle's availability and the watering plans it is assigned to.
+/// Operational status of a vehicle. Read-only: derived from the
+/// vehicle's availability and the operation plans it is assigned to.
 #[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
 #[schema(example = "available")]
 pub enum VehicleStatus {
-    /// Vehicle is currently in use on a watering plan.
+    /// Vehicle is currently in use on an operation plan.
     Active,
     /// Vehicle is available for assignment.
     Available,
@@ -188,7 +188,7 @@ pub enum VehicleStatus {
     NotAvailable,
 }
 
-/// Classification of a watering vehicle.
+/// Classification of a vehicle.
 #[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
 #[schema(example = "transporter")]
@@ -204,7 +204,7 @@ pub enum VehicleType {
 #[serde(rename_all = "snake_case")]
 #[schema(example = "available")]
 pub enum UserStatus {
-    /// User is available for watering plan assignments.
+    /// User is available for operation plan assignments.
     Available,
     /// User is currently absent.
     Absent,

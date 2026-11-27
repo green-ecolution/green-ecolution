@@ -49,7 +49,7 @@
       "label": "Unbekannt"
     }
   },
-  "wateringPlanStatus": {
+  "planStatus": {
     "active": {
       "label": "Aktiv",
       "description": "Der Einsatzplan ist aktiv und wird aktuell ausgeführt."
@@ -91,9 +91,17 @@
     }
   },
   "drivingLicense": {
-    "B": { "label": "B" },
-    "BE": { "label": "BE" },
-    "C": { "label": "C" },
-    "CE": { "label": "CE" }
+    "B": {
+      "label": "B"
+    },
+    "BE": {
+      "label": "BE"
+    },
+    "C": {
+      "label": "C"
+    },
+    "CE": {
+      "label": "CE"
+    }
   }
 }

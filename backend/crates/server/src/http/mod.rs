@@ -150,23 +150,21 @@ impl AsRef<extractors::PluginAuthenticator> for AppState {
 #[openapi(
     info(
         title = "Green Ecolution API",
-        description = "REST API for the Green Ecolution smart irrigation and green-space management platform. \
-            Combines IoT sensor data, route optimization, and automated maintenance scheduling \
-            to help municipalities manage urban greenery efficiently. \
-            The system uses LoRaWAN sensors to monitor soil conditions, calculates optimal \
-            watering routes, and provides fleet management capabilities.",
+        description = "REST API of Green Ecolution, a platform for municipal maintenance operations. \
+            It manages organizations and tenants, permissions, sensors, vehicles and operation plans; \
+            feature modules add their own resources.",
         contact(name = "Green Ecolution", url = "https://green-ecolution.de"),
         license(name = "AGPL-3.0", identifier = "AGPL-3.0-or-later"),
     ),
     tags(
-        (name = "Regions", description = "Manage geographic regions used to group the objects modules place on the map. Regions define administrative boundaries for organizing green spaces."),
-        (name = "Vehicles", description = "Manage watering vehicles (transporters and trailers) including their water capacity, dimensions, and availability status. Vehicles can be archived when decommissioned."),
-        (name = "Sensors", description = "Access LoRaWAN sensor data for soil moisture monitoring. Sensors are attached to module objects and provide real-time environmental readings."),
+        (name = "Regions", description = "Manage geographic regions used to group the objects modules place on the map. Regions define administrative boundaries."),
+        (name = "Vehicles", description = "Manage vehicles (transporters and trailers) including their capacities, dimensions, and availability status. Vehicles can be archived when decommissioned."),
+        (name = "Sensors", description = "Access LoRaWAN sensor data. Sensors are attached to module objects and provide real-time environmental readings."),
         (name = "Plans", description = "Create and manage a module's operation plans that combine stops, vehicles, and optimized routes. Plans track status from planning through execution."),
         (name = "Info", description = "Application metadata including version information, server status, map configuration, service health, and data statistics."),
         (name = "Users", description = "User registration and role management. Authentication is handled directly against Keycloak."),
         (name = "Plugins", description = "Plugin installation and lifecycle management, plus the ingest surface external plugins authenticate against with their API key to push data."),
-        (name = "Routing", description = "Routing configuration and start point management. Exposes the named depot locations available for watering route optimization."),
+        (name = "Routing", description = "Routing configuration and start point management. Exposes the named depot locations available for route optimization."),
         (name = "Organizations", description = "Manage the organization tree used for RBAC scoping and multi-tenancy."),
         (name = "Roles", description = "Manage roles (named permission sets) and their assignment to users."),
         (name = "Comments", description = "Free-text comments on module objects and plans. Reading follows the parent resource's read permission, writing its update permission."),

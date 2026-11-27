@@ -1,4 +1,4 @@
-//! StartPoint aggregate — a named routing location a watering route starts and
+//! StartPoint aggregate — a named routing location a route starts and
 //! returns from; each one also restores the capacity kinds it replenishes.
 //!
 //! Follows the `Region` pattern: aggregate + `StartPointDraft` for creation, a

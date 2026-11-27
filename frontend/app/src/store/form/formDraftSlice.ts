@@ -1,4 +1,4 @@
-export const WATERING_PLAN_FORM = 'wateringplan'
+export const PLAN_FORM = 'plan'
 export const VEHICLE_FORM = 'vehicle'
 
 // Core uses the constants above; modules bring their own keys.

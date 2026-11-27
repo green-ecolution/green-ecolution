@@ -24,7 +24,7 @@ fn sample_profile(id: Uuid) -> UserProfile {
         avatar_url: Some(url::Url::parse("https://example.com/a.png").unwrap()),
         status: UserStatus::Absent,
         driving_licenses: vec![DrivingLicense::B, DrivingLicense::CE],
-        watering_plan_selectable: false,
+        plan_selectable: false,
     }
 }
 
@@ -75,7 +75,7 @@ async fn by_ids_skips_missing_rows() {
 }
 
 #[tokio::test]
-async fn fresh_profile_row_is_selectable_for_watering_plans() {
+async fn fresh_profile_row_is_selectable_for_plans() {
     let app = spawn_app().await;
     let repo = PgUserProfileRepository::new(app.db_pool.clone());
     let id = Uuid::now_v7();
@@ -83,7 +83,7 @@ async fn fresh_profile_row_is_selectable_for_watering_plans() {
     seed_profile_row(&repo, id).await;
 
     let loaded = repo.by_ids(&[id]).await.unwrap();
-    assert!(loaded[0].watering_plan_selectable);
+    assert!(loaded[0].plan_selectable);
 }
 
 #[tokio::test]
@@ -124,4 +124,31 @@ async fn deleting_a_profile_removes_its_role_assignments() {
             .unwrap();
     assert_eq!(profiles, 0);
     assert_eq!(assignments, 0);
+}
+
+#[tokio::test]
+async fn renaming_the_column_keeps_a_profile_that_is_not_selectable() {
+    let id = Uuid::now_v7();
+    let app = crate::helpers::spawn_app_on_migrated_until(
+        crate::helpers::BEFORE_PLAN_SELECTABLE_RENAME,
+        async |pool: &sqlx::PgPool| {
+            sqlx::query(
+                "INSERT INTO user_profiles (id, organization_id, watering_plan_selectable)
+                 VALUES ($1, $2, FALSE)",
+            )
+            .bind(id)
+            .bind(Uuid::parse_str(ROOT_ORG).unwrap())
+            .execute(pool)
+            .await
+            .unwrap();
+        },
+    )
+    .await;
+
+    let loaded = PgUserProfileRepository::new(app.db_pool.clone())
+        .by_ids(&[id])
+        .await
+        .unwrap();
+
+    assert!(!loaded[0].plan_selectable);
 }

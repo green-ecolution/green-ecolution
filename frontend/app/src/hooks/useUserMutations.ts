@@ -29,7 +29,7 @@ export interface UpdateProfileVariables {
   avatarUrl: string | null
   status: UserStatus
   drivingLicenses: DrivingLicense[]
-  wateringPlanSelectable: boolean
+  planSelectable: boolean
 }
 
 export interface CreateUserVariables {
@@ -102,7 +102,7 @@ export const useUserMutations = () => {
       avatarUrl,
       status,
       drivingLicenses,
-      wateringPlanSelectable,
+      planSelectable,
     }: UpdateProfileVariables) =>
       userApi.updateUser({
         userId,
@@ -112,7 +112,7 @@ export const useUserMutations = () => {
           avatarUrl,
           status,
           drivingLicenses,
-          wateringPlanSelectable,
+          planSelectable,
         },
       }),
     onSuccess: () => {

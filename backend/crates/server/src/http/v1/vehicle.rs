@@ -160,7 +160,7 @@ pub async fn get_vehicle(
 #[utoipa::path(post, path = "/vehicles", tag = "Vehicles",
     operation_id = "createVehicle",
     summary = "Create a vehicle",
-    description = "Registers a new watering vehicle.",
+    description = "Registers a new vehicle.",
     request_body = VehicleCreateRequest,
     responses(
         (status = 201, description = "Vehicle created", body = VehicleResponse),

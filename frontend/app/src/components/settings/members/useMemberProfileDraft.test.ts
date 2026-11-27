@@ -13,7 +13,7 @@ const anna = {
   drivingLicenses: [DrivingLicense.B],
   phoneNumber: '+49 461 1',
   employeeId: 'EMP-1',
-  wateringPlanSelectable: true,
+  planSelectable: true,
 } as UserResponse
 
 describe('useMemberProfileDraft', () => {
@@ -110,11 +110,11 @@ describe('useMemberProfileDraft', () => {
     const { result } = renderHook(() => useMemberProfileDraft())
     act(() => result.current.edit(anna))
 
-    expect(result.current.draft?.wateringPlanSelectable).toBe(true)
+    expect(result.current.draft?.planSelectable).toBe(true)
 
-    act(() => result.current.setWateringPlanSelectable(false))
+    act(() => result.current.setPlanSelectable(false))
 
-    expect(result.current.draft?.wateringPlanSelectable).toBe(false)
+    expect(result.current.draft?.planSelectable).toBe(false)
     expect(result.current.dirty).toBe(true)
   })
 
@@ -122,8 +122,8 @@ describe('useMemberProfileDraft', () => {
     const { result } = renderHook(() => useMemberProfileDraft())
     act(() => result.current.edit(anna))
 
-    act(() => result.current.setWateringPlanSelectable(false))
-    act(() => result.current.setWateringPlanSelectable(true))
+    act(() => result.current.setPlanSelectable(false))
+    act(() => result.current.setPlanSelectable(true))
 
     expect(result.current.dirty).toBe(false)
   })

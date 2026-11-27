@@ -45,10 +45,10 @@ function Dashboard() {
       ? [
           {
             url: '/plans',
-            headline: t('cards.wateringPlans.headline'),
+            headline: t('cards.plans.headline'),
             description: descriptionKeys.plans
               ? i18n.t(descriptionKeys.plans)
-              : t('cards.wateringPlans.description'),
+              : t('cards.plans.description'),
           },
         ]
       : []),

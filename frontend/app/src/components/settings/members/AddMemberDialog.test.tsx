@@ -29,7 +29,7 @@ const createdUser = {
   driving_licenses: [],
   roles: [],
   status: 'available',
-  watering_plan_selectable: true,
+  plan_selectable: true,
 }
 
 const bodies: Record<string, unknown>[] = []

@@ -18,7 +18,7 @@ interface TestTreeForm {
   species?: string
 }
 
-interface TestWateringPlanForm {
+interface TestPlanForm {
   date?: string
   transporterId?: number
   stopIds?: number[]
@@ -131,10 +131,10 @@ describe('formDraftSlice', () => {
     })
 
     it('should create entry with hasChanges=true if not exists', () => {
-      useStore.getState().markFormDraftChanged('wateringplan-create')
+      useStore.getState().markFormDraftChanged('plan-create')
 
-      expect(useStore.getState().formDrafts['wateringplan-create']?.hasChanges).toBe(true)
-      expect(useStore.getState().formDrafts['wateringplan-create']?.data).toBeNull()
+      expect(useStore.getState().formDrafts['plan-create']?.hasChanges).toBe(true)
+      expect(useStore.getState().formDrafts['plan-create']?.data).toBeNull()
     })
   })
 
@@ -160,7 +160,7 @@ describe('formDraftSlice', () => {
     it('should remove all drafts', () => {
       useStore.getState().setFormDraft('cluster-create', { name: 'Cluster' })
       useStore.getState().setFormDraft('tree-create', { species: 'Oak' })
-      useStore.getState().setFormDraft('wateringplan-update', { date: '2024-01-01' })
+      useStore.getState().setFormDraft('plan-update', { date: '2024-01-01' })
 
       useStore.getState().clearAllFormDrafts()
 
@@ -180,11 +180,11 @@ describe('formDraftSlice', () => {
     it('should keep different form types separate', () => {
       useStore.getState().setFormDraft('tree-create', { species: 'Oak' })
       useStore.getState().setFormDraft('cluster-create', { name: 'Cluster' })
-      useStore.getState().setFormDraft('wateringplan-create', { date: '2024-01-01' })
+      useStore.getState().setFormDraft('plan-create', { date: '2024-01-01' })
 
       expect(getDraft<TestTreeForm>('tree-create')?.data).toEqual({ species: 'Oak' })
       expect(getDraft<TestClusterForm>('cluster-create')?.data).toEqual({ name: 'Cluster' })
-      expect(getDraft<TestWateringPlanForm>('wateringplan-create')?.data).toEqual({
+      expect(getDraft<TestPlanForm>('plan-create')?.data).toEqual({
         date: '2024-01-01',
       })
     })
@@ -221,14 +221,14 @@ describe('Form → Map → Form roundtrip (Bug Prevention)', () => {
     })
 
     it('should save stopIds when no prior draft exists', () => {
-      expect(useStore.getState().formDrafts['wateringplan-update']).toBeUndefined()
+      expect(useStore.getState().formDrafts['plan-update']).toBeUndefined()
 
-      useStore.getState().updateFormDraft<TestWateringPlanForm>('wateringplan-update', (prev) => ({
+      useStore.getState().updateFormDraft<TestPlanForm>('plan-update', (prev) => ({
         ...(prev ?? {}),
         stopIds: [10, 20, 30],
       }))
 
-      const draft = getDraft<TestWateringPlanForm>('wateringplan-update')
+      const draft = getDraft<TestPlanForm>('plan-update')
       expect(draft?.data?.stopIds).toEqual([10, 20, 30])
     })
 
@@ -306,20 +306,20 @@ describe('Form → Map → Form roundtrip (Bug Prevention)', () => {
     expect(draft?.hasChanges).toBe(true)
   })
 
-  it('WateringPlan: stopIds should be preserved after map selection', () => {
-    useStore.getState().setFormDraft('wateringplan-create', {
+  it('Plan: stopIds should be preserved after map selection', () => {
+    useStore.getState().setFormDraft('plan-create', {
       date: new Date().toISOString(),
       transporterId: 1,
       stopIds: [],
     })
 
-    useStore.getState().updateFormDraft<TestWateringPlanForm>('wateringplan-create', (prev) => ({
+    useStore.getState().updateFormDraft<TestPlanForm>('plan-create', (prev) => ({
       ...prev,
       stopIds: [10, 20, 30],
     }))
-    useStore.getState().markFormDraftChanged('wateringplan-create')
+    useStore.getState().markFormDraftChanged('plan-create')
 
-    const draft = getDraft<TestWateringPlanForm>('wateringplan-create')
+    const draft = getDraft<TestPlanForm>('plan-create')
     expect(draft?.data?.stopIds).toEqual([10, 20, 30])
     expect(draft?.data?.transporterId).toBe(1)
     expect(draft?.hasChanges).toBe(true)
@@ -405,8 +405,8 @@ describe('Type safety for FormDraftKey', () => {
       'tree-update',
       'cluster-create',
       'cluster-update',
-      'wateringplan-create',
-      'wateringplan-update',
+      'plan-create',
+      'plan-update',
       'vehicle-create',
       'vehicle-update',
     ]

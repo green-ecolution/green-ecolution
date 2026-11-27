@@ -38,12 +38,11 @@ export const invalidateRoots = async (
 
 /**
  * Query roots a plan status change touches: the plans themselves and whatever
- * the plan module derives from them (irrigation flags the watered clusters and
- * trees and aggregates finished plans in its evaluation).
+ * the plan module derives from them (its `invalidateOnStatusChange`).
  */
 export const planStatusQueryRoots = (
   planning: Pick<ModulePlanning, 'invalidateOnStatusChange'> | undefined,
-): QueryKey[] => [...queryRoots.wateringPlan, ...(planning?.invalidateOnStatusChange ?? [])]
+): QueryKey[] => [...queryRoots.plan, ...(planning?.invalidateOnStatusChange ?? [])]
 
 export const useInvalidateQueryRoots = () => {
   const queryClient = useQueryClient()

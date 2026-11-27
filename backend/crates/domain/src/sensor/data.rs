@@ -61,7 +61,7 @@ impl SensorReading {
 
 /// Single Watermark soil-tension reading at a fixed depth in centimetres.
 ///
-/// Centibar (kPa) is what the watering-status calibration tables consume;
+/// Centibar (kPa) is what calibration tables consume;
 /// resistance is recorded for raw-data archival.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Watermark {

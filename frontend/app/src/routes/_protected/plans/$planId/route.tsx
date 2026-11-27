@@ -1,0 +1,32 @@
+import { planQueries } from '@/api/queries'
+import { entityRoute } from '@/lib/router'
+import { getI18n } from '@/lib/i18n'
+import { dateFnsLocale } from '@/lib/i18n/format'
+import { createFileRoute } from '@tanstack/react-router'
+import { format } from 'date-fns'
+
+/** Shared by the detail and _formular layout routes; spread it — the router mutates route options on update. */
+export const planEntityRoute = entityRoute({
+  key: 'plan',
+  query: planQueries.detail,
+  idParam: 'planId',
+  title: (plan) => ({
+    titleKey: 'plan:detail.entityTitle',
+    params: {
+      value: plan.date
+        ? format(new Date(plan.date), 'dd.MM.yyyy', {
+            locale: dateFnsLocale(getI18n().language),
+          })
+        : plan.id,
+    },
+  }),
+  notFound: {
+    entityName: { key: 'plan:entity.name' },
+    backTo: '/plans',
+    backLabel: { key: 'plan:detail.notFoundBackLabel' },
+  },
+})
+
+export const Route = createFileRoute('/_protected/plans/$planId')({
+  ...planEntityRoute,
+})

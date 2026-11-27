@@ -277,10 +277,7 @@
     "hideActionsAriaLabel": "Aktionen für {area} verbergen",
     "templateName": {
       "administrator": "Administrator",
-      "tree_care": "Baumpflege",
       "sensors": "Sensorik",
-      "route_planning": "Routenplanung",
-      "waste_collection": "Abfallsammlung",
       "observer": "Beobachter"
     },
     "toast": {
@@ -325,8 +322,8 @@
     "phoneNumberPlaceholder": "z. B. +49 461 123456",
     "employeeIdLabel": "Personalnummer",
     "employeeIdPlaceholder": "z. B. EMP-042",
-    "wateringPlanSelectableLabel": "Für Einsatzpläne auswählbar",
-    "wateringPlanSelectableHint": "Nur gekennzeichnete Personen erscheinen in der Auswahl der verknüpften Mitarbeitenden eines Einsatzplans.",
+    "planSelectableLabel": "Für Einsatzpläne auswählbar",
+    "planSelectableHint": "Nur gekennzeichnete Personen erscheinen in der Auswahl der verknüpften Mitarbeitenden eines Einsatzplans.",
     "yes": "Ja",
     "no": "Nein",
     "rolesTitle": "Rollen",

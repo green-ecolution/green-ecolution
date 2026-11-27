@@ -2,7 +2,7 @@
 /* eslint-disable */
 /**
  * Green Ecolution API
- * REST API for the Green Ecolution smart irrigation and green-space management platform. Combines IoT sensor data, route optimization, and automated maintenance scheduling to help municipalities manage urban greenery efficiently. The system uses LoRaWAN sensors to monitor soil conditions, calculates optimal watering routes, and provides fleet management capabilities.
+ * REST API of Green Ecolution, a platform for municipal maintenance operations. It manages organizations and tenants, permissions, sensors, vehicles and operation plans; feature modules add their own resources.
  *
  * The version of the OpenAPI document: 0.9.0
  * 
@@ -83,6 +83,12 @@ export interface UserRegisterRequest {
      */
     phoneNumber?: string | null;
     /**
+     * Whether the new user may be assigned to operation plans (defaults to true).
+     * @type {boolean}
+     * @memberof UserRegisterRequest
+     */
+    planSelectable?: boolean | null;
+    /**
      * Roles to assign to the user (must be org-owned, not templates).
      * @type {Array<string>}
      * @memberof UserRegisterRequest
@@ -100,12 +106,6 @@ export interface UserRegisterRequest {
      * @memberof UserRegisterRequest
      */
     username: string;
-    /**
-     * Whether the new user may be assigned to watering plans (defaults to true).
-     * @type {boolean}
-     * @memberof UserRegisterRequest
-     */
-    wateringPlanSelectable?: boolean | null;
 }
 
 
@@ -140,10 +140,10 @@ export function UserRegisterRequestFromJSONTyped(json: any, ignoreDiscriminator:
         'lastName': json['last_name'],
         'organizationId': json['organization_id'],
         'phoneNumber': json['phone_number'] == null ? undefined : json['phone_number'],
+        'planSelectable': json['plan_selectable'] == null ? undefined : json['plan_selectable'],
         'roleIds': json['role_ids'] == null ? undefined : json['role_ids'],
         'status': json['status'] == null ? undefined : UserStatusFromJSON(json['status']),
         'username': json['username'],
-        'wateringPlanSelectable': json['watering_plan_selectable'] == null ? undefined : json['watering_plan_selectable'],
     };
 }
 
@@ -166,10 +166,10 @@ export function UserRegisterRequestToJSONTyped(value?: UserRegisterRequest | nul
         'last_name': value['lastName'],
         'organization_id': value['organizationId'],
         'phone_number': value['phoneNumber'],
+        'plan_selectable': value['planSelectable'],
         'role_ids': value['roleIds'],
         'status': UserStatusToJSON(value['status']),
         'username': value['username'],
-        'watering_plan_selectable': value['wateringPlanSelectable'],
     };
 }
 

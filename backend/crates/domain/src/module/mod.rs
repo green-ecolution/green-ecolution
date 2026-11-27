@@ -1,6 +1,6 @@
 //! Module identity and activation.
 //!
-//! A module is a feature area such as irrigation or waste collection. The
+//! A module is a feature area a build ships. The
 //! root organization releases it per tenant, the tenant switches it on or
 //! off, and every organization below a tenant follows that tenant.
 

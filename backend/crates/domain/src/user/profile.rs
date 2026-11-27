@@ -20,8 +20,8 @@ pub struct UserProfile {
     pub status: UserStatus,
     pub driving_licenses: Vec<DrivingLicense>,
     /// Defaults to true: a person without maintained profile facts must not
-    /// silently drop out of watering-plan assignment.
-    pub watering_plan_selectable: bool,
+    /// silently drop out of plan assignment.
+    pub plan_selectable: bool,
 }
 
 impl UserProfile {
@@ -33,7 +33,7 @@ impl UserProfile {
             avatar_url: None,
             status: UserStatus::Available,
             driving_licenses: Vec::new(),
-            watering_plan_selectable: true,
+            plan_selectable: true,
         }
     }
 }
@@ -52,6 +52,6 @@ mod tests {
         assert!(p.employee_id.is_none());
         assert!(p.phone_number.is_none());
         assert!(p.avatar_url.is_none());
-        assert!(p.watering_plan_selectable);
+        assert!(p.plan_selectable);
     }
 }

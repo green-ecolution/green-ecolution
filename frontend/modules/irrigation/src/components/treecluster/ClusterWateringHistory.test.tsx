@@ -42,7 +42,7 @@ function renderWithProviders() {
   })
   const detailRoute = createRoute({
     getParentRoute: () => rootRoute,
-    path: '/plans/$wateringPlanId',
+    path: '/plans/$planId',
     component: () => <div data-testid="detail-page">Detail</div>,
   })
   const routeTree = rootRoute.addChildren([indexRoute, detailRoute])

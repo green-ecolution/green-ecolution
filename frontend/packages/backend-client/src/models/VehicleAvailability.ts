@@ -2,7 +2,7 @@
 /* eslint-disable */
 /**
  * Green Ecolution API
- * REST API for the Green Ecolution smart irrigation and green-space management platform. Combines IoT sensor data, route optimization, and automated maintenance scheduling to help municipalities manage urban greenery efficiently. The system uses LoRaWAN sensors to monitor soil conditions, calculates optimal watering routes, and provides fleet management capabilities.
+ * REST API of Green Ecolution, a platform for municipal maintenance operations. It manages organizations and tenants, permissions, sensors, vehicles and operation plans; feature modules add their own resources.
  *
  * The version of the OpenAPI document: 0.9.0
  * 
@@ -14,7 +14,7 @@
 
 
 /**
- * Whether a watering vehicle may be assigned at all. Set by hand; the only
+ * Whether a vehicle may be assigned at all. Set by hand; the only
  * part of a vehicle's state the system cannot observe for itself.
  * @export
  */

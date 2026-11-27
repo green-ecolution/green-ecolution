@@ -24,8 +24,8 @@
       "headline": "Sensors",
       "description": "Readings, battery and links."
     },
-    "wateringPlans": {
-      "headline": "Watering plans",
+    "plans": {
+      "headline": "Operation plans",
       "description": "Plan and track trips."
     },
     "settings": {

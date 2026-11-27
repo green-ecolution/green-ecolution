@@ -4,5 +4,5 @@ import { crumbRoute, guardedRoute } from '@/lib/router'
 import { moduleManifests } from '@/modules/registry'
 
 export const Route = createFileRoute('/_protected/plans/_formular/new')(
-  guardedRoute(planPermissionsFor(moduleManifests, 'create'), crumbRoute('wateringPlanNew')),
+  guardedRoute(planPermissionsFor(moduleManifests, 'create'), crumbRoute('planNew')),
 )

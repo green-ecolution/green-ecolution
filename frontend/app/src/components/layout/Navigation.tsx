@@ -108,28 +108,28 @@ const moduleLinksFor = (
       })),
   )
 
-// Module links sit between `before` and `after`, where the irrigation entries used to be.
+// Module links sit between `before` and `after`; the map link leads its section.
 const protectedNavData = (
   t: TFunction<'navigation'>,
   translate: (key: I18nKey) => string,
   manifests: readonly ModuleManifest[],
 ): NavSectionData[] => {
+  // Without a module drawing on it the map is an empty basemap.
+  const firstMap = manifests.find(({ map }) => map)?.map
+  const mapSection: NavSectionKey | undefined = firstMap && (firstMap.navSection ?? 'assets')
+  const mapLink: NavLinkData = {
+    key: 'nav-map',
+    label: t('sidebar.map'),
+    icon: <Map className="w-5 h-5" />,
+    to: '/map',
+    preload: false,
+  }
+
   const sections: CoreSection[] = [
     {
       key: 'greenspaces',
       headline: t('sidebar.headlineGreenSpaces'),
-      // Without a module drawing on it the map is an empty basemap.
-      before: manifests.some(({ map }) => map)
-        ? [
-            {
-              key: 'nav-green-spaces-map',
-              label: t('sidebar.map'),
-              icon: <Map className="w-5 h-5" />,
-              to: '/map',
-              preload: false,
-            },
-          ]
-        : [],
+      before: [],
       after: [],
     },
     {
@@ -152,8 +152,8 @@ const protectedNavData = (
         planResourcesOf(manifests).length > 0
           ? [
               {
-                key: 'nav-watering-plans',
-                label: t('sidebar.wateringPlans'),
+                key: 'nav-plans',
+                label: t('sidebar.plans'),
                 icon: <ArrowLeftRight className="w-5 h-5" />,
                 to: '/plans',
               },
@@ -161,7 +161,7 @@ const protectedNavData = (
           : [],
       after: [
         {
-          key: 'nav-watering-plan-vehicle',
+          key: 'nav-plan-vehicles',
           label: t('sidebar.vehicles'),
           icon: <Car className="w-5 h-5" />,
           to: '/vehicles',
@@ -198,7 +198,12 @@ const protectedNavData = (
   return sections.map(({ key, headline, before, after }) => ({
     key,
     headline,
-    links: [...before, ...moduleLinksFor(key, manifests, translate), ...after],
+    links: [
+      ...(key === mapSection ? [mapLink] : []),
+      ...before,
+      ...moduleLinksFor(key, manifests, translate),
+      ...after,
+    ],
   }))
 }
 

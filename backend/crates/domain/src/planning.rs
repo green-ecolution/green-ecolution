@@ -34,7 +34,7 @@ impl fmt::Display for StopRef {
 pub struct StopOutcome {
     pub stop: StopRef,
     pub completed: bool,
-    /// Irrigation: liters used. Waste: volume loaded.
+    /// What the stop consumed or yielded, in the unit of the module's capacity kind.
     pub amount: Option<f64>,
 }
 

@@ -1,0 +1,49 @@
+import type { TFunction } from 'i18next'
+import { PlanStatus } from '@green-ecolution/backend-client'
+
+export type BoardColumnId = 'planned' | 'active' | 'done'
+
+export const DONE_STATUSES: PlanStatus[] = [
+  PlanStatus.Finished,
+  PlanStatus.Canceled,
+  PlanStatus.NotCompleted,
+]
+
+export function columnForStatus(status: PlanStatus): BoardColumnId {
+  switch (status) {
+    case PlanStatus.Planned:
+      return 'planned'
+    case PlanStatus.Active:
+      return 'active'
+    case PlanStatus.Finished:
+    case PlanStatus.Canceled:
+    case PlanStatus.NotCompleted:
+      return 'done'
+  }
+}
+
+export type DropAction = 'start' | 'cancel' | 'complete' | 'revertStart'
+
+export function dropActionFor(from: BoardColumnId, to: BoardColumnId): DropAction | null {
+  if (from === 'planned' && to === 'active') return 'start'
+  if (from === 'planned' && to === 'done') return 'cancel'
+  if (from === 'active' && to === 'done') return 'complete'
+  if (from === 'active' && to === 'planned') return 'revertStart'
+  return null
+}
+
+// Not a component: the caller passes its own scoped `t` (see clusterStatusReason.ts
+// for the same shape) rather than this module reaching for `getI18n()` — a frozen
+// translation here would reproduce the bug the router helpers had.
+export function dropHintFor(action: DropAction, t: TFunction<'plan'>): string {
+  switch (action) {
+    case 'start':
+      return t('board.dropHint.start')
+    case 'cancel':
+      return t('board.dropHint.cancel')
+    case 'complete':
+      return t('board.dropHint.complete')
+    case 'revertStart':
+      return t('board.dropHint.revertStart')
+  }
+}

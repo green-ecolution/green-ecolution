@@ -36,6 +36,9 @@ export const wasteManifest: ModuleManifest = {
     '/waste-bins': ['waste_bin:read'],
   },
   resources: wasteResources,
+  roleTemplates: [
+    { key: 'waste_collection', nameKey: 'waste:roles.waste_collection', icon: Trash2 },
+  ],
   map: wasteMap,
   planning: wastePlanning,
   targets: [binSensorTarget],

@@ -13,7 +13,7 @@ use crate::issue::ValidationIssue;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct WateringPlanDraftInput {
+pub(crate) struct PlanDraftInput {
     pub date: DateTime<Utc>,
     #[serde(default)]
     #[allow(dead_code)] // free-text DTO field, not validated
@@ -39,13 +39,13 @@ fn non_empty(value: Option<&str>) -> Option<&str> {
     value.and_then(|v| (!v.is_empty()).then_some(v))
 }
 
-pub(crate) fn collect_plan_issues(input: &WateringPlanDraftInput) -> Vec<ValidationIssue> {
+pub(crate) fn collect_plan_issues(input: &PlanDraftInput) -> Vec<ValidationIssue> {
     let mut issues = Vec::new();
 
     if input.stop_ids.iter().all(|s| s.is_empty()) {
         issues.push(ValidationIssue::from_error(
             &ValidationError::EmptyString {
-                field: "watering_plan.stop_ids",
+                field: "plan.stop_ids",
             },
             "stopIds",
         ));
@@ -54,7 +54,7 @@ pub(crate) fn collect_plan_issues(input: &WateringPlanDraftInput) -> Vec<Validat
     if input.driver_ids.is_empty() {
         issues.push(ValidationIssue::from_error(
             &ValidationError::EmptyString {
-                field: "watering_plan.driver_ids",
+                field: "plan.driver_ids",
             },
             "driverIds",
         ));
@@ -63,7 +63,7 @@ pub(crate) fn collect_plan_issues(input: &WateringPlanDraftInput) -> Vec<Validat
             if Uuid::parse_str(id).is_err() {
                 issues.push(ValidationIssue::from_error(
                     &ValidationError::InvalidFormat {
-                        field: "watering_plan.driver_ids",
+                        field: "plan.driver_ids",
                         reason: format!("`{}` is not a valid UUID", id),
                     },
                     "driverIds",
@@ -76,7 +76,7 @@ pub(crate) fn collect_plan_issues(input: &WateringPlanDraftInput) -> Vec<Validat
     if non_empty(input.transporter_id.as_deref()).is_none() {
         issues.push(ValidationIssue::from_error(
             &ValidationError::EmptyString {
-                field: "watering_plan.transporter_id",
+                field: "plan.transporter_id",
             },
             "transporterId",
         ));
@@ -86,15 +86,14 @@ pub(crate) fn collect_plan_issues(input: &WateringPlanDraftInput) -> Vec<Validat
     if non_empty(input.start_point_name.as_deref()).is_none() {
         issues.push(ValidationIssue::from_error(
             &ValidationError::EmptyString {
-                field: "watering_plan.start_point_name",
+                field: "plan.start_point_name",
             },
             "startPointName",
         ));
     }
 
     if let Some(status) = input.status.as_deref()
-        && let Some(issue) =
-            validate_enum::<OperationPlanStatus>(status, "watering_plan.status", "status")
+        && let Some(issue) = validate_enum::<OperationPlanStatus>(status, "plan.status", "status")
     {
         issues.push(issue);
     }
@@ -107,7 +106,7 @@ pub(crate) fn collect_plan_issues(input: &WateringPlanDraftInput) -> Vec<Validat
     if input.date < today_start {
         issues.push(ValidationIssue::from_error(
             &ValidationError::OutOfRange {
-                field: "watering_plan.date",
+                field: "plan.date",
                 min: today_start.timestamp() as f64,
                 max: f64::MAX,
                 got: input.date.timestamp() as f64,
@@ -119,10 +118,9 @@ pub(crate) fn collect_plan_issues(input: &WateringPlanDraftInput) -> Vec<Validat
     issues
 }
 
-#[wasm_bindgen(js_name = validateWateringPlanDraft)]
-pub fn validate_watering_plan_draft(input: JsValue) -> Result<JsValue, JsError> {
-    let draft: WateringPlanDraftInput =
-        from_value(input).map_err(|e| JsError::new(&e.to_string()))?;
+#[wasm_bindgen(js_name = validatePlanDraft)]
+pub fn validate_plan_draft(input: JsValue) -> Result<JsValue, JsError> {
+    let draft: PlanDraftInput = from_value(input).map_err(|e| JsError::new(&e.to_string()))?;
     let issues = collect_plan_issues(&draft);
     to_js(&issues)
 }
@@ -136,8 +134,8 @@ mod tests {
         Utc::now() + Duration::days(2)
     }
 
-    fn valid() -> WateringPlanDraftInput {
-        WateringPlanDraftInput {
+    fn valid() -> PlanDraftInput {
+        PlanDraftInput {
             date: future_date(),
             description: None,
             stop_ids: vec!["stop-a".into(), "stop-b".into()],
@@ -164,7 +162,7 @@ mod tests {
             .iter()
             .find(|i| i.path == "stopIds")
             .expect("stopIds issue");
-        assert_eq!(issue.key, "watering_plan.stop_ids.empty");
+        assert_eq!(issue.key, "plan.stop_ids.empty");
     }
 
     #[test]
@@ -192,7 +190,7 @@ mod tests {
             .iter()
             .find(|i| i.path == "transporterId")
             .expect("transporterId issue");
-        assert_eq!(issue.key, "watering_plan.transporter_id.empty");
+        assert_eq!(issue.key, "plan.transporter_id.empty");
     }
 
     #[test]
@@ -212,7 +210,7 @@ mod tests {
             .iter()
             .find(|i| i.path == "driverIds")
             .expect("driverIds issue");
-        assert_eq!(issue.key, "watering_plan.driver_ids.invalidFormat");
+        assert_eq!(issue.key, "plan.driver_ids.invalidFormat");
     }
 
     #[test]
@@ -224,7 +222,7 @@ mod tests {
             .iter()
             .find(|i| i.path == "status")
             .expect("status issue");
-        assert_eq!(issue.key, "watering_plan.status.invalidFormat");
+        assert_eq!(issue.key, "plan.status.invalidFormat");
     }
 
     #[test]
@@ -251,7 +249,7 @@ mod tests {
             .iter()
             .find(|i| i.path == "startPointName")
             .expect("startPointName issue");
-        assert_eq!(issue.key, "watering_plan.start_point_name.empty");
+        assert_eq!(issue.key, "plan.start_point_name.empty");
     }
 
     #[test]

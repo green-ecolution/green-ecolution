@@ -206,8 +206,7 @@ pub enum ServiceError {
     PlanFinishedDifferently,
     #[error("too many routing requests, try again shortly")]
     TooManyRequests,
-    /// An error a module raises with its own stable code, e.g.
-    /// `conflict.tree_in_cluster`.
+    /// An error a module raises with its own stable code.
     #[error("{message}")]
     Module {
         kind: ModuleErrorKind,

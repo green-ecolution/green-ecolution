@@ -37,7 +37,8 @@ Die Seitennavigation gliedert sich in die vier Bereiche **Grünflächen**, **Bes
 **Planung** und **Weiteres**. Unter **Grünflächen** liegen Karte, Bewässerungsgruppen und
 Bäume, unter **Bestand** die Sensoren und bei aktivem Abfallmodul die Abfallbehälter,
 unter **Planung** Einsatzpläne und Fahrzeuge, unter **Weiteres** das Handbuch und die
-Auswertung. **Einstellungen** und das Benutzermenü sind davon getrennt
+Auswertung. Ist die Bewässerung in deiner Organisation nicht aktiv, entfällt der Bereich
+**Grünflächen**, und die Karte steht unter **Bestand**. **Einstellungen** und das Benutzermenü sind davon getrennt
 am unteren Rand der Navigation angeheftet. Welche Einträge du siehst, hängt von deinen
 Rollen ab; mehr dazu steht in [Rollen und Sichtbarkeit](./introduction.md#rollen-und-sichtbarkeit).
 

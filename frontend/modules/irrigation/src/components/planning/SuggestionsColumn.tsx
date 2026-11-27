@@ -5,8 +5,8 @@ import { FolderPlus, Sprout } from 'lucide-react'
 import { Button, KanbanColumn, KanbanColumnEmpty, KanbanColumnHeader } from '@green-ecolution/ui'
 import { useTranslation } from 'react-i18next'
 import { PlanStatus as WateringPlanStatus } from '@green-ecolution/backend-client'
-import { useWateringPlanDraft } from '@/store/form/useFormDraft'
-import type { WateringPlanForm } from '@/schema/wateringPlanSchema'
+import { usePlanDraft } from '@/store/form/useFormDraft'
+import type { PlanForm } from '@/schema/planSchema'
 import { useHasPermission } from '@/lib/auth/useHasPermission'
 import { IRRIGATION } from '../../lib/targets'
 import { clusterQueries } from '../../api/queries'
@@ -16,7 +16,7 @@ const SuggestionsColumn = () => {
   const clustersQuery = useQuery(clusterQueries.suggested())
   const { data: clustersRes } = clustersQuery
   const [selected, setSelected] = useState<string[]>([])
-  const draft = useWateringPlanDraft<WateringPlanForm>('create')
+  const draft = usePlanDraft<PlanForm>('create')
   const navigate = useNavigate()
   const canBundle = useHasPermission(['watering_plan:create'])
   const { t } = useTranslation(['irrigation', 'common'])

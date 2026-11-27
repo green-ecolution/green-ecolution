@@ -117,7 +117,7 @@ function resolveMessage(
   // A named field beats a generic code: "Name darf maximal 255 Zeichen lang
   // sein" is more use than "Die eingegebenen Daten sind ungültig."
   if (validation) {
-    const message = translateIssueNow(validation)
+    const message = translateIssueNow(validation, context.module)
     if (message !== validation.key) {
       return { message, messageKey: `validation:${validation.key}` }
     }

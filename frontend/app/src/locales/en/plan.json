@@ -1,0 +1,164 @@
+{
+  "entity": {
+    "name": "Operation plan",
+    "nameWithArticle": "the operation plan"
+  },
+  "list": {
+    "title": "Operation plans",
+    "descriptionCanModify": "Plan, start, and document trips. Drag an operation plan into the next column to change its status.",
+    "description": "Track planned, ongoing, and completed trips.",
+    "createButton": "Create new operation plan",
+    "loadingLabel": "Loading data"
+  },
+  "detail": {
+    "backLabel": "All operation plans",
+    "title": "Operation plan for {date}",
+    "editLabel": "Edit operation plan",
+    "downloadRouteLabel": "Download route",
+    "routeErrorAlert": "The route for this operation plan could not be calculated. Please check whether the selected vehicle has enough capacity for the chosen stops.",
+    "updateStatusLabel": "Update status",
+    "tabGeneral": "General data",
+    "tabRoute": "Route",
+    "loadingLabel": "Loading operation plan …",
+    "routeLengthLabel": "Route length",
+    "startPointLabel": "Start point",
+    "demandLabel": {
+      "water": "Water required",
+      "cargo_volume": "Cargo volume required"
+    },
+    "demandValue": "{value} liters",
+    "transporterLabel": "Transporter",
+    "archivedVehicleValue": "{numberPlate} (Archived)",
+    "trailerLabel": "Additional trailer",
+    "assignedUsersLabel": "Assigned staff",
+    "refillCountLabel": "Refills required",
+    "durationLabel": "Time required (driving time)",
+    "updatedAtLabel": "Last updated",
+    "dataHeadline": "Operation plan data",
+    "currentStatusLabel": "Current status of the operation plan",
+    "cancellationNoteLabel": "Cancellation note",
+    "routeStartDescription": "Operation plan starts: {startPoint}",
+    "entityTitle": "Operation plan: {value}",
+    "notFoundBackLabel": "To the operation plan list",
+    "routePreviewAriaLabel": "Map with the route and stops for this plan",
+    "routePreviewLoadingLabel": "Loading map …",
+    "transporterCapacity": {
+      "water": {
+        "label": "Vehicle water tank",
+        "used": "In use",
+        "unused": "Stays empty, only the trailer carries water"
+      },
+      "cargo_volume": {
+        "label": "Vehicle cargo space",
+        "used": "In use",
+        "unused": "Stays empty, only the trailer is loaded"
+      }
+    }
+  },
+  "update": {
+    "backLabel": "Back to the operation plan",
+    "title": "Edit operation plan for {date}",
+    "description": "A plan needs at least one stop, one staff member and a vehicle.",
+    "statusEditNotice": "An operation plan's status can be edited separately.",
+    "deletingLabel": "The operation plan is being deleted"
+  },
+  "statusUpdate": {
+    "backLabel": "Back to the operation plan",
+    "title": "Edit status of operation plan {date}",
+    "currentStatusLabel": "Current status:",
+    "description": "An operation plan's status describes whether it is currently being carried out, has been completed, or was canceled, for example. This information helps categorize the operation plans that have been created and build an evaluation. Once an operation plan is completed, you can also specify how each stop was handled.",
+    "finishedNotice": "This operation plan is completed. Its status can no longer be changed.",
+    "finishModuleInactive": "The module of this operation plan is not active for your organization. It can only be finished once the module is switched on again.",
+    "statusFieldLabel": "Operation plan status",
+    "statusFieldPlaceholder": "Choose a status",
+    "cancelReasonLabel": "Reason for cancellation",
+    "cancelReasonPlaceholder": "Why was the operation plan canceled?",
+    "notCompletedReasonLabel": "Reason it wasn't carried out",
+    "notCompletedReasonPlaceholder": "Why wasn't the operation plan carried out?",
+    "toastSuccess": "The operation plan's status was updated successfully."
+  },
+  "form": {
+    "moduleLabel": "Module",
+    "modulePlaceholder": "Choose a module",
+    "noDrivingLicenseLabel": "No driving licence",
+    "dateLabel": "Operation plan date",
+    "transporterLabel": "Linked vehicle",
+    "transporterPlaceholder": "Choose a vehicle",
+    "startPointLabel": "Start point",
+    "startPointPlaceholder": "Choose a start point",
+    "noStartPointsError": "No start points are available. An operation plan cannot be created without a start point.",
+    "trailerLabel": "Linked trailer",
+    "trailerPlaceholder": "Choose a trailer, if any",
+    "noTrailerOption": "No trailer",
+    "driversLabel": "Linked staff",
+    "driversPlaceholder": "Select staff",
+    "noQualifiedDriverError": "No selected staff member has all the required driving licences for the selected vehicles.",
+    "createLeaveMessage": "Do you really want to leave this page? Your entries for creating the operation plan will be lost if you leave now.",
+    "updateLeaveMessage": "Do you really want to leave this page? Your changes to the operation plan will be lost if you leave now.",
+    "createSuccessMessage": "The operation plan was created successfully.",
+    "updateSuccessMessage": "The operation plan was updated successfully.",
+    "transporterCapacityUsed": {
+      "water": {
+        "label": "Use the vehicle's water tank",
+        "hint": "Clear this if only the trailer carries water. The route then plans with the trailer's capacity alone."
+      },
+      "cargo_volume": {
+        "label": "Use the vehicle's cargo space",
+        "hint": "Clear this if only the trailer is loaded. The route then plans with the trailer's capacity alone."
+      }
+    }
+  },
+  "create": {
+    "backLabel": "To all operation plans",
+    "title": "Create new operation plan",
+    "description": "Choose the date, vehicle, staff and the stops to visit. A new plan starts as \"planned\"."
+  },
+  "board": {
+    "moduleSwitcherAriaLabel": "Planning module",
+    "columnError": {
+      "message": "The operation plans could not be loaded."
+    },
+    "column": {
+      "planned": "Planned",
+      "active": "Underway",
+      "done": "Done",
+      "plannedEmptyCanCreate": "No planned operation plans. Create a new operation plan or bundle suggestions.",
+      "plannedEmpty": "No planned operation plans.",
+      "activeEmptyCanModify": "Drag a planned operation plan here to start it.",
+      "activeEmpty": "No operation plan is currently underway.",
+      "doneEmpty": "No completed operation plans yet.",
+      "loadMore": "Load more"
+    },
+    "assignDriverLabel": "Assign driver",
+    "assignUsersPopover": {
+      "changeLabel": "Change",
+      "assignLabel": "Assign",
+      "heading": "Assign staff",
+      "placeholder": "Choose staff…",
+      "saveLabel": "Save assignment"
+    },
+    "cancelDialog": {
+      "title": "Cancel operation plan",
+      "description": "The operation plan for {date} will be canceled. Please give a reason."
+    },
+    "completeDialog": {
+      "title": "Complete operation plan",
+      "description": "How did the operation plan for {date} turn out?",
+      "outcomeAriaLabel": "Outcome of the operation plan"
+    },
+    "dropHint": {
+      "start": "Start operation plan",
+      "cancel": "Cancel operation plan",
+      "complete": "Complete operation plan",
+      "revertStart": "Undo start"
+    },
+    "mutation": {
+      "startRevertedToast": "Start undone.",
+      "startedToast": "Operation plan started.",
+      "undoActionLabel": "Undo",
+      "canceledToast": "Operation plan canceled.",
+      "finishedToast": "Operation plan completed.",
+      "assignedToast": "Assignment saved."
+    }
+  }
+}

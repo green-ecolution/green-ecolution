@@ -3,12 +3,12 @@ import type {
   PlanInListResponse,
   PlanUpdateRequest,
 } from '@green-ecolution/backend-client'
-import type { WateringPlanForm } from '@/schema/wateringPlanSchema'
+import type { PlanForm } from '@/schema/planSchema'
 
 const trailerOf = (trailerId: string | undefined) =>
   trailerId && trailerId !== '-1' ? trailerId : undefined
 
-export const toPlanCreateRequest = (form: WateringPlanForm): PlanCreateRequest => ({
+export const toPlanCreateRequest = (form: PlanForm): PlanCreateRequest => ({
   module: form.module,
   date: form.date.toISOString(),
   description: form.description,
@@ -20,7 +20,7 @@ export const toPlanCreateRequest = (form: WateringPlanForm): PlanCreateRequest =
   startPointName: form.startPointName,
 })
 
-export const toPlanFormUpdateRequest = (form: WateringPlanForm): PlanUpdateRequest => ({
+export const toPlanFormUpdateRequest = (form: PlanForm): PlanUpdateRequest => ({
   date: form.date.toISOString(),
   description: form.description,
   status: form.status,

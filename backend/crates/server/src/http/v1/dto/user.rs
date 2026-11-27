@@ -33,7 +33,7 @@ use crate::http::v1::pagination::{default_page, default_per_page};
     "organization": null,
     "roles": [],
     "driving_licenses": ["B"],
-    "watering_plan_selectable": true
+    "plan_selectable": true
 }))]
 pub struct UserResponse {
     /// Unique user identifier (UUID).
@@ -74,9 +74,9 @@ pub struct UserResponse {
     pub roles: Vec<RoleResponse>,
     /// Driving licenses held by the user.
     pub driving_licenses: Vec<DrivingLicense>,
-    /// Whether the user may be assigned to watering plans.
+    /// Whether the user may be assigned to operation plans.
     #[schema(example = true)]
-    pub watering_plan_selectable: bool,
+    pub plan_selectable: bool,
 }
 
 /// Request body for registering a new user.
@@ -93,7 +93,7 @@ pub struct UserResponse {
     "avatar_url": "https://example.com/avatar.jpg",
     "status": "available",
     "driving_licenses": ["B"],
-    "watering_plan_selectable": true
+    "plan_selectable": true
 }))]
 pub struct UserRegisterRequest {
     /// Desired login username.
@@ -132,10 +132,10 @@ pub struct UserRegisterRequest {
     /// Initial driving licenses.
     #[serde(default)]
     pub driving_licenses: Vec<DrivingLicense>,
-    /// Whether the new user may be assigned to watering plans (defaults to true).
+    /// Whether the new user may be assigned to operation plans (defaults to true).
     #[serde(default)]
     #[schema(example = true, nullable)]
-    pub watering_plan_selectable: Option<bool>,
+    pub plan_selectable: Option<bool>,
 }
 
 /// A registered user together with the password the account starts with.
@@ -155,7 +155,7 @@ pub struct UserRegisterResponse {
     "avatar_url": "https://example.com/avatar.jpg",
     "status": "available",
     "driving_licenses": ["B", "CE"],
-    "watering_plan_selectable": true
+    "plan_selectable": true
 }))]
 pub struct UserUpdateRequest {
     /// Internal employee identifier; empty or absent clears the value.
@@ -174,9 +174,9 @@ pub struct UserUpdateRequest {
     pub status: UserStatus,
     /// Full replacement set of driving licenses.
     pub driving_licenses: Vec<DrivingLicense>,
-    /// Whether the user may be assigned to watering plans.
+    /// Whether the user may be assigned to operation plans.
     #[schema(example = true)]
-    pub watering_plan_selectable: bool,
+    pub plan_selectable: bool,
 }
 
 /// Query parameters for the user list endpoint: pagination plus optional
@@ -254,7 +254,7 @@ impl UserUpdateRequest {
             avatar_url,
             status: self.status.into(),
             driving_licenses: self.driving_licenses.into_iter().map(Into::into).collect(),
-            watering_plan_selectable: self.watering_plan_selectable,
+            plan_selectable: self.plan_selectable,
         })
     }
 }
@@ -298,7 +298,7 @@ impl From<&DomainUserView> for UserResponse {
                 .copied()
                 .map(Into::into)
                 .collect(),
-            watering_plan_selectable: value.watering_plan_selectable,
+            plan_selectable: value.plan_selectable,
         }
     }
 }
@@ -386,7 +386,7 @@ impl TryFrom<UserRegisterRequest> for DomainUserCreate {
                 .map(DomainUserStatus::from)
                 .unwrap_or(DomainUserStatus::Available),
             driving_licenses: value.driving_licenses.into_iter().map(Into::into).collect(),
-            watering_plan_selectable: value.watering_plan_selectable.unwrap_or(true),
+            plan_selectable: value.plan_selectable.unwrap_or(true),
         })
     }
 }
@@ -395,14 +395,14 @@ impl TryFrom<UserRegisterRequest> for DomainUserCreate {
 mod tests {
     use super::*;
 
-    fn request_with_selectable(watering_plan_selectable: bool) -> UserUpdateRequest {
+    fn request_with_selectable(plan_selectable: bool) -> UserUpdateRequest {
         UserUpdateRequest {
             employee_id: None,
             phone_number: None,
             avatar_url: None,
             status: UserStatus::Available,
             driving_licenses: Vec::new(),
-            watering_plan_selectable,
+            plan_selectable,
         }
     }
 
@@ -419,7 +419,7 @@ mod tests {
             avatar_url: None,
             status: None,
             driving_licenses: Vec::new(),
-            watering_plan_selectable: None,
+            plan_selectable: None,
         }
     }
 
@@ -472,21 +472,21 @@ mod tests {
     }
 
     #[test]
-    fn try_into_profile_carries_watering_plan_selectable_true() {
+    fn try_into_profile_carries_plan_selectable_true() {
         let profile = request_with_selectable(true)
             .try_into_profile(Uuid::now_v7())
             .expect("valid request");
 
-        assert!(profile.watering_plan_selectable);
+        assert!(profile.plan_selectable);
     }
 
     #[test]
-    fn try_into_profile_carries_watering_plan_selectable_false() {
+    fn try_into_profile_carries_plan_selectable_false() {
         let profile = request_with_selectable(false)
             .try_into_profile(Uuid::now_v7())
             .expect("valid request");
 
-        assert!(!profile.watering_plan_selectable);
+        assert!(!profile.plan_selectable);
     }
 }
 

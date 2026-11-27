@@ -1,0 +1,168 @@
+import { queryRoots } from '@/api/queries'
+import { useMutation, useQueryClient, type QueryKey } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
+import { PlanStatus } from '@green-ecolution/backend-client'
+import type {
+  ListResponsePlanInListResponse,
+  PlanInListResponse,
+  PlanUpdateRequest,
+  StopOutcomeDto,
+} from '@green-ecolution/backend-client'
+import { planApi } from '@/api/backendApi'
+import { planQueries } from '@/api/queries'
+import { planStatusQueryRoots, useInvalidateQueryRoots } from '@/lib/queryInvalidation'
+import { toUpdateRequest } from '@/lib/plans'
+import { completeOutcomes } from '@/modules/planning'
+import type { ModulePlanning } from '@/modules/types'
+import createToast from '@/hooks/createToast'
+import { resolveApiError } from '@/lib/apiError'
+
+const columnKeys = (plan: PlanInListResponse) => ({
+  plannedKey: planQueries.boardColumn(plan.module, [PlanStatus.Planned]).queryKey,
+  activeKey: planQueries.boardColumn(plan.module, [PlanStatus.Active]).queryKey,
+})
+
+/** `planning` names what a status change invalidates beyond the plans; assignments need none. */
+export const usePlanBoardMutations = (
+  planning?: Pick<ModulePlanning, 'invalidateOnStatusChange'>,
+) => {
+  const queryClient = useQueryClient()
+  const invalidate = useInvalidateQueryRoots()
+  const showToast = createToast()
+  // Default namespace stays 'errors' so every existing `t('frame.*')` call below
+  // is untouched; plan strings are reached with an explicit prefix.
+  const { t } = useTranslation(['errors', 'plan'])
+
+  // The board stays mounted after a mutation, so the route loaders have to
+  // re-run as well; cancelQueries elsewhere is scoped to the board to avoid
+  // aborting unrelated plan queries.
+  const runInvalidation = (roots: readonly QueryKey[]) =>
+    invalidate(roots, { reloadRoutes: true }).catch((error) =>
+      console.error('Invalidation after plan mutation failed:', error),
+    )
+
+  const invalidateAfterStatusChange = () => void runInvalidation(planStatusQueryRoots(planning))
+  const invalidatePlans = () => void runInvalidation(queryRoots.plan)
+
+  const update = (plan: PlanInListResponse, overrides: Partial<PlanUpdateRequest>) =>
+    planApi.updatePlan({ planId: plan.id, planUpdateRequest: toUpdateRequest(plan, overrides) })
+
+  const revertStart = useMutation({
+    mutationFn: (plan: PlanInListResponse) => update(plan, { status: PlanStatus.Planned }),
+    onMutate: async (plan) => {
+      await queryClient.cancelQueries({ queryKey: ['plans', 'board'] })
+      const { plannedKey, activeKey } = columnKeys(plan)
+      const previousPlanned = queryClient.getQueryData<ListResponsePlanInListResponse>(plannedKey)
+      const previousActive = queryClient.getQueryData<ListResponsePlanInListResponse>(activeKey)
+      if (previousActive) {
+        queryClient.setQueryData(activeKey, {
+          ...previousActive,
+          data: previousActive.data.filter((p) => p.id !== plan.id),
+        })
+      }
+      if (previousPlanned) {
+        queryClient.setQueryData(plannedKey, {
+          ...previousPlanned,
+          data: [{ ...plan, status: PlanStatus.Planned }, ...previousPlanned.data],
+        })
+      }
+      return { previousPlanned, previousActive }
+    },
+    onError: (error, plan, context) => {
+      const { plannedKey, activeKey } = columnKeys(plan)
+      if (context?.previousPlanned) queryClient.setQueryData(plannedKey, context.previousPlanned)
+      if (context?.previousActive) queryClient.setQueryData(activeKey, context.previousActive)
+      void resolveApiError(error, { module: plan.module }).then((info) =>
+        showToast(t('frame.planStartRevertFailed', { reason: info.message }), 'error'),
+      )
+    },
+    onSuccess: () => showToast(t('plan:board.mutation.startRevertedToast')),
+    onSettled: invalidateAfterStatusChange,
+  })
+
+  const startPlan = useMutation({
+    mutationFn: (plan: PlanInListResponse) => update(plan, { status: PlanStatus.Active }),
+    onMutate: async (plan) => {
+      await queryClient.cancelQueries({ queryKey: ['plans', 'board'] })
+      const { plannedKey, activeKey } = columnKeys(plan)
+      const previousPlanned = queryClient.getQueryData<ListResponsePlanInListResponse>(plannedKey)
+      const previousActive = queryClient.getQueryData<ListResponsePlanInListResponse>(activeKey)
+      if (previousPlanned) {
+        queryClient.setQueryData(plannedKey, {
+          ...previousPlanned,
+          data: previousPlanned.data.filter((p) => p.id !== plan.id),
+        })
+      }
+      if (previousActive) {
+        queryClient.setQueryData(activeKey, {
+          ...previousActive,
+          data: [{ ...plan, status: PlanStatus.Active }, ...previousActive.data],
+        })
+      }
+      return { previousPlanned, previousActive }
+    },
+    onError: (error, plan, context) => {
+      const { plannedKey, activeKey } = columnKeys(plan)
+      if (context?.previousPlanned) queryClient.setQueryData(plannedKey, context.previousPlanned)
+      if (context?.previousActive) queryClient.setQueryData(activeKey, context.previousActive)
+      void resolveApiError(error, { module: plan.module }).then((info) =>
+        showToast(t('frame.planStartFailed', { reason: info.message }), 'error'),
+      )
+    },
+    onSuccess: (_data, plan) =>
+      showToast(t('plan:board.mutation.startedToast'), 'success', {
+        action: {
+          label: t('plan:board.mutation.undoActionLabel'),
+          onClick: () => revertStart.mutate(plan),
+        },
+      }),
+    onSettled: invalidateAfterStatusChange,
+  })
+
+  const cancelPlan = useMutation({
+    mutationFn: ({ plan, note }: { plan: PlanInListResponse; note: string }) =>
+      update(plan, { status: PlanStatus.Canceled, cancellationNote: note }),
+    onError: (error, { plan }) => {
+      void resolveApiError(error, { module: plan.module }).then((info) =>
+        showToast(t('frame.planCancelFailed', { reason: info.message }), 'error'),
+      )
+    },
+    onSuccess: () => {
+      showToast(t('plan:board.mutation.canceledToast'))
+      invalidateAfterStatusChange()
+    },
+  })
+
+  const finishPlan = useMutation({
+    mutationFn: ({ plan, outcomes }: { plan: PlanInListResponse; outcomes: StopOutcomeDto[] }) =>
+      update(plan, {
+        status: PlanStatus.Finished,
+        outcomes: completeOutcomes(plan.stops, outcomes),
+      }),
+    onError: (error, { plan }) => {
+      void resolveApiError(error, { module: plan.module }).then((info) =>
+        showToast(t('frame.planFinishFailed', { reason: info.message }), 'error'),
+      )
+    },
+    onSuccess: () => {
+      showToast(t('plan:board.mutation.finishedToast'))
+      invalidateAfterStatusChange()
+    },
+  })
+
+  const assignUsers = useMutation({
+    mutationFn: ({ plan, userIds }: { plan: PlanInListResponse; userIds: string[] }) =>
+      update(plan, { userIds }),
+    onError: (error, { plan }) => {
+      void resolveApiError(error, { module: plan.module }).then((info) =>
+        showToast(t('frame.planAssignFailed', { reason: info.message }), 'error'),
+      )
+    },
+    onSuccess: () => {
+      showToast(t('plan:board.mutation.assignedToast'))
+      invalidatePlans()
+    },
+  })
+
+  return { revertStart, startPlan, cancelPlan, finishPlan, assignUsers }
+}

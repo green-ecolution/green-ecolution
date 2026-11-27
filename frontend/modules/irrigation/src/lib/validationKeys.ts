@@ -1,0 +1,20 @@
+/** Every key the Rust validators of this module can emit; the texts live under `irrigation:validation`. */
+export const IRRIGATION_VALIDATION_KEYS = [
+  'tree.species.empty',
+  'tree.species.tooShort',
+  'tree.species.tooLong',
+  'tree.number.empty',
+  'tree.number.tooShort',
+  'tree.number.tooLong',
+  'tree.planting_year.outOfRange',
+  'tree.planting_year.invalidFormat',
+  'cluster.name.empty',
+  'cluster.name.tooShort',
+  'cluster.name.tooLong',
+  'cluster.address.empty',
+  'cluster.address.tooShort',
+  'cluster.address.tooLong',
+  'cluster.soil_condition.invalidFormat',
+  'settings.water_demand.outOfRange',
+  'settings.just_watered_ttl.outOfRange',
+] as const satisfies readonly string[]

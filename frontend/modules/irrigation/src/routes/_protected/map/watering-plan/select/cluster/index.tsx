@@ -5,10 +5,10 @@ import { MoveRight } from 'lucide-react'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
-import { WateringPlanForm } from '@/schema/wateringPlanSchema'
-import { routingStartPointsQuery, vehicleQueries, wateringPlanQueries } from '@/api/queries'
+import { PlanForm } from '@/schema/planSchema'
+import { routingStartPointsQuery, vehicleQueries, planQueries } from '@/api/queries'
 import { clusterQueries } from '../../../../../../api/queries'
-import { useWateringPlanDraft } from '@/store/form/useFormDraft'
+import { usePlanDraft } from '@/store/form/useFormDraft'
 import { useFormNavigationBlocker } from '@/hooks/form/useFormNavigationBlocker'
 import SelectEntities from '../../../../../../components/general/form/types/SelectEntities'
 import UnsavedChangesDialog from '@/components/general/form/UnsavedChangesDialog'
@@ -44,10 +44,10 @@ function SelectCluster() {
   const [showError, setShowError] = useState(false)
   const navigate = useNavigate({ from: Route.fullPath })
   const { wateringPlanId } = Route.useSearch()
-  const draft = useWateringPlanDraft<WateringPlanForm>(formType)
+  const draft = usePlanDraft<PlanForm>(formType)
   // An edited plan keeps its organization, which decides its depot and stations.
   const { data: editedPlan } = useQuery({
-    ...wateringPlanQueries.detail(wateringPlanId ?? ''),
+    ...planQueries.detail(wateringPlanId ?? ''),
     enabled: formType === 'update' && !!wateringPlanId,
   })
 
@@ -80,7 +80,7 @@ function SelectCluster() {
 
   const previewEnabled = debouncedClusterIds.length > 0 && !!transporterId && transporterId !== '-1'
   const { data: previewRoute } = useQuery({
-    ...wateringPlanQueries.routePreview({
+    ...planQueries.routePreview({
       module: IRRIGATION,
       stops: debouncedClusterIds,
       transporterId: transporterId ?? '',
@@ -115,8 +115,8 @@ function SelectCluster() {
     switch (formType) {
       case 'update':
         return navigate({
-          to: `/plans/$wateringPlanId/edit`,
-          params: { wateringPlanId: String(wateringPlanId) },
+          to: `/plans/$planId/edit`,
+          params: { planId: String(wateringPlanId) },
         })
       case 'create':
         return navigate({ to: '/plans/new' })
@@ -161,7 +161,7 @@ function SelectCluster() {
       clusterIds.some((id) => !originalClusterIds.includes(id))
 
     draft.updateData((prev) => ({
-      ...(prev ?? ({} as WateringPlanForm)),
+      ...(prev ?? ({} as PlanForm)),
       stopIds: clusterIds,
     }))
 

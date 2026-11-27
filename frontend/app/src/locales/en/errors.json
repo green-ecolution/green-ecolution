@@ -2,7 +2,7 @@
   "code": {
     "organization_mismatch": {
       "sensor_vs_target": "The sensor and the object belong to different organizations.",
-      "stops_vs_plan": "The selected stops lie outside the watering plan's organization.",
+      "stops_vs_plan": "The selected stops lie outside the operation plan's organization.",
       "role_vs_user": "The role belongs to a different organization than the selected person."
     },
     "conflict": {
@@ -28,12 +28,12 @@
       "contact_person_not_a_member": "The selected contact person does not belong to this organization."
     },
     "plan": {
-      "invalid_state_transition": "This status change is not possible in the watering plan's current state.",
-      "cannot_mutate_after_start": "The watering plan can only be edited while it has not started yet.",
+      "invalid_state_transition": "This status change is not possible in the operation plan's current state.",
+      "cannot_mutate_after_start": "The operation plan can only be edited while it has not started yet.",
       "cancellation_note_required": "Canceling requires a reason.",
       "outcome_missing": "The outcome is still missing for at least one stop.",
       "outcome_duplicate": "The outcome was entered more than once for a stop.",
-      "outcome_unknown_stop": "The evaluation names a stop that is not part of the watering plan.",
+      "outcome_unknown_stop": "The evaluation names a stop that is not part of the operation plan.",
       "transporter_capacity_required": "Without a trailer the transporter's own tank must be used.",
       "unknown_stop": "A selected stop no longer exists."
     },
@@ -93,12 +93,12 @@
     "unknown": "The server responded with status {status}."
   },
   "frame": {
-    "wateringPlanStartRevertFailed": "The start could not be undone: {reason}",
-    "wateringPlanStartFailed": "The watering plan could not be started: {reason}",
-    "wateringPlanCancelFailed": "The watering plan could not be canceled: {reason}",
-    "wateringPlanFinishFailed": "The watering plan could not be completed: {reason}",
-    "wateringPlanAssignFailed": "The assignment could not be saved: {reason}",
-    "wateringPlanStatusUpdateFailed": "The status could not be changed: {reason}",
+    "planStartRevertFailed": "The start could not be undone: {reason}",
+    "planStartFailed": "The operation plan could not be started: {reason}",
+    "planCancelFailed": "The operation plan could not be canceled: {reason}",
+    "planFinishFailed": "The operation plan could not be completed: {reason}",
+    "planAssignFailed": "The assignment could not be saved: {reason}",
+    "planStatusUpdateFailed": "The status could not be changed: {reason}",
     "deleteFailed": "{entity} could not be deleted: {reason}",
     "archiveFailed": "{entity} could not be archived: {reason}",
     "gpxDownloadFailed": "The GPX download failed: {reason}",

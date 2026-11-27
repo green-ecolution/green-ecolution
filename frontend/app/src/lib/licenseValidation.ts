@@ -2,7 +2,7 @@ import type { TFunction } from 'i18next'
 import { DrivingLicense } from '@green-ecolution/backend-client'
 import type { User, Vehicle } from '@/api/backendApi'
 
-// Keep in sync with backend: internal/service/domain/watering_plan/watering_plan.go
+// Keep in sync with the backend: `DrivingLicense::satisfies` in the domain crate.
 export function licenseSatisfies(held: DrivingLicense, required: DrivingLicense): boolean {
   if (held === required) {
     return true
@@ -32,7 +32,7 @@ export function validateDriverLicenses(
   trailers: Vehicle[],
   transporterId: string | undefined,
   trailerId: string | undefined,
-  t: TFunction<'wateringPlan'>,
+  t: TFunction<'plan'>,
 ): { valid: boolean; message?: string } {
   if (!driverIds || driverIds.length === 0) {
     return { valid: true }

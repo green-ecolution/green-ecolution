@@ -1,6 +1,6 @@
-//! Capacity a vehicle brings to a route and a station restores. Irrigation
-//! counts water on board; waste collection counts free cargo space. Both are
-//! liters, so one optimizer serves both.
+//! Capacity a vehicle brings to a route and a station restores. A module may
+//! count what is on board or the space still free. Every kind is measured in
+//! liters, so one optimizer serves all of them.
 
 use std::{fmt, ops::Add, str::FromStr};
 

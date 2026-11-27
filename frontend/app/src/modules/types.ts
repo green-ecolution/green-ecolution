@@ -54,8 +54,10 @@ export interface ModuleStatistic {
 
 export interface ModuleMap {
   permissions: PermissionRequirement
-  /** Replaces the core description of the dashboard's map card while the module is active. */
+  /** Replaces the core description of the dashboard's map card while no other active module draws on the map. */
   cardDescriptionKey?: I18nKey
+  /** Sidebar section of the map link; the first active module with a map decides. Defaults to `assets`. */
+  navSection?: NavSectionKey
   searchSchema: z.ZodObject
   interactiveLayerIds: readonly string[]
   prefetch?: (queryClient: QueryClient) => void
@@ -236,6 +238,13 @@ export interface ModuleSettingsSection<D extends ModuleSettingsDraft = ModuleSet
   Section: ComponentType<ModuleSettingsSectionProps<D>>
 }
 
+export interface ModuleRoleTemplate {
+  /** The backend's `template_key` of a role template the module ships. */
+  key: string
+  nameKey: I18nKey
+  icon: ComponentType<{ className?: string }>
+}
+
 export interface ModuleManifest {
   key: string
   /** Sorts the modules wherever their order shows: error lookup, dashboard texts, chart colors. Ties fall back to the key. */
@@ -249,6 +258,8 @@ export interface ModuleManifest {
   nav?: ModuleNav
   routePermissions?: Readonly<Record<string, PermissionRequirement>>
   resources?: readonly ModuleResource[]
+  /** Names and icons of the role templates the module ships; the stored name shows without one. */
+  roleTemplates?: readonly ModuleRoleTemplate[]
   /** Figures for the dashboard's overview; each renders one `<li>` or nothing. */
   dashboardTiles?: readonly ComponentType[]
   statistics?: Readonly<Record<string, ModuleStatistic>>

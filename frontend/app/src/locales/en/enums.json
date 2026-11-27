@@ -35,7 +35,7 @@
     },
     "active": {
       "label": "On a run",
-      "description": "The vehicle is assigned to a watering plan that is currently running."
+      "description": "The vehicle is assigned to an operation plan that is currently running."
     }
   },
   "vehicleType": {
@@ -49,26 +49,26 @@
       "label": "Unknown"
     }
   },
-  "wateringPlanStatus": {
+  "planStatus": {
     "active": {
       "label": "Active",
-      "description": "The watering plan is active and is currently being carried out."
+      "description": "The operation plan is active and is currently being carried out."
     },
     "canceled": {
       "label": "Canceled",
-      "description": "The watering plan was canceled and was not completed."
+      "description": "The operation plan was canceled and was not completed."
     },
     "finished": {
       "label": "Finished",
-      "description": "The watering plan was completed successfully."
+      "description": "The operation plan was completed successfully."
     },
     "not_completed": {
       "label": "Not carried out",
-      "description": "The watering plan was not carried out."
+      "description": "The operation plan was not carried out."
     },
     "planned": {
       "label": "Planned",
-      "description": "The watering plan is planned and can be started."
+      "description": "The operation plan is planned and can be started."
     }
   },
   "dataHealth": {
@@ -91,9 +91,17 @@
     }
   },
   "drivingLicense": {
-    "B": { "label": "B" },
-    "BE": { "label": "BE" },
-    "C": { "label": "C" },
-    "CE": { "label": "CE" }
+    "B": {
+      "label": "B"
+    },
+    "BE": {
+      "label": "BE"
+    },
+    "C": {
+      "label": "C"
+    },
+    "CE": {
+      "label": "CE"
+    }
   }
 }

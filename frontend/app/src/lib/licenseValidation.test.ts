@@ -13,9 +13,9 @@ import { licenseSatisfies, validateDriverLicenses } from './licenseValidation'
 
 // vitest setup already calls createI18n(); fix the language so assertions
 // against the German catalog text stay stable regardless of test order.
-let t: TFunction<'wateringPlan'>
+let t: TFunction<'plan'>
 beforeAll(() => {
-  t = getI18n().getFixedT('de', 'wateringPlan')
+  t = getI18n().getFixedT('de', 'plan')
 })
 
 describe('licenseSatisfies', () => {
@@ -62,7 +62,7 @@ const makeUser = (id: string, licenses: DrivingLicense[]): User => ({
   drivingLicenses: licenses,
   roles: [],
   status: UserStatus.Available,
-  wateringPlanSelectable: true,
+  planSelectable: true,
 })
 
 const makeVehicle = (id: string, license: DrivingLicense, type: VehicleType): Vehicle => ({

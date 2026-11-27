@@ -2,7 +2,6 @@ import { useEffect, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useWatch, type DefaultValues, type UseFormReturn } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
-import { wasteBinDraftResolver, type WasteBinForm } from '@green-ecolution/domain-wasm'
 import type { OrganizationResponse } from '@green-ecolution/backend-client'
 import { organizationQueries } from '@/api/queries'
 import { EntityFormConfig, useEntityForm } from '@/hooks/form/useEntityForm'
@@ -13,6 +12,7 @@ import { useEffectiveRoles, useHomeOrganizationId } from '@/lib/auth/scope/effec
 import { useIssueTranslator } from '@/lib/i18n/validation'
 import { wasteBinApi, type WasteBin, type WasteBinCreate, type WasteBinUpdate } from '../api/client'
 import { wasteRoots } from '../api/roots'
+import { wasteBinDraftResolver, type WasteBinForm } from '../lib/drafts'
 import { WASTE } from '../lib/targets'
 
 export const WASTE_BIN_FORM = 'waste-bin'
@@ -58,7 +58,7 @@ export const useWasteBinForm = (
     disableNavigationBlock?: boolean
   },
 ) => {
-  const translate = useIssueTranslator()
+  const translate = useIssueTranslator(WASTE)
   const { t } = useTranslation('waste')
 
   const config: EntityFormConfig<WasteBinForm, WasteBinForm, WasteBinForm, WasteBin> = {

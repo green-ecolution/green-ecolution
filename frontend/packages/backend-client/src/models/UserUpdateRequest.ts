@@ -2,7 +2,7 @@
 /* eslint-disable */
 /**
  * Green Ecolution API
- * REST API for the Green Ecolution smart irrigation and green-space management platform. Combines IoT sensor data, route optimization, and automated maintenance scheduling to help municipalities manage urban greenery efficiently. The system uses LoRaWAN sensors to monitor soil conditions, calculates optimal watering routes, and provides fleet management capabilities.
+ * REST API of Green Ecolution, a platform for municipal maintenance operations. It manages organizations and tenants, permissions, sensors, vehicles and operation plans; feature modules add their own resources.
  *
  * The version of the OpenAPI document: 0.9.0
  * 
@@ -59,17 +59,17 @@ export interface UserUpdateRequest {
      */
     phoneNumber?: string | null;
     /**
+     * Whether the user may be assigned to operation plans.
+     * @type {boolean}
+     * @memberof UserUpdateRequest
+     */
+    planSelectable: boolean;
+    /**
      * New availability status.
      * @type {UserStatus}
      * @memberof UserUpdateRequest
      */
     status: UserStatus;
-    /**
-     * Whether the user may be assigned to watering plans.
-     * @type {boolean}
-     * @memberof UserUpdateRequest
-     */
-    wateringPlanSelectable: boolean;
 }
 
 
@@ -79,8 +79,8 @@ export interface UserUpdateRequest {
  */
 export function instanceOfUserUpdateRequest(value: object): value is UserUpdateRequest {
     if (!('drivingLicenses' in value) || value['drivingLicenses'] === undefined) return false;
+    if (!('planSelectable' in value) || value['planSelectable'] === undefined) return false;
     if (!('status' in value) || value['status'] === undefined) return false;
-    if (!('wateringPlanSelectable' in value) || value['wateringPlanSelectable'] === undefined) return false;
     return true;
 }
 
@@ -98,8 +98,8 @@ export function UserUpdateRequestFromJSONTyped(json: any, ignoreDiscriminator: b
         'drivingLicenses': ((json['driving_licenses'] as Array<any>).map(DrivingLicenseFromJSON)),
         'employeeId': json['employee_id'] == null ? undefined : json['employee_id'],
         'phoneNumber': json['phone_number'] == null ? undefined : json['phone_number'],
+        'planSelectable': json['plan_selectable'],
         'status': UserStatusFromJSON(json['status']),
-        'wateringPlanSelectable': json['watering_plan_selectable'],
     };
 }
 
@@ -118,8 +118,8 @@ export function UserUpdateRequestToJSONTyped(value?: UserUpdateRequest | null, i
         'driving_licenses': ((value['drivingLicenses'] as Array<any>).map(DrivingLicenseToJSON)),
         'employee_id': value['employeeId'],
         'phone_number': value['phoneNumber'],
+        'plan_selectable': value['planSelectable'],
         'status': UserStatusToJSON(value['status']),
-        'watering_plan_selectable': value['wateringPlanSelectable'],
     };
 }
 

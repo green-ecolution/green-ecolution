@@ -2,7 +2,7 @@
 /* eslint-disable */
 /**
  * Green Ecolution API
- * REST API for the Green Ecolution smart irrigation and green-space management platform. Combines IoT sensor data, route optimization, and automated maintenance scheduling to help municipalities manage urban greenery efficiently. The system uses LoRaWAN sensors to monitor soil conditions, calculates optimal watering routes, and provides fleet management capabilities.
+ * REST API of Green Ecolution, a platform for municipal maintenance operations. It manages organizations and tenants, permissions, sensors, vehicles and operation plans; feature modules add their own resources.
  *
  * The version of the OpenAPI document: 0.9.0
  * 
@@ -63,7 +63,7 @@ export interface RoleResponse {
     permissions: Array<string>;
     /**
      * Which delivered template this role still matches verbatim, e.g.
-     * `tree_care`. Null once someone edits the name or description, or for a
+     * `observer`. Null once someone edits the name or description, or for a
      * hand-made role. A client may translate `name` and `description` while
      * this is set, and must show them verbatim once it is null.
      * @type {string}

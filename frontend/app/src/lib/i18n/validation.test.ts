@@ -44,17 +44,22 @@ it('has a German entry for every key the validators emit', () => {
   expect(missing).toEqual([])
 })
 
+it('holds no text the core validators never emit', () => {
+  const emitted = new Set<string>(VALIDATION_KEYS)
+  expect(flatten(de).filter((key) => !emitted.has(key))).toEqual([])
+})
+
 it('has the same key set in German and English', () => {
   expect(flatten(en).sort()).toEqual(flatten(de).sort())
 })
 
 it('renders a parameterised issue in both languages', async () => {
   const i18n = await createI18n()
-  expect(i18n.t('validation:tree.species.tooShort', { min: 3 })).toBe(
-    'Art muss mindestens 3 Zeichen lang sein.',
+  expect(i18n.t('validation:vehicle.number_plate.tooShort', { min: 3 })).toBe(
+    'Kennzeichen muss mindestens 3 Zeichen lang sein.',
   )
   await i18n.changeLanguage('en')
-  expect(i18n.t('validation:tree.species.tooShort', { min: 3 })).toContain('3')
+  expect(i18n.t('validation:vehicle.number_plate.tooShort', { min: 3 })).toContain('3')
 })
 
 // A dropped word, a swapped {min}/{max}, or a mangled umlaut in any of the

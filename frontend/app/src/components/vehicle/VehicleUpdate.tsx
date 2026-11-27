@@ -86,7 +86,7 @@ const VehicleUpdate = ({ vehicleId }: VehicleUpdateProps) => {
             type="archive"
             entityName={{ key: 'vehicle:entity.nameWithArticle' }}
             redirectUrl={{ to: '/vehicles' }}
-            invalidates={[...queryRoots.vehicle, ...queryRoots.wateringPlan]}
+            invalidates={[...queryRoots.vehicle, ...queryRoots.plan]}
           />
         </Suspense>
       </Can>
