@@ -164,6 +164,7 @@ const AddMemberDialog = ({
               <div className="grid gap-4 sm:grid-cols-2">
                 <FormField
                   id="add-member-first-name"
+                  required
                   label={t('members.add.firstName')}
                   value={values.firstName}
                   onChange={(e) => edit('firstName', e.target.value)}
@@ -172,6 +173,7 @@ const AddMemberDialog = ({
                 />
                 <FormField
                   id="add-member-last-name"
+                  required
                   label={t('members.add.lastName')}
                   value={values.lastName}
                   onChange={(e) => edit('lastName', e.target.value)}
@@ -187,6 +189,7 @@ const AddMemberDialog = ({
               )}
               <FormField
                 id="add-member-email"
+                required
                 type="email"
                 label={t('members.add.email')}
                 value={values.email}
@@ -196,6 +199,7 @@ const AddMemberDialog = ({
               />
               <FormField
                 id="add-member-username"
+                required
                 label={t('members.add.username')}
                 description={t('members.add.usernameHint')}
                 value={values.username}

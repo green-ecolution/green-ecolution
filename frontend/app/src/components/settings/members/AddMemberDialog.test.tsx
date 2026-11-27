@@ -62,9 +62,12 @@ const setup = (props: Partial<React.ComponentProps<typeof AddMemberDialog>> = {}
 }
 
 const fillForm = async () => {
-  await userEvent.type(screen.getByLabelText('Vorname'), 'Anna')
-  await userEvent.type(screen.getByLabelText('Nachname'), 'Schmidt')
-  await userEvent.type(screen.getByLabelText('E-Mail-Adresse'), 'Anna.Schmidt@tbz.example')
+  await userEvent.type(screen.getByRole('textbox', { name: 'Vorname' }), 'Anna')
+  await userEvent.type(screen.getByRole('textbox', { name: 'Nachname' }), 'Schmidt')
+  await userEvent.type(
+    screen.getByRole('textbox', { name: 'E-Mail-Adresse' }),
+    'Anna.Schmidt@tbz.example',
+  )
 }
 
 const submit = () => userEvent.click(screen.getByRole('button', { name: 'Person anlegen' }))
@@ -111,7 +114,7 @@ describe('AddMemberDialog', () => {
     expect(screen.getByText(PASSWORD)).toBeInTheDocument()
     expect(screen.getByText(/bei der ersten Anmeldung ändern/)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Fertig' })).toBeInTheDocument()
-    expect(screen.queryByLabelText('Vorname')).not.toBeInTheDocument()
+    expect(screen.queryByRole('textbox', { name: 'Vorname' })).not.toBeInTheDocument()
   })
 
   it('forgets the password when the dialog closes', async () => {
@@ -139,8 +142,8 @@ describe('AddMemberDialog', () => {
     expect(document.body).not.toHaveTextContent(PASSWORD)
     rerender(dialog(true))
 
-    expect(screen.getByLabelText('Vorname')).toHaveValue('')
-    expect(screen.getByLabelText('E-Mail-Adresse')).toHaveValue('')
+    expect(screen.getByRole('textbox', { name: 'Vorname' })).toHaveValue('')
+    expect(screen.getByRole('textbox', { name: 'E-Mail-Adresse' })).toHaveValue('')
     expect(document.body).not.toHaveTextContent(PASSWORD)
   })
 
@@ -169,11 +172,13 @@ describe('AddMemberDialog', () => {
       'Der Benutzername oder die E-Mail-Adresse ist bereits vergeben.',
     )
     expect(
-      alert.compareDocumentPosition(screen.getByLabelText('E-Mail-Adresse')) &
+      alert.compareDocumentPosition(screen.getByRole('textbox', { name: 'E-Mail-Adresse' })) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy()
-    expect(screen.getByLabelText('Vorname')).toHaveValue('Anna')
-    expect(screen.getByLabelText('E-Mail-Adresse')).toHaveValue('Anna.Schmidt@tbz.example')
+    expect(screen.getByRole('textbox', { name: 'Vorname' })).toHaveValue('Anna')
+    expect(screen.getByRole('textbox', { name: 'E-Mail-Adresse' })).toHaveValue(
+      'Anna.Schmidt@tbz.example',
+    )
   })
 
   it('reports an uncoded failure with the generic toast and keeps the form', async () => {
@@ -186,7 +191,7 @@ describe('AddMemberDialog', () => {
       expect(showToast).toHaveBeenCalledWith('Die Person konnte nicht angelegt werden.', 'error'),
     )
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
-    expect(screen.getByLabelText('Vorname')).toHaveValue('Anna')
+    expect(screen.getByRole('textbox', { name: 'Vorname' })).toHaveValue('Anna')
   })
 
   it('names the cause of a coded failure in the toast', async () => {
@@ -217,8 +222,10 @@ describe('AddMemberDialog', () => {
       'Diese Rolle enthält Rechte, die über deine eigenen hinausgehen.',
     )
     expect(showToast).not.toHaveBeenCalled()
-    expect(screen.getByLabelText('Vorname')).toHaveValue('Anna')
-    expect(screen.getByLabelText('E-Mail-Adresse')).toHaveValue('Anna.Schmidt@tbz.example')
+    expect(screen.getByRole('textbox', { name: 'Vorname' })).toHaveValue('Anna')
+    expect(screen.getByRole('textbox', { name: 'E-Mail-Adresse' })).toHaveValue(
+      'Anna.Schmidt@tbz.example',
+    )
   })
 
   it('reports a 403 without a chosen role with the generic toast', async () => {
@@ -303,7 +310,7 @@ describe('AddMemberDialog', () => {
     await waitFor(() =>
       expect(screen.getByRole('button', { name: 'Person anlegen' })).toBeDisabled(),
     )
-    await userEvent.type(screen.getByLabelText('Benutzername'), '{Enter}')
+    await userEvent.type(screen.getByRole('textbox', { name: 'Benutzername' }), '{Enter}')
 
     expect(calls).toBe(1)
   })
@@ -342,7 +349,7 @@ describe('AddMemberDialog', () => {
       await userEvent.click(screen.getByRole('button', { name: /schließen|close/i }))
 
       expect(onOpenChange).not.toHaveBeenCalled()
-      expect(screen.getByLabelText('Vorname')).toBeInTheDocument()
+      expect(screen.getByRole('textbox', { name: 'Vorname' })).toBeInTheDocument()
       expect(held.calls()).toBe(1)
 
       held.release()

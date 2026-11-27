@@ -63,7 +63,8 @@ Verwaltungsrechten für dich übernehmen.
 Mit der Berechtigung `user:create` in der gewählten Organisation legst du neue
 Mitarbeitende direkt in der Anwendung an. Die Schaltfläche **Person hinzufügen** steht in
 der Kopfzeile der Seite, bei einer leeren Organisation stattdessen in der erklärenden
-Ansicht. Der Dialog fragt nach Vorname, Nachname, E-Mail-Adresse und Benutzername. Der
+Ansicht. Der Dialog fragt nach Vorname, Nachname, E-Mail-Adresse und Benutzername; diese
+vier Angaben sind Pflicht und mit einem Sternchen markiert. Der
 Benutzername ist mit dem Teil der E-Mail-Adresse vor dem @ vorbelegt und lässt sich
 ändern; hast du ihn einmal von Hand angepasst, folgt er der E-Mail-Adresse nicht mehr.
 Mit diesem Benutzernamen meldet sich die Person an. Rollen sind freiwillig und lassen sich
