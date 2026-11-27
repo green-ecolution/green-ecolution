@@ -26,6 +26,11 @@ ignore = [
   # astral-tokio-tar is unmaintained; dev-only via testcontainers (0.27 and
   # 0.28 depend on it unconditionally). Remove once testcontainers drops it.
   "RUSTSEC-2026-0440",
+  # chrono is unmaintained; no vulnerability is reported. It is used across
+  # the whole workspace (domain types, sqlx and serde integration, the WASM
+  # build), so moving to jiff or time is a migration of its own. Remove once
+  # that migration is done.
+  "RUSTSEC-2026-0543",
 ]
 
 [licenses]
