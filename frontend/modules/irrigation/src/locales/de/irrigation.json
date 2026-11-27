@@ -527,5 +527,9 @@
         "outOfRange": "Nachwirkzeit muss zwischen {min} und {max} liegen."
       }
     }
+  },
+  "roles": {
+    "tree_care": "Baumpflege",
+    "route_planning": "Routenplanung"
   }
 }

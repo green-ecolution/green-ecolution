@@ -277,10 +277,7 @@
     "hideActionsAriaLabel": "Aktionen für {area} verbergen",
     "templateName": {
       "administrator": "Administrator",
-      "tree_care": "Baumpflege",
       "sensors": "Sensorik",
-      "route_planning": "Routenplanung",
-      "waste_collection": "Abfallsammlung",
       "observer": "Beobachter"
     },
     "toast": {

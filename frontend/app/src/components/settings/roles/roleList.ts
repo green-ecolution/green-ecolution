@@ -1,5 +1,7 @@
 import type { TFunction } from 'i18next'
 import type { Role } from '@/api/backendApi'
+import { moduleManifests } from '@/modules/registry'
+import { roleTemplateOf } from '@/modules/roleTemplates'
 
 // `t`'s generated overloads only accept the catalog's literal key union; a key
 // built from the backend's runtime template_key can't satisfy that statically.
@@ -26,26 +28,16 @@ export const ownRolesOf = (roles: Role[]): Role[] =>
   roles.filter((role) => !role.isTemplate && !isPristineTemplateCopy(role))
 
 /**
- * Names of the delivered roles, keyed by the backend's `template_key`, resolved
- * through settings:roles.templateName.* so the display name follows the active
- * language. These live here rather than in the database because a name shipped
- * by a migration cannot be translated. The moment a user edits the role the
- * backend drops the key, and the stored name wins again.
+ * Label for a role: the catalog name of its template while untouched, the
+ * stored name after. The names live in the catalogs rather than in the database
+ * because a name shipped by a migration cannot be translated. The moment a
+ * user edits the role the backend drops the template key, and the stored name
+ * wins again.
  */
-const TEMPLATE_KEYS: readonly string[] = [
-  'administrator',
-  'tree_care',
-  'sensors',
-  'route_planning',
-  'observer',
-]
-
-/** Label for a role: the catalog name while untouched, the stored name after. */
 export const roleDisplayName = (
   role: Pick<Role, 'name' | 'templateKey'>,
   t: TFunction<'settings'>,
 ): string => {
-  const key = role.templateKey
-  if (key == null || !TEMPLATE_KEYS.includes(key)) return role.name
-  return (t as LooseTranslate)(`roles.templateName.${key}`)
+  const template = roleTemplateOf(role.templateKey, moduleManifests)
+  return template ? (t as LooseTranslate)(template.nameKey) : role.name
 }

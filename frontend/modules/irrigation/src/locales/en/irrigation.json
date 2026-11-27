@@ -527,5 +527,9 @@
         "outOfRange": "Just-watered duration must be between {min} and {max}."
       }
     }
+  },
+  "roles": {
+    "tree_care": "Tree care",
+    "route_planning": "Route planning"
   }
 }

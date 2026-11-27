@@ -1,5 +1,5 @@
 import { lazy } from 'react'
-import { Droplets, FolderClosed, PieChart, TreeDeciduous, Trees } from 'lucide-react'
+import { Droplets, FolderClosed, PieChart, Route, TreeDeciduous, Trees } from 'lucide-react'
 import Tree from '@/components/icons/Tree'
 import type { ModuleManifest } from '@/modules/types'
 import { irrigationSettingsSection } from './components/settings/settingsSection'
@@ -54,6 +54,10 @@ export const irrigationManifest: ModuleManifest = {
     '/evaluations': EVALUATION_READ,
   },
   resources: irrigationResources,
+  roleTemplates: [
+    { key: 'tree_care', nameKey: 'irrigation:roles.tree_care', icon: TreeDeciduous },
+    { key: 'route_planning', nameKey: 'irrigation:roles.route_planning', icon: Route },
+  ],
   dashboardTiles: [lazy(() => import('./components/dashboard/ClustersTile'))],
   statistics: {
     tree: {

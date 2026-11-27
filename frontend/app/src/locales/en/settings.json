@@ -277,10 +277,7 @@
     "hideActionsAriaLabel": "Hide actions for {area}",
     "templateName": {
       "administrator": "Administrator",
-      "tree_care": "Tree care",
       "sensors": "Sensor technology",
-      "route_planning": "Route planning",
-      "waste_collection": "Waste collection",
       "observer": "Observer"
     },
     "toast": {

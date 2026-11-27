@@ -327,5 +327,8 @@
         "invalidFormat": "Die Voll-Schwelle muss eine ganze Zahl sein."
       }
     }
+  },
+  "roles": {
+    "waste_collection": "Abfallsammlung"
   }
 }

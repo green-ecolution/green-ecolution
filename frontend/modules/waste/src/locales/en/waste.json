@@ -327,5 +327,8 @@
         "invalidFormat": "The full threshold must be a whole number."
       }
     }
+  },
+  "roles": {
+    "waste_collection": "Waste collection"
   }
 }
