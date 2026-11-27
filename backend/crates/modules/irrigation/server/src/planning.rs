@@ -36,7 +36,7 @@ impl IrrigationPlanning {
 #[async_trait::async_trait]
 impl PlanningProvider for IrrigationPlanning {
     fn capacity_kind(&self) -> CapacityKind {
-        CapacityKind::Water
+        irrigation_domain::capacity_kind()
     }
 
     fn plan_resource(&self) -> ResourceKey {

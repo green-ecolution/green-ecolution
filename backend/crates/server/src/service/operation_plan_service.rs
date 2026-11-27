@@ -3,7 +3,7 @@ use std::sync::Arc;
 use domain::{
     Id,
     authorization::{OrgHierarchy, Visibility},
-    capacity::{CapacityKind, Liters, route_capacity},
+    capacity::{Amount, CapacityCatalog, CapacityKind, route_capacity},
     comment::{CommentSubject, CommentWriter},
     events::DomainEvent,
     module::{ModuleActivationReader, ModuleKey},
@@ -39,6 +39,7 @@ pub struct OperationPlanService {
     planning: Arc<PlanningRegistry>,
     activation: Arc<dyn ModuleActivationReader>,
     organizations: Arc<dyn OrganizationReader>,
+    capacities: Arc<CapacityCatalog>,
 }
 
 /// Input for a route computation that is not (yet) a stored plan.
@@ -80,6 +81,7 @@ impl OperationPlanService {
         planning: Arc<PlanningRegistry>,
         activation: Arc<dyn ModuleActivationReader>,
         organizations: Arc<dyn OrganizationReader>,
+        capacities: Arc<CapacityCatalog>,
     ) -> Self {
         Self {
             reader,
@@ -92,6 +94,7 @@ impl OperationPlanService {
             planning,
             activation,
             organizations,
+            capacities,
         }
     }
 
@@ -151,7 +154,7 @@ impl OperationPlanService {
     /// whether or not routing is enabled.
     async fn check_vehicles(
         &self,
-        kind: CapacityKind,
+        kind: &CapacityKind,
         transporter_id: Option<Id<Vehicle>>,
         trailer_id: Option<Id<Vehicle>>,
         capacity_used: bool,
@@ -208,7 +211,7 @@ impl OperationPlanService {
         self.resolve(provider.as_ref(), &draft.stops, draft.organization_id)
             .await?;
         self.check_vehicles(
-            provider.capacity_kind(),
+            &provider.capacity_kind(),
             draft.transporter_id,
             draft.trailer_id,
             draft.transporter_capacity_used,
@@ -239,7 +242,7 @@ impl OperationPlanService {
             .await?;
         plan.replace_details(update)?;
         self.check_vehicles(
-            provider.capacity_kind(),
+            &provider.capacity_kind(),
             plan.transporter_id(),
             plan.trailer_id(),
             plan.transporter_capacity_used(),
@@ -376,17 +379,19 @@ impl OperationPlanService {
             .collect();
         let station_coordinates: Vec<Coordinate> =
             station_points.iter().map(|p| p.coordinate).collect();
-        // A collection tour must unload before it returns to the depot.
-        let return_replenished = kind == CapacityKind::CargoVolume;
+        let return_replenished = self
+            .capacities
+            .spec(&kind)
+            .is_some_and(|spec| spec.returns_replenished);
 
         let capacity = capacity(
-            kind,
+            &kind,
             &transporter,
             trailer.as_ref(),
             req.transporter_capacity_used,
         )?;
         if return_replenished && station_points.is_empty() {
-            return Err(RoutingError::NoStation { kind }.into());
+            return Err(RoutingError::NoStation { kind: kind.clone() }.into());
         }
         let route = optimizer
             .optimize(RouteRequest {
@@ -485,11 +490,11 @@ impl OperationPlanService {
 }
 
 fn capacity(
-    kind: CapacityKind,
+    kind: &CapacityKind,
     transporter: &Vehicle,
     trailer: Option<&Vehicle>,
     capacity_used: bool,
-) -> Result<Liters, ServiceError> {
+) -> Result<Amount, ServiceError> {
     route_capacity(kind, transporter, trailer, capacity_used).map_err(|e| {
         ServiceError::VehicleCapacityMissing {
             vehicle: e.vehicle.value(),

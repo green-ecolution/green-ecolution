@@ -61,7 +61,7 @@ mod tests {
     #[async_trait::async_trait]
     impl PlanningProvider for Fake {
         fn capacity_kind(&self) -> CapacityKind {
-            CapacityKind::Water
+            CapacityKind::new("probe").unwrap()
         }
 
         fn plan_resource(&self) -> ResourceKey {

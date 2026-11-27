@@ -13,7 +13,7 @@ pub mod targets;
 
 use std::{sync::Arc, time::Duration};
 
-use domain::{authorization::ResourceKey, module::ModuleKey};
+use domain::{authorization::ResourceKey, capacity::CapacityKindSpec, module::ModuleKey};
 use server::module::{Module, ModuleBuildError, ModuleContext, ModuleRoutes, ModuleRuntime};
 
 use http::state::{IrrigationHttpState, NearestTreeLimits};
@@ -104,6 +104,10 @@ impl Module for IrrigationModule {
 
     fn resources(&self) -> &'static [ResourceKey] {
         &resources::ALL
+    }
+
+    fn capacity_kinds(&self) -> Vec<CapacityKindSpec> {
+        vec![irrigation_domain::capacity_kind_spec()]
     }
 
     fn build(&self, ctx: ModuleContext) -> Result<ModuleRuntime, ModuleBuildError> {

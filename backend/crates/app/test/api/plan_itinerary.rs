@@ -30,6 +30,7 @@ async fn itinerary_lists_depot_stop_and_station_in_driving_order() {
     let body: serde_json::Value = resp.json().await.unwrap();
     assert_eq!(body["module"], "irrigation");
     assert_eq!(body["capacity_kind"], "water");
+    assert_eq!(body["capacity_unit"], "l");
     let entries = body["entries"].as_array().unwrap();
     let kinds: Vec<&str> = entries
         .iter()

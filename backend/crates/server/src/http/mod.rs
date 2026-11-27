@@ -136,6 +136,7 @@ pub struct AppState {
         Arc<crate::service::module_activation_service::ModuleActivationService>,
     pub module_activation: Arc<dyn domain::module::ModuleActivationReader>,
     pub targets: Arc<crate::service::targets::TargetRegistry>,
+    pub capacities: Arc<domain::capacity::CapacityCatalog>,
     pub planning: Arc<PlanningRegistry>,
     pub app_origins: AppOrigins,
 }

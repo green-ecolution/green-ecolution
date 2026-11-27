@@ -43,7 +43,7 @@ impl WastePlanning {
 #[async_trait::async_trait]
 impl PlanningProvider for WastePlanning {
     fn capacity_kind(&self) -> CapacityKind {
-        CapacityKind::CargoVolume
+        waste_domain::capacity_kind()
     }
 
     fn plan_resource(&self) -> ResourceKey {

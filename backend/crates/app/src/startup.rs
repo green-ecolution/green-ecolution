@@ -4,10 +4,10 @@ use std::time::Duration;
 use sqlx::{PgPool, postgres::PgPoolOptions};
 use tokio::net::TcpListener;
 
-use domain::authorization::ResourceCatalog;
 use domain::info::{
     HealthSnapshotReader, ReadinessReader, ServiceName, StatisticsReader, SystemInfoProvider,
 };
+use domain::{authorization::ResourceCatalog, capacity::CapacityCatalog};
 use server::{
     configuration::{CorsSettings, DatabaseSettings, Settings},
     http::{
@@ -106,6 +106,15 @@ impl Application {
         let resource_catalog = Arc::new(
             ResourceCatalog::new(modules.iter().flat_map(|m| m.resources().iter().copied()))
                 .map_err(|e| std::io::Error::other(format!("invalid resource catalog: {e}")))?,
+        );
+        let capacity_catalog = Arc::new(
+            CapacityCatalog::new(modules.iter().flat_map(|m| {
+                let key = m.key();
+                m.capacity_kinds()
+                    .into_iter()
+                    .map(move |spec| (key.clone(), spec))
+            }))
+            .map_err(|e| std::io::Error::other(format!("invalid capacity catalog: {e}")))?,
         );
         for configured in settings.modules.keys() {
             if !modules.iter().any(|m| m.key().as_str() == configured) {
@@ -215,6 +224,7 @@ impl Application {
                 )
             }),
             resource_catalog.clone(),
+            capacity_catalog.clone(),
         );
 
         let plugin_auth = PluginAuthenticator::new(
@@ -266,6 +276,14 @@ impl Application {
                 catalogs.insert(module.key(), catalog);
             }
             if let Some(provider) = runtime.planning {
+                server::module::check_planning_kind(
+                    &module.key(),
+                    provider.as_ref(),
+                    &capacity_catalog,
+                )
+                .map_err(|e| {
+                    std::io::Error::new(std::io::ErrorKind::InvalidInput, e.to_string())
+                })?;
                 providers.insert(module.key(), provider);
             }
             if let Some(provider) = runtime.statistics {
@@ -387,6 +405,7 @@ impl Application {
             organization_service: services.organization,
             role_service: services.role,
             resource_catalog: resource_catalog.clone(),
+            capacities: capacity_catalog.clone(),
             authorization_service: services.authorization,
             plugin_auth,
             plugin_reader: repos.plugin_reader,
@@ -613,6 +632,7 @@ impl Services {
         auth_enabled: bool,
         proxy_policy: Option<ProxyPolicy>,
         resource_catalog: Arc<ResourceCatalog>,
+        capacities: Arc<CapacityCatalog>,
     ) -> Self {
         let authorization = Arc::new(AuthorizationService::new(
             repos.organization_reader.clone(),
@@ -648,6 +668,7 @@ impl Services {
             planning,
             module_activation.clone(),
             repos.organization_reader.clone(),
+            capacities.clone(),
         ));
         let plugin_sensor_ingest = Arc::new(PluginSensorIngestService::new(
             sensor.clone(),
@@ -662,6 +683,7 @@ impl Services {
             vehicle: Arc::new(VehicleService::new(
                 repos.vehicle_reader.clone(),
                 repos.vehicle_writer.clone(),
+                capacities.clone(),
             )),
             comment: Arc::new(CommentService::new(
                 repos.comment_reader.clone(),
@@ -678,6 +700,7 @@ impl Services {
             start_point: Arc::new(StartPointService::new(
                 start_point_reader.clone(),
                 start_point_writer,
+                capacities,
             )),
             organization: Arc::new(OrganizationService::new(
                 repos.organization_reader.clone(),

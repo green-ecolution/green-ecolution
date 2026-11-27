@@ -1,4 +1,4 @@
-use domain::capacity::Liters;
+use domain::capacity::Amount;
 use domain::shared::error::ValidationError;
 use domain::vehicle::{
     DrivingLicense, NumberPlate, VehicleAvailability, VehicleDimension, VehicleModel, VehicleType,
@@ -86,7 +86,7 @@ pub(crate) fn collect_vehicle_issues(input: &VehicleDraftInput) -> Vec<Validatio
             OptionalF64::Absent => {}
             OptionalF64::Invalid => issues.push(invalid_number_issue(field, path)),
             OptionalF64::Value(n) => {
-                if let Err(err) = Liters::new(n) {
+                if let Err(err) = Amount::new(n) {
                     issues.push(ValidationIssue::from_error(&err, path));
                 }
             }

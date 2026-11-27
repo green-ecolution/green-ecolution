@@ -1,4 +1,4 @@
-use domain::capacity::Liters;
+use domain::capacity::Amount;
 use domain::region::RegionName;
 use domain::sensor::SensorId;
 use domain::settings::{DefectStreak, MapBounds, MapView, SensorOfflineAfter, ZoomLevel};
@@ -136,12 +136,12 @@ pub fn validate_vehicle_dimension(
 
 #[wasm_bindgen(js_name = validateWaterCapacity)]
 pub fn validate_water_capacity(liters: f64) -> Result<JsValue, JsError> {
-    finish(Liters::new(liters), "waterCapacity")
+    finish(Amount::new(liters), "waterCapacity")
 }
 
 #[wasm_bindgen(js_name = validateCargoVolumeCapacity)]
 pub fn validate_cargo_volume_capacity(liters: f64) -> Result<JsValue, JsError> {
-    finish(Liters::new(liters), "cargoVolumeCapacity")
+    finish(Amount::new(liters), "cargoVolumeCapacity")
 }
 
 #[wasm_bindgen(js_name = validateDistance)]

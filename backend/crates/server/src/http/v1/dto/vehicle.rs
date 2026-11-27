@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use domain::{
     Id,
-    capacity::{CapacityKind, Liters},
+    capacity::{Amount, CapacityKind},
     organization::Organization,
     shared::provenance::{Provenance, ProviderId},
     vehicle::{
@@ -15,50 +15,12 @@ use domain::{
 
 use super::{DrivingLicense, SortOrderParam, VehicleAvailability, VehicleStatus, VehicleType};
 
-/// Kind of capacity a vehicle carries or a start point restores.
-#[derive(
-    Debug,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    Hash,
-    Serialize,
-    Deserialize,
-    utoipa::ToSchema,
-)]
-#[serde(rename_all = "snake_case")]
-pub enum CapacityKindDto {
-    Water,
-    CargoVolume,
-}
-
-impl From<CapacityKind> for CapacityKindDto {
-    fn from(value: CapacityKind) -> Self {
-        match value {
-            CapacityKind::Water => Self::Water,
-            CapacityKind::CargoVolume => Self::CargoVolume,
-        }
-    }
-}
-
-impl From<CapacityKindDto> for CapacityKind {
-    fn from(value: CapacityKindDto) -> Self {
-        match value {
-            CapacityKindDto::Water => Self::Water,
-            CapacityKindDto::CargoVolume => Self::CargoVolume,
-        }
-    }
-}
-
-fn into_liters(
-    capacities: BTreeMap<CapacityKindDto, f64>,
-) -> Result<BTreeMap<CapacityKind, Liters>, crate::service::ServiceError> {
+fn into_amounts(
+    capacities: BTreeMap<String, f64>,
+) -> Result<BTreeMap<CapacityKind, Amount>, crate::service::ServiceError> {
     capacities
         .into_iter()
-        .map(|(kind, liters)| Ok((kind.into(), Liters::new(liters)?)))
+        .map(|(kind, amount)| Ok((CapacityKind::new(&kind)?, Amount::new(amount)?)))
         .collect()
 }
 
@@ -80,10 +42,10 @@ pub struct VehicleResponse {
     /// Human-readable description of the vehicle.
     #[schema(example = "Großes Fahrzeug für den Innenstadtbereich")]
     pub description: String,
-    /// Capacity in liters per kind. A kind that is absent means the vehicle
-    /// does not offer it.
-    #[schema(example = json!({"water": 8000.0}))]
-    pub capacities: BTreeMap<CapacityKindDto, f64>,
+    /// Amount per capacity kind, in the unit the kind's module declares. A
+    /// kind that is absent means the vehicle does not offer it.
+    #[schema(example = json!({"example_kind": 8000.0}))]
+    pub capacities: BTreeMap<String, f64>,
     /// Manufacturer and model name.
     #[schema(example = "MAN TGE 3.180")]
     pub model: String,
@@ -137,7 +99,7 @@ impl From<&VehicleView> for VehicleResponse {
             capacities: value
                 .capacities
                 .iter()
-                .map(|(kind, liters)| ((*kind).into(), *liters))
+                .map(|(kind, amount)| (kind.to_string(), *amount))
                 .collect(),
             model: value.model.clone(),
             status: value.status.into(),
@@ -165,10 +127,10 @@ pub struct VehicleCreateRequest {
     /// Human-readable description of the vehicle.
     #[schema(example = "Großes Fahrzeug für den Innenstadtbereich")]
     pub description: Option<String>,
-    /// Capacity in liters per kind. A kind that is absent means the vehicle
-    /// does not offer it.
-    #[schema(example = json!({"water": 8000.0}))]
-    pub capacities: BTreeMap<CapacityKindDto, f64>,
+    /// Amount per capacity kind, in the unit the kind's module declares. A
+    /// kind that is absent means the vehicle does not offer it.
+    #[schema(example = json!({"example_kind": 8000.0}))]
+    pub capacities: BTreeMap<String, f64>,
     /// Manufacturer and model name.
     #[schema(example = "MAN TGE 3.180")]
     pub model: String,
@@ -215,10 +177,10 @@ pub struct VehicleUpdateRequest {
     /// Human-readable description of the vehicle.
     #[schema(example = "Großes Fahrzeug für den Innenstadtbereich")]
     pub description: Option<String>,
-    /// Capacity in liters per kind. A kind that is absent means the vehicle
-    /// does not offer it.
-    #[schema(example = json!({"water": 8000.0}))]
-    pub capacities: BTreeMap<CapacityKindDto, f64>,
+    /// Amount per capacity kind, in the unit the kind's module declares. A
+    /// kind that is absent means the vehicle does not offer it.
+    #[schema(example = json!({"example_kind": 8000.0}))]
+    pub capacities: BTreeMap<String, f64>,
     /// Manufacturer and model name.
     #[schema(example = "MAN TGE 3.180")]
     pub model: String,
@@ -266,7 +228,7 @@ impl VehicleCreateRequest {
     ) -> Result<VehicleDraft, crate::service::ServiceError> {
         let number_plate = NumberPlate::new(self.number_plate)?;
         let model = VehicleModel::new(self.model)?;
-        let capacities = into_liters(self.capacities)?;
+        let capacities = into_amounts(self.capacities)?;
         let dimension = VehicleDimension::new(self.height, self.width, self.length, self.weight)?;
         let provenance = parse_provenance(self.provider, self.additional_information)?;
 
@@ -291,7 +253,7 @@ impl VehicleUpdateRequest {
     ) -> Result<domain::vehicle::VehicleUpdate, crate::service::ServiceError> {
         let number_plate = NumberPlate::new(self.number_plate)?;
         let model = VehicleModel::new(self.model)?;
-        let capacities = into_liters(self.capacities)?;
+        let capacities = into_amounts(self.capacities)?;
         let dimension = VehicleDimension::new(self.height, self.width, self.length, self.weight)?;
         let provenance = parse_provenance(self.provider, self.additional_information)?;
 

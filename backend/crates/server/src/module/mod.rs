@@ -10,6 +10,7 @@ use std::{
 
 use domain::{
     authorization::ResourceKey,
+    capacity::{CapacityCatalog, CapacityKind, CapacityKindSpec},
     module::{ModuleKey, ModuleStatistics},
     organization::OrganizationReader,
     planning::PlanningProvider,
@@ -51,6 +52,11 @@ pub trait Module: Send + Sync {
         &[]
     }
     fn migrations(&self) -> Vec<sqlx::migrate::Migration> {
+        Vec::new()
+    }
+    /// Static like `resources`: vehicle and station services check against
+    /// the catalog before any module is built.
+    fn capacity_kinds(&self) -> Vec<CapacityKindSpec> {
         Vec::new()
     }
     fn build(&self, ctx: ModuleContext) -> Result<ModuleRuntime, ModuleBuildError>;
@@ -164,6 +170,29 @@ pub enum ModuleSetupError {
         existing: String,
         owner: String,
     },
+    #[error("module {module} plans with capacity kind {kind} but does not declare it")]
+    UndeclaredCapacityKind {
+        module: ModuleKey,
+        kind: CapacityKind,
+    },
+}
+
+/// A module may plan only with a capacity kind it declares itself, so the
+/// kind's rules (unit, unloading) come from the same module.
+pub fn check_planning_kind(
+    module: &ModuleKey,
+    provider: &dyn PlanningProvider,
+    catalog: &CapacityCatalog,
+) -> Result<(), ModuleSetupError> {
+    let kind = provider.capacity_kind();
+    if catalog.owner(&kind) == Some(module) {
+        Ok(())
+    } else {
+        Err(ModuleSetupError::UndeclaredCapacityKind {
+            module: module.clone(),
+            kind,
+        })
+    }
 }
 
 /// Fails before anything is mounted. axum would only panic on a few exact
@@ -319,6 +348,56 @@ mod tests {
             }),
         ];
         assert!(check_modules(&core(), &modules).is_ok());
+    }
+
+    struct PlansWith(&'static str);
+
+    #[async_trait::async_trait]
+    impl PlanningProvider for PlansWith {
+        fn capacity_kind(&self) -> CapacityKind {
+            CapacityKind::new(self.0).unwrap()
+        }
+        fn plan_resource(&self) -> ResourceKey {
+            ResourceKey::declare("fake_plan")
+        }
+        async fn resolve_stops(
+            &self,
+            _stops: &[domain::planning::StopRef],
+            _org: domain::Id<domain::organization::Organization>,
+        ) -> Result<Vec<domain::planning::ResolvedStop>, domain::planning::PlanningError> {
+            unreachable!("startup checks never resolve stops")
+        }
+    }
+
+    fn catalog() -> CapacityCatalog {
+        CapacityCatalog::new([(
+            ModuleKey::new("alpha").unwrap(),
+            CapacityKindSpec {
+                kind: CapacityKind::new("sand").unwrap(),
+                unit: "t",
+                returns_replenished: false,
+            },
+        )])
+        .unwrap()
+    }
+
+    #[test]
+    fn planning_with_an_own_kind_passes() {
+        let alpha = ModuleKey::new("alpha").unwrap();
+        assert!(check_planning_kind(&alpha, &PlansWith("sand"), &catalog()).is_ok());
+    }
+
+    #[test]
+    fn planning_with_a_foreign_kind_is_refused() {
+        let beta = ModuleKey::new("beta").unwrap();
+        for kind in ["sand", "gravel"] {
+            let err = check_planning_kind(&beta, &PlansWith(kind), &catalog()).unwrap_err();
+            assert!(
+                matches!(err, ModuleSetupError::UndeclaredCapacityKind { ref module, kind: ref k }
+                    if module == &beta && k.as_str() == kind),
+                "{err}"
+            );
+        }
     }
 
     #[test]

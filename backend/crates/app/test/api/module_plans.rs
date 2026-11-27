@@ -5,7 +5,7 @@ use crate::{
     helpers::{TestApp, set_module, spawn_app_with_modules, spawn_app_with_modules_and_routing},
     module_host::switch,
     settings_repo::child_org,
-    test_module::{KEY, TestModule},
+    test_module::{KEY, THING_LOAD, TestModule},
 };
 
 const ROOT: &str = "01980000-0000-7000-8000-000000000001";
@@ -36,7 +36,7 @@ async fn thing(app: &TestApp) -> Uuid {
 }
 
 async fn cargo_vehicle(app: &TestApp) -> Uuid {
-    crate::vehicle::create_vehicle_with(app, json!({ "cargo_volume": 6000.0 })).await
+    crate::vehicle::create_vehicle_with(app, json!({ THING_LOAD: 6000.0 })).await
 }
 
 async fn plan_in(app: &TestApp, stops: &[Uuid], vehicle: Uuid, org: Uuid) -> Value {
@@ -272,7 +272,7 @@ async fn deleting_a_stop_object_removes_it_from_finished_plans_too() {
 }
 
 #[tokio::test]
-async fn a_vehicle_without_cargo_volume_does_not_fit_a_collection_plan() {
+async fn a_vehicle_without_the_module_kind_does_not_fit_its_plan() {
     let app = app().await;
     let stop = thing(&app).await;
     let water_only = crate::vehicle::create_vehicle_with(&app, json!({ "water": 3000.0 })).await;
@@ -330,7 +330,7 @@ async fn a_collection_route_with_an_unloading_station_asks_the_optimizer_to_retu
     let station = app
         .post_json(
             "/api/v1/routing/start-points",
-            &json!({ "name": "Deponie", "lat": 54.8, "lon": 9.4, "replenishes": ["cargo_volume"] }),
+            &json!({ "name": "Deponie", "lat": 54.8, "lon": 9.4, "replenishes": [THING_LOAD] }),
         )
         .await;
     assert_eq!(station.status(), 201, "{}", station.text().await.unwrap());

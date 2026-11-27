@@ -12,7 +12,7 @@ use crate::{
         AppState,
         auth::extractor::AuthUserExtractor,
         extractors::{Json, Path},
-        v1::{dto::vehicle::CapacityKindDto, error::ErrorBody, plan::readable_plan},
+        v1::{error::ErrorBody, plan::readable_plan},
     },
     service::ServiceError,
 };
@@ -54,8 +54,10 @@ pub struct ItineraryEntryResponse {
 pub struct ItineraryResponse {
     pub plan_id: Uuid,
     pub module: String,
-    /// `water` or `cargo_volume`.
-    pub capacity_kind: CapacityKindDto,
+    /// Capacity kind of the plan's module.
+    pub capacity_kind: String,
+    /// Unit of `demand`, as the kind's module declares it.
+    pub capacity_unit: String,
     pub entries: Vec<ItineraryEntryResponse>,
 }
 
@@ -126,7 +128,12 @@ pub async fn get_plan_itinerary(
     Ok(Json(ItineraryResponse {
         plan_id: id,
         module: plan.module().to_string(),
-        capacity_kind: capacity_kind.into(),
+        capacity_unit: state
+            .capacities
+            .spec(&capacity_kind)
+            .map(|spec| spec.unit.to_string())
+            .unwrap_or_default(),
+        capacity_kind: capacity_kind.to_string(),
         entries: build_entries(plan.itinerary(), &stops),
     }))
 }

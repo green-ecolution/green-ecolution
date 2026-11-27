@@ -179,6 +179,7 @@ impl IntoResponse for ServiceError {
             ServiceError::TargetNotAccepted { .. }
             | ServiceError::TargetRefused { .. }
             | ServiceError::VehicleCapacityMissing { .. }
+            | ServiceError::UnknownCapacityKind { .. }
             | ServiceError::UnknownStop { .. } => {
                 (StatusCode::UNPROCESSABLE_ENTITY, self.to_string())
             }

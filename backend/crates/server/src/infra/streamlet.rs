@@ -326,7 +326,7 @@ mod tests {
     use super::*;
     use std::collections::BTreeMap;
 
-    use domain::capacity::{CapacityKind, Liters};
+    use domain::capacity::{Amount, CapacityKind};
     use domain::routing::{RouteOptimizer, RouteRequest, RouteStop, RouteVisit};
     use domain::shared::coordinates::Coordinate;
     use domain::vehicle::{
@@ -335,13 +335,17 @@ mod tests {
     use wiremock::matchers::{body_partial_json, method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
-    fn vehicle(vehicle_type: VehicleType, water_capacity: f64) -> Vehicle {
+    fn water() -> CapacityKind {
+        CapacityKind::new("water").unwrap()
+    }
+
+    fn vehicle(vehicle_type: VehicleType, capacity: f64) -> Vehicle {
         Vehicle::reconstitute(VehicleSnapshot {
             id: uuid::Uuid::now_v7(),
             archived_at: None,
             number_plate: "FL GE 1234".to_string(),
             description: None,
-            capacities: BTreeMap::from([(CapacityKind::Water, water_capacity)]),
+            capacities: BTreeMap::from([(water(), capacity)]),
             availability: VehicleAvailability::Available,
             vehicle_type,
             model: "Unimog".to_string(),
@@ -364,8 +368,8 @@ mod tests {
     ) -> RouteRequest<'a> {
         RouteRequest {
             transporter,
-            kind: CapacityKind::Water,
-            capacity: transporter.capacity(CapacityKind::Water).unwrap(),
+            kind: water(),
+            capacity: transporter.capacity(&water()).unwrap(),
             stops,
             depot,
             stations,
@@ -450,7 +454,7 @@ mod tests {
         let refills = refills();
         let route = optimizer(&server.uri())
             .optimize(RouteRequest {
-                capacity: Liters::new(1000.0).unwrap(),
+                capacity: Amount::new(1000.0).unwrap(),
                 ..request(&transporter, &stops, depot(), &refills)
             })
             .await

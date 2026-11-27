@@ -96,14 +96,101 @@ async fn updating_a_vehicle_replaces_its_capacities() {
     assert_eq!(fetched["capacities"], json!({ "cargo_volume": 500.0 }));
 }
 
+async fn store_capacity(app: &TestApp, vehicle: Uuid, kind: &str, amount: f64) {
+    sqlx::query("INSERT INTO vehicle_capacities (vehicle_id, kind, amount) VALUES ($1, $2, $3)")
+        .bind(vehicle)
+        .bind(kind)
+        .bind(amount)
+        .execute(&app.db_pool)
+        .await
+        .unwrap();
+}
+
+async fn capacities_of(app: &TestApp, vehicle: Uuid) -> serde_json::Value {
+    let body: serde_json::Value = app
+        .get(&format!("/api/v1/vehicles/{vehicle}"))
+        .await
+        .json()
+        .await
+        .unwrap();
+    body["capacities"].clone()
+}
+
 #[tokio::test]
-async fn an_unknown_capacity_kind_is_rejected() {
+async fn a_new_undeclared_kind_is_refused() {
     let app = spawn_app().await;
     let mut body = vehicle_json("FL-CAP 3");
     body["capacities"] = json!({ "sand": 10.0 });
 
     let res = app.post_json("/api/v1/vehicles", &body).await;
-    assert!(res.status().is_client_error());
+    assert_eq!(res.status(), 422);
+    let body: serde_json::Value = res.json().await.unwrap();
+    assert_eq!(body["code"], "capacity.unknown_kind");
+}
+
+#[tokio::test]
+async fn a_kind_in_the_wrong_format_is_a_bad_request() {
+    let app = spawn_app().await;
+    let mut body = vehicle_json("FL-CAP 4");
+    body["capacities"] = json!({ "Water": 10.0 });
+
+    let res = app.post_json("/api/v1/vehicles", &body).await;
+    assert_eq!(res.status(), 400);
+    let body: serde_json::Value = res.json().await.unwrap();
+    assert_eq!(body["code"], "request.validation_failed");
+}
+
+#[tokio::test]
+async fn a_stored_kind_no_module_declares_is_returned_unchanged() {
+    let app = spawn_app().await;
+    let id = create_vehicle_with(&app, json!({ "water": 1000.0 })).await;
+    store_capacity(&app, id, "sand", 12.5).await;
+
+    assert_eq!(
+        capacities_of(&app, id).await,
+        json!({ "water": 1000.0, "sand": 12.5 })
+    );
+}
+
+#[tokio::test]
+async fn a_stored_undeclared_kind_may_be_sent_back() {
+    let app = spawn_app().await;
+    let id = create_vehicle_with(&app, json!({ "water": 1000.0 })).await;
+    store_capacity(&app, id, "sand", 12.5).await;
+    let mut body = vehicle_json("FL-CAP 5");
+    body["capacities"] = json!({ "water": 1200.0, "sand": 12.5 });
+
+    let res = app.put_json(&format!("/api/v1/vehicles/{id}"), &body).await;
+    assert_eq!(res.status(), 200, "{}", res.text().await.unwrap());
+    assert_eq!(
+        capacities_of(&app, id).await,
+        json!({ "water": 1200.0, "sand": 12.5 })
+    );
+}
+
+#[tokio::test]
+async fn a_stored_undeclared_kind_may_be_dropped() {
+    let app = spawn_app().await;
+    let id = create_vehicle_with(&app, json!({ "water": 1000.0 })).await;
+    store_capacity(&app, id, "sand", 12.5).await;
+    let mut body = vehicle_json("FL-CAP 6");
+    body["capacities"] = json!({ "water": 1000.0 });
+
+    let res = app.put_json(&format!("/api/v1/vehicles/{id}"), &body).await;
+    assert_eq!(res.status(), 200);
+    assert_eq!(capacities_of(&app, id).await, json!({ "water": 1000.0 }));
+}
+
+#[tokio::test]
+async fn an_undeclared_kind_cannot_be_added_on_update() {
+    let app = spawn_app().await;
+    let id = create_vehicle_with(&app, json!({ "water": 1000.0 })).await;
+    let mut body = vehicle_json("FL-CAP 7");
+    body["capacities"] = json!({ "water": 1000.0, "gravel": 3.0 });
+
+    let res = app.put_json(&format!("/api/v1/vehicles/{id}"), &body).await;
+    assert_eq!(res.status(), 422);
+    assert_eq!(capacities_of(&app, id).await, json!({ "water": 1000.0 }));
 }
 
 #[tokio::test]

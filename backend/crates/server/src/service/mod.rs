@@ -197,6 +197,8 @@ pub enum ServiceError {
     TargetRefused { code: &'static str, message: String },
     #[error("vehicle {vehicle} has no {kind} capacity")]
     VehicleCapacityMissing { vehicle: uuid::Uuid, kind: String },
+    #[error("unknown capacity kind '{kind}'")]
+    UnknownCapacityKind { kind: String },
     #[error(transparent)]
     OperationPlan(#[from] OperationPlanError),
     #[error("unknown stop {stop}")]
@@ -213,6 +215,14 @@ pub enum ServiceError {
         code: &'static str,
         message: String,
     },
+}
+
+impl From<domain::capacity::UnknownCapacityKind> for ServiceError {
+    fn from(value: domain::capacity::UnknownCapacityKind) -> Self {
+        Self::UnknownCapacityKind {
+            kind: value.0.to_string(),
+        }
+    }
 }
 
 impl ServiceError {
@@ -251,6 +261,7 @@ impl ServiceError {
             Self::ModuleDisabled { .. } => "module.disabled",
             Self::TargetNotAccepted { .. } => "target.not_accepted",
             Self::VehicleCapacityMissing { .. } => "vehicle.capacity_missing",
+            Self::UnknownCapacityKind { .. } => "capacity.unknown_kind",
             Self::UnknownStop { .. } => "plan.unknown_stop",
             Self::PlanFinishedDifferently => "plan.already_finished_differently",
             Self::TooManyRequests => "routing.too_many_requests",
@@ -474,7 +485,7 @@ mod tests {
             ServiceError::Routing(RoutingError::InvalidProblem("x".into())),
             ServiceError::Routing(RoutingError::Failed("x".into())),
             ServiceError::Routing(RoutingError::NoStation {
-                kind: domain::capacity::CapacityKind::CargoVolume,
+                kind: domain::capacity::CapacityKind::new("x").unwrap(),
             }),
             ServiceError::Organization(domain::organization::OrganizationError::RootImmutable),
             ServiceError::Role(domain::role::RoleError::TemplateImmutable),
@@ -508,8 +519,9 @@ mod tests {
             },
             ServiceError::VehicleCapacityMissing {
                 vehicle: uuid::Uuid::nil(),
-                kind: "water".into(),
+                kind: "x".into(),
             },
+            ServiceError::UnknownCapacityKind { kind: "x".into() },
             ServiceError::OperationPlan(OperationPlanError::InvalidStateTransition {
                 from: OperationPlanStatus::Planned,
                 to: OperationPlanStatus::Finished,

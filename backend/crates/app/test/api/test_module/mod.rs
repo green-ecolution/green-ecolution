@@ -10,7 +10,7 @@ use axum::{extract::State, http::StatusCode};
 use domain::{
     Id, RepositoryError,
     authorization::{Action, Permission, ResourceKey},
-    capacity::CapacityKind,
+    capacity::{CapacityKind, CapacityKindSpec},
     event_bus::{EventHandler, EventHandlerError},
     events::DomainEvent,
     module::ModuleKey,
@@ -187,7 +187,10 @@ fn routes() -> OpenApiRouter<Arc<TestState>> {
         .routes(routes!(delete_thing))
 }
 
-/// Collection tours over things: every thing takes one unit of cargo volume.
+/// The test module's own capacity kind; a tour must unload before it returns.
+pub const THING_LOAD: &str = "thing_load";
+
+/// Collection tours over things: every thing takes one unit of load.
 struct ThingPlanning {
     pool: PgPool,
     organizations: Arc<dyn OrganizationReader>,
@@ -196,7 +199,7 @@ struct ThingPlanning {
 #[async_trait::async_trait]
 impl PlanningProvider for ThingPlanning {
     fn capacity_kind(&self) -> CapacityKind {
-        CapacityKind::CargoVolume
+        CapacityKind::new(THING_LOAD).expect("valid kind")
     }
 
     fn plan_resource(&self) -> ResourceKey {
@@ -360,6 +363,14 @@ impl Module for TestModule {
         &[THING, PLAN]
     }
 
+    fn capacity_kinds(&self) -> Vec<CapacityKindSpec> {
+        vec![CapacityKindSpec {
+            kind: CapacityKind::new(THING_LOAD).expect("valid kind"),
+            unit: "units",
+            returns_replenished: true,
+        }]
+    }
+
     fn default_enabled(&self) -> bool {
         false
     }
@@ -501,6 +512,78 @@ impl Module for ParserOnlyModule {
         runtime
             .sensor_parsers
             .push(Arc::new(FixedModelParser(self.model)));
+        Ok(runtime)
+    }
+}
+
+/// Declares capacity kinds and may plan with one; used to prove the startup
+/// checks on capacity kinds.
+pub struct CapacityModule {
+    key: &'static str,
+    declares: &'static [&'static str],
+    plans_with: Option<&'static str>,
+}
+
+impl CapacityModule {
+    pub fn new(
+        key: &'static str,
+        declares: &'static [&'static str],
+        plans_with: Option<&'static str>,
+    ) -> Self {
+        Self {
+            key,
+            declares,
+            plans_with,
+        }
+    }
+}
+
+struct FixedKindPlanning(&'static str);
+
+#[async_trait::async_trait]
+impl PlanningProvider for FixedKindPlanning {
+    fn capacity_kind(&self) -> CapacityKind {
+        CapacityKind::new(self.0).expect("valid kind")
+    }
+
+    fn plan_resource(&self) -> ResourceKey {
+        PLAN
+    }
+
+    async fn resolve_stops(
+        &self,
+        _stops: &[StopRef],
+        _org: Id<Organization>,
+    ) -> Result<Vec<ResolvedStop>, PlanningError> {
+        Ok(vec![])
+    }
+}
+
+impl Module for CapacityModule {
+    fn key(&self) -> ModuleKey {
+        ModuleKey::new(self.key).expect("valid key")
+    }
+    fn default_enabled(&self) -> bool {
+        false
+    }
+    fn openapi(&self) -> utoipa::openapi::OpenApi {
+        OpenApiRouter::<()>::new().into_openapi()
+    }
+    fn capacity_kinds(&self) -> Vec<CapacityKindSpec> {
+        self.declares
+            .iter()
+            .map(|kind| CapacityKindSpec {
+                kind: CapacityKind::new(kind).expect("valid kind"),
+                unit: "l",
+                returns_replenished: false,
+            })
+            .collect()
+    }
+    fn build(&self, _ctx: ModuleContext) -> Result<ModuleRuntime, ModuleBuildError> {
+        let mut runtime = ModuleRuntime::new(ModuleRoutes::empty());
+        runtime.planning = self
+            .plans_with
+            .map(|kind| Arc::new(FixedKindPlanning(kind)) as Arc<dyn PlanningProvider>);
         Ok(runtime)
     }
 }

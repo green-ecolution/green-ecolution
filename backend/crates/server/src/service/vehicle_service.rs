@@ -1,8 +1,9 @@
-use std::sync::Arc;
+use std::{collections::BTreeSet, sync::Arc};
 
 use domain::{
     Id,
     authorization::Visibility,
+    capacity::CapacityCatalog,
     organization::Organization,
     shared::pagination::{Page, Pagination, SearchPage},
     vehicle::{
@@ -16,11 +17,20 @@ use super::ServiceError;
 pub struct VehicleService {
     reader: Arc<dyn VehicleReader>,
     writer: Arc<dyn VehicleWriter>,
+    capacities: Arc<CapacityCatalog>,
 }
 
 impl VehicleService {
-    pub fn new(reader: Arc<dyn VehicleReader>, writer: Arc<dyn VehicleWriter>) -> Self {
-        Self { reader, writer }
+    pub fn new(
+        reader: Arc<dyn VehicleReader>,
+        writer: Arc<dyn VehicleWriter>,
+        capacities: Arc<CapacityCatalog>,
+    ) -> Self {
+        Self {
+            reader,
+            writer,
+            capacities,
+        }
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
@@ -72,6 +82,8 @@ impl VehicleService {
 
     #[tracing::instrument(level = "debug", skip_all)]
     pub async fn create(&self, draft: VehicleDraft) -> Result<Vehicle, ServiceError> {
+        self.capacities
+            .admit(draft.capacities.keys(), &BTreeSet::new())?;
         Ok(self.writer.save_new(draft).await?)
     }
 
@@ -82,6 +94,8 @@ impl VehicleService {
         update: VehicleUpdate,
     ) -> Result<Vehicle, ServiceError> {
         let mut vehicle = self.reader.by_id(id).await?;
+        let stored = vehicle.capacities.keys().cloned().collect();
+        self.capacities.admit(update.capacities.keys(), &stored)?;
         vehicle.replace_details(update);
         self.writer.save(&vehicle).await?;
         Ok(vehicle)

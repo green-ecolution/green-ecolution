@@ -18,8 +18,13 @@ fn whole_word_hits(text: &str, word: &str) -> usize {
 }
 
 /// Every way a text can name a module: its key as a word, one of its
-/// permissions, or one of its resources as a quoted value.
-fn module_terms_in(text: &str, keys: &[String], resources: &[String]) -> Vec<String> {
+/// permissions, or one of its resources or capacity kinds as a quoted value.
+fn module_terms_in(
+    text: &str,
+    keys: &[String],
+    resources: &[String],
+    capacity_kinds: &[String],
+) -> Vec<String> {
     let mut found = Vec::new();
     for key in keys {
         if whole_word_hits(text, key) > 0 {
@@ -38,6 +43,12 @@ fn module_terms_in(text: &str, keys: &[String], resources: &[String]) -> Vec<Str
             found.push(quoted);
         }
     }
+    for kind in capacity_kinds {
+        let quoted = format!("\"{kind}\"");
+        if text.contains(&quoted) {
+            found.push(quoted);
+        }
+    }
     found
 }
 
@@ -45,7 +56,12 @@ fn module_terms_in(text: &str, keys: &[String], resources: &[String]) -> Vec<Str
 fn the_check_finds_a_module_key_a_permission_and_a_quoted_resource() {
     let text = r#"module "irrigation", permission tree:read, kind "tree", an organization tree"#;
 
-    let found = module_terms_in(text, &["irrigation".to_string()], &["tree".to_string()]);
+    let found = module_terms_in(
+        text,
+        &["irrigation".to_string()],
+        &["tree".to_string()],
+        &[],
+    );
 
     assert_eq!(found, ["irrigation", "tree:read", "\"tree\""]);
 }
@@ -54,9 +70,18 @@ fn the_check_finds_a_module_key_a_permission_and_a_quoted_resource() {
 fn the_check_ignores_a_resource_inside_a_longer_word() {
     let text = "the organization tree, a subtree, street:read";
 
-    let found = module_terms_in(text, &["tree".to_string()], &["tree".to_string()]);
+    let found = module_terms_in(text, &["tree".to_string()], &["tree".to_string()], &[]);
 
     assert_eq!(found, ["tree"]);
+}
+
+#[test]
+fn the_check_finds_a_quoted_capacity_kind() {
+    let text = r#"{"capacities": {"water": 8000.0}, "note": "water level"}"#;
+
+    let found = module_terms_in(text, &[], &[], &["water".to_string()]);
+
+    assert_eq!(found, ["\"water\""]);
 }
 
 #[test]
@@ -67,9 +92,14 @@ fn core_openapi_names_no_registered_module() {
         .iter()
         .map(|resource| resource.as_str().to_string())
         .collect();
+    let capacity_kinds: Vec<String> = modules
+        .iter()
+        .flat_map(|m| m.capacity_kinds())
+        .map(|spec| spec.kind.to_string())
+        .collect();
     let doc = serde_json::to_string(&server::http::openapi_doc("/", Vec::new())).unwrap();
 
-    let offenders = module_terms_in(&doc, &keys, &resources);
+    let offenders = module_terms_in(&doc, &keys, &resources, &capacity_kinds);
 
     assert!(offenders.is_empty(), "{offenders:#?}");
 }

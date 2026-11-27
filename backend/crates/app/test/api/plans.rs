@@ -33,7 +33,7 @@ async fn create_trailer(app: &helpers::TestApp) -> serde_json::Value {
 }
 
 #[tokio::test]
-async fn a_transporter_without_water_capacity_is_refused() {
+async fn a_transporter_without_the_plan_kind_is_refused() {
     let app = spawn_app().await;
     let cluster = crate::clusters::create_cluster(&app).await;
     let transporter =

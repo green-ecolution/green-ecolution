@@ -8,7 +8,9 @@ use crate::{
     helpers::{spawn_app_with_modules, try_spawn_app_with_modules},
     organizations::ROOT_ORG_ID,
     settings_repo::child_org,
-    test_module::{CollidingModule, KEY, LEVEL_MODEL, ParserOnlyModule, Probe, TestModule},
+    test_module::{
+        CapacityModule, CollidingModule, KEY, LEVEL_MODEL, ParserOnlyModule, Probe, TestModule,
+    },
 };
 
 async fn app_with_test_module() -> (crate::helpers::TestApp, Arc<Probe>) {
@@ -156,6 +158,36 @@ async fn a_module_shadowing_a_core_route_stops_the_start() {
         Err(err) => err,
     };
     assert!(err.to_string().contains("/organizations"), "{err}");
+}
+
+#[tokio::test]
+async fn a_capacity_kind_declared_twice_stops_the_start() {
+    let err = match try_spawn_app_with_modules(vec![Box::new(CapacityModule::new(
+        "water_twin",
+        &["water"],
+        None,
+    ))])
+    .await
+    {
+        Ok(_) => panic!("startup must refuse a capacity kind declared twice"),
+        Err(err) => err,
+    };
+    assert!(err.to_string().contains("water"), "{err}");
+}
+
+#[tokio::test]
+async fn planning_with_an_undeclared_kind_stops_the_start() {
+    let err = match try_spawn_app_with_modules(vec![Box::new(CapacityModule::new(
+        "sand_planner",
+        &[],
+        Some("sand"),
+    ))])
+    .await
+    {
+        Ok(_) => panic!("startup must refuse planning with an undeclared kind"),
+        Err(err) => err,
+    };
+    assert!(err.to_string().contains("sand_planner"), "{err}");
 }
 
 #[tokio::test]
