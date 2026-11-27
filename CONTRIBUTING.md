@@ -388,7 +388,7 @@ Use the [Feature Request template](https://github.com/green-ecolution/green-ecol
 
 - Format with `cargo fmt --all` and lint with `cargo clippy --workspace --all-targets --all-features -- -D warnings` before pushing.
 - Build with `--locked` and rely on `SQLX_OFFLINE=true` for CI; refresh the cache with `just generate-sqlx` whenever a `query!` / `query_as!` invocation changes.
-- Domain code (`backend/crates/domain/` and every module domain crate such as `backend/crates/modules/irrigation/domain/`) must not depend on `sqlx` (except behind the optional `sqlx` feature), `axum`, `tokio`, `reqwest`, `rumqttc`, or `tracing-subscriber`. `cargo build -p domain --no-default-features --locked` and `cargo build -p irrigation-domain --no-default-features --locked` must stay green so the crates remain portable to WASM / mobile targets.
+- Domain code (`backend/crates/domain/` and every module domain crate such as `backend/crates/modules/irrigation/domain/`) must not depend on `sqlx` (except behind the optional `sqlx` feature), `axum`, `tokio`, `reqwest`, `rumqttc`, or `tracing-subscriber`. `just check-portable` builds `domain` and every module domain crate with `--no-default-features --locked` and must stay green so the crates remain portable to WASM / mobile targets.
 - `domain` and `server` never depend on a module crate, and module crates depend only on the core, never on each other. Only `app` (and `domain-wasm` for the domain crates) knows the modules.
 - Aggregate invariants live in private fields with intent-named methods that return `Vec<DomainEvent>`. HTTP handlers return `*View` types, never raw aggregates.
 - Errors are typed: repository traits return `RepositoryError`; the HTTP layer maps to `ApiError`. Avoid `unwrap()` / `expect()` / `panic!` outside `reconstitute` paths and tests.
@@ -579,7 +579,9 @@ A module is a pair of crates under `backend/crates/modules/<name>/`: `<name>-dom
 for its aggregates and value objects (same portability rules as `domain`) and
 `<name>-server` for services, Postgres adapters, routes and event handlers. The
 server crate exports a type implementing `server::module::Module`, and
-`backend/crates/app/src/modules.rs` lists it in `registered()`. The reference
+`backend/crates/app/src/modules.rs` lists it in `registered()`. The workspace and the CI
+find both crates by their path, so outside its own directory a new module needs only the
+dependency in `backend/crates/app/Cargo.toml` and that line in `registered()`. The reference
 implementation is the irrigation module (`irrigation-domain`, `irrigation-server`); a
 minimal one for tests lives in `backend/crates/app/test/api/test_module/`
 (`ThingCatalog`, `ThingPlanning`). Because the core does not depend on any module, the
