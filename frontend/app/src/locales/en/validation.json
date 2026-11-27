@@ -1,20 +1,4 @@
 {
-  "tree": {
-    "species": {
-      "empty": "Species is required.",
-      "tooShort": "Species must be at least {min} characters long.",
-      "tooLong": "Species must be at most {max} characters long."
-    },
-    "number": {
-      "empty": "Tree number is required.",
-      "tooShort": "Tree number must be at least {min} characters long.",
-      "tooLong": "Tree number must be at most {max} characters long."
-    },
-    "planting_year": {
-      "outOfRange": "Planting year must be between {min} and {max}.",
-      "invalidFormat": "Planting year must be a whole number."
-    }
-  },
   "coordinate": {
     "latitude": {
       "outOfRange": "Latitude must be between {min} and {max} (was {got}).",
@@ -23,21 +7,6 @@
     "longitude": {
       "outOfRange": "Longitude must be between {min} and {max} (was {got}).",
       "invalidFormat": "Longitude must be a number."
-    }
-  },
-  "cluster": {
-    "name": {
-      "empty": "Name is required.",
-      "tooShort": "Name must be at least {min} characters long.",
-      "tooLong": "Name must be at most {max} characters long."
-    },
-    "address": {
-      "empty": "Address is required.",
-      "tooShort": "Address must be at least {min} characters long.",
-      "tooLong": "Address must be at most {max} characters long."
-    },
-    "soil_condition": {
-      "invalidFormat": "Not a valid soil condition."
     }
   },
   "vehicle": {
@@ -116,31 +85,7 @@
       "empty": "A start point must be selected."
     }
   },
-  "waste_bin": {
-    "number": {
-      "empty": "Bin number is required.",
-      "tooLong": "Bin number must be at most {max} characters long."
-    },
-    "volume": {
-      "outOfRange": "Volume must be between {min} and {max} liters.",
-      "invalidFormat": "The volume must be a number."
-    },
-    "depth": {
-      "outOfRange": "Depth must be between {min} and {max} cm.",
-      "invalidFormat": "The depth must be a whole number."
-    }
-  },
   "settings": {
-    "water_demand": {
-      "outOfRange": "Water demand must be between {min} and {max} liters."
-    },
-    "just_watered_ttl": {
-      "outOfRange": "Just-watered duration must be between {min} and {max}."
-    },
-    "full_threshold": {
-      "outOfRange": "Full threshold must be between {min} and {max} percent.",
-      "invalidFormat": "The full threshold must be a whole number."
-    },
     "map_view": {
       "invalidFormat": "The centre must lie inside the chosen extent."
     },

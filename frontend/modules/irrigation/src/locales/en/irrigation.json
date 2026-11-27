@@ -486,5 +486,46 @@
         "invalid_problem": "No route can be calculated from the selected data. Check the vehicle, start point and groups."
       }
     }
+  },
+  "validation": {
+    "tree": {
+      "species": {
+        "empty": "Species is required.",
+        "tooShort": "Species must be at least {min} characters long.",
+        "tooLong": "Species must be at most {max} characters long."
+      },
+      "number": {
+        "empty": "Tree number is required.",
+        "tooShort": "Tree number must be at least {min} characters long.",
+        "tooLong": "Tree number must be at most {max} characters long."
+      },
+      "planting_year": {
+        "outOfRange": "Planting year must be between {min} and {max}.",
+        "invalidFormat": "Planting year must be a whole number."
+      }
+    },
+    "cluster": {
+      "name": {
+        "empty": "Name is required.",
+        "tooShort": "Name must be at least {min} characters long.",
+        "tooLong": "Name must be at most {max} characters long."
+      },
+      "address": {
+        "empty": "Address is required.",
+        "tooShort": "Address must be at least {min} characters long.",
+        "tooLong": "Address must be at most {max} characters long."
+      },
+      "soil_condition": {
+        "invalidFormat": "Not a valid soil condition."
+      }
+    },
+    "settings": {
+      "water_demand": {
+        "outOfRange": "Water demand must be between {min} and {max} liters."
+      },
+      "just_watered_ttl": {
+        "outOfRange": "Just-watered duration must be between {min} and {max}."
+      }
+    }
   }
 }

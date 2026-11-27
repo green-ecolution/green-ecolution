@@ -12,6 +12,7 @@ import {
 import { ReactNode } from 'react'
 import { FORM_VALIDATION_MODE } from '@/hooks/form/useEntityForm'
 import { useIssueTranslator } from '@/lib/i18n/validation'
+import { IRRIGATION } from '../../../lib/targets'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from '@green-ecolution/ui'
 import { Sensor } from '@/api/backendApi'
@@ -28,7 +29,7 @@ function TestWrapper({
     defaultOptions: { queries: { retry: false } },
   })
 
-  const translate = useIssueTranslator()
+  const translate = useIssueTranslator(IRRIGATION)
 
   // Mirrors the production wiring in useEntityForm; a divergent mode here would
   // hide exactly the bugs these tests exist to catch.

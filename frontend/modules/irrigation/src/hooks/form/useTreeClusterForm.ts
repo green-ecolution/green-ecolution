@@ -3,6 +3,7 @@ import { irrigationRoots } from '../../api/queries'
 import type { TreeCluster, TreeClusterCreate, TreeClusterUpdate } from '../../api/client'
 import { clusterApi } from '../../api/client'
 import { useIssueTranslator } from '@/lib/i18n/validation'
+import { IRRIGATION } from '../../lib/targets'
 import { TreeclusterForm } from '../../schema/treeclusterSchema'
 import { clusterDraftResolver } from '@green-ecolution/domain-wasm'
 import { DefaultValues } from 'react-hook-form'
@@ -17,7 +18,7 @@ export const useTreeClusterForm = (
     disableNavigationBlock?: boolean
   },
 ) => {
-  const translate = useIssueTranslator()
+  const translate = useIssueTranslator(IRRIGATION)
   const { t } = useTranslation('treecluster')
 
   const treeClusterConfig: EntityFormConfig<

@@ -486,5 +486,46 @@
         "invalid_problem": "Aus den gewählten Angaben lässt sich keine Route berechnen. Prüfe Fahrzeug, Startpunkt und Gruppen."
       }
     }
+  },
+  "validation": {
+    "tree": {
+      "species": {
+        "empty": "Art ist erforderlich.",
+        "tooShort": "Art muss mindestens {min} Zeichen lang sein.",
+        "tooLong": "Art darf maximal {max} Zeichen lang sein."
+      },
+      "number": {
+        "empty": "Baumnummer ist erforderlich.",
+        "tooShort": "Baumnummer muss mindestens {min} Zeichen lang sein.",
+        "tooLong": "Baumnummer darf maximal {max} Zeichen lang sein."
+      },
+      "planting_year": {
+        "outOfRange": "Pflanzjahr muss zwischen {min} und {max} liegen.",
+        "invalidFormat": "Pflanzjahr muss eine ganze Zahl sein."
+      }
+    },
+    "cluster": {
+      "name": {
+        "empty": "Name ist erforderlich.",
+        "tooShort": "Name muss mindestens {min} Zeichen lang sein.",
+        "tooLong": "Name darf maximal {max} Zeichen lang sein."
+      },
+      "address": {
+        "empty": "Adresse ist erforderlich.",
+        "tooShort": "Adresse muss mindestens {min} Zeichen lang sein.",
+        "tooLong": "Adresse darf maximal {max} Zeichen lang sein."
+      },
+      "soil_condition": {
+        "invalidFormat": "Keine korrekte Bodenbeschaffenheit."
+      }
+    },
+    "settings": {
+      "water_demand": {
+        "outOfRange": "Wasserbedarf muss zwischen {min} und {max} Liter liegen."
+      },
+      "just_watered_ttl": {
+        "outOfRange": "Nachwirkzeit muss zwischen {min} und {max} liegen."
+      }
+    }
   }
 }

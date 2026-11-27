@@ -3,6 +3,7 @@ import { irrigationRoots } from '../../api/queries'
 import type { Tree, TreeCreate, TreeUpdate } from '../../api/client'
 import { treeApi } from '../../api/client'
 import { useIssueTranslator } from '@/lib/i18n/validation'
+import { IRRIGATION } from '../../lib/targets'
 import { TreeForm } from '../../schema/treeSchema'
 import { treeDraftResolver } from '@green-ecolution/domain-wasm'
 import { DefaultValues } from 'react-hook-form'
@@ -13,7 +14,7 @@ export const useTreeForm = (
   mutationType: 'create' | 'update',
   opts: { treeId?: string; initForm?: DefaultValues<TreeForm>; disableNavigationBlock?: boolean },
 ) => {
-  const translate = useIssueTranslator()
+  const translate = useIssueTranslator(IRRIGATION)
   const { t } = useTranslation('tree')
 
   const treeConfig: EntityFormConfig<TreeForm, TreeCreate, TreeUpdate, Tree> = {

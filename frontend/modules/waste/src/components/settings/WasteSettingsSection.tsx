@@ -6,6 +6,7 @@ import {
 } from '@green-ecolution/domain-wasm'
 import SettingValueField from '@/components/settings/organization/SettingValueField'
 import { useIssueTranslator } from '@/lib/i18n/validation'
+import { WASTE } from '../../lib/targets'
 import type { ModuleSettingsSectionProps } from '@/modules/types'
 import type { WasteSettingsDraft } from './useWasteSettingsDraft'
 
@@ -14,7 +15,7 @@ const WasteSettingsSection = ({
   locked,
 }: ModuleSettingsSectionProps<WasteSettingsDraft>) => {
   const { t } = useTranslation('waste')
-  const translate = useIssueTranslator()
+  const translate = useIssueTranslator(WASTE)
   const { server, draft, issue } = state
   if (!server || !draft) return null
   const usual = server.fullThreshold.inheritedValue

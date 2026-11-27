@@ -58,7 +58,7 @@ export const useWasteBinForm = (
     disableNavigationBlock?: boolean
   },
 ) => {
-  const translate = useIssueTranslator()
+  const translate = useIssueTranslator(WASTE)
   const { t } = useTranslation('waste')
 
   const config: EntityFormConfig<WasteBinForm, WasteBinForm, WasteBinForm, WasteBin> = {

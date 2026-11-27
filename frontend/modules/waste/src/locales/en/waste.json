@@ -305,5 +305,27 @@
       "loadFailedTitle": "Bin not loaded",
       "loadFailedDescription": "The linked bin (#{id}) could not be retrieved."
     }
+  },
+  "validation": {
+    "waste_bin": {
+      "number": {
+        "empty": "Bin number is required.",
+        "tooLong": "Bin number must be at most {max} characters long."
+      },
+      "volume": {
+        "outOfRange": "Volume must be between {min} and {max} liters.",
+        "invalidFormat": "The volume must be a number."
+      },
+      "depth": {
+        "outOfRange": "Depth must be between {min} and {max} cm.",
+        "invalidFormat": "The depth must be a whole number."
+      }
+    },
+    "settings": {
+      "full_threshold": {
+        "outOfRange": "Full threshold must be between {min} and {max} percent.",
+        "invalidFormat": "The full threshold must be a whole number."
+      }
+    }
   }
 }

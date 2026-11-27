@@ -1,37 +1,19 @@
 import type { IssueTranslator, TranslatableIssue } from './types'
 
 /**
- * Every key the Rust validators can emit, in catalog order.
+ * Every key the core's Rust validators can emit, in catalog order. A module
+ * lists the keys of its own validators itself.
  *
  * The texts live in the consuming app's `validation` namespace; this package
  * holds keys only. A test in the app checks the catalog against this list, so
  * a new Rust variant cannot arrive without a translation.
  */
 export const VALIDATION_KEYS = [
-  // Tree
-  'tree.species.empty',
-  'tree.species.tooShort',
-  'tree.species.tooLong',
-  'tree.number.empty',
-  'tree.number.tooShort',
-  'tree.number.tooLong',
-  'tree.planting_year.outOfRange',
-  'tree.planting_year.invalidFormat',
-
   // Coordinate
   'coordinate.latitude.outOfRange',
   'coordinate.longitude.outOfRange',
   'coordinate.latitude.invalidFormat',
   'coordinate.longitude.invalidFormat',
-
-  // Cluster
-  'cluster.name.empty',
-  'cluster.name.tooShort',
-  'cluster.name.tooLong',
-  'cluster.address.empty',
-  'cluster.address.tooShort',
-  'cluster.address.tooLong',
-  'cluster.soil_condition.invalidFormat',
 
   // Vehicle
   'vehicle.number_plate.empty',
@@ -67,21 +49,10 @@ export const VALIDATION_KEYS = [
   'plan.date.outOfRange',
   'plan.start_point_name.empty',
 
-  // Waste bin
-  'waste_bin.number.empty',
-  'waste_bin.number.tooLong',
-  'waste_bin.volume.outOfRange',
-  'waste_bin.volume.invalidFormat',
-  'waste_bin.depth.outOfRange',
-  'waste_bin.depth.invalidFormat',
-
   // Settings
   'settings.sensor_offline_after.outOfRange',
   'settings.defect_streak.outOfRange',
   'settings.defect_streak.invalidFormat',
-  'settings.water_demand.outOfRange',
-  'settings.just_watered_ttl.outOfRange',
-  'settings.full_threshold.outOfRange',
   'settings.map_view.invalidFormat',
 
   // Bounding box, reachable through the map viewport setting.
