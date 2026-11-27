@@ -53,7 +53,11 @@ function SelectField({
     <div data-slot="select-field" className={cn('flex flex-col gap-y-2', className)}>
       <Label htmlFor={inputId} className={cn(hideLabel && 'sr-only', error && 'text-destructive')}>
         {label}
-        {required && <span className="text-destructive ml-1">*</span>}
+        {required && (
+          <span aria-hidden="true" className="text-destructive ml-1">
+            *
+          </span>
+        )}
       </Label>
       <Select value={value} onValueChange={onValueChange} disabled={disabled}>
         <SelectTrigger
