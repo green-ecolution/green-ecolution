@@ -64,6 +64,7 @@ describe('DataTabContent', () => {
   it('renders a statistic of another module from its own manifest', () => {
     const waste: ModuleManifest = {
       key: 'waste',
+      order: 0,
       labelKey: 'irrigation:label',
       icon: () => null,
       descriptionKey: 'irrigation:label',

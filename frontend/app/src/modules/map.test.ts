@@ -6,6 +6,7 @@ import type { ModuleManifest, ModuleMap } from './types'
 
 const probe = (key: string, map: Partial<ModuleMap> = {}): ModuleManifest => ({
   key,
+  order: 0,
   labelKey: 'irrigation:label',
   icon: () => null,
   descriptionKey: 'irrigation:label',

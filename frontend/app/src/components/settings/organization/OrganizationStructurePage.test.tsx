@@ -47,6 +47,7 @@ vi.mock('./useSettingsOrganization', () => ({
 
 const probeManifest: ModuleManifest = {
   key: 'alpha',
+  order: 0,
   labelKey: 'probe:label' as ModuleManifest['labelKey'],
   icon: () => null,
   descriptionKey: 'probe:label' as ModuleManifest['labelKey'],

@@ -94,6 +94,7 @@ const useProbeDraft = (organizationId: string, { enabled }: { enabled: boolean }
 
 const probeManifest: ModuleManifest = {
   key: 'probe',
+  order: 0,
   labelKey: 'irrigation:label',
   icon: () => null,
   descriptionKey: 'irrigation:label',

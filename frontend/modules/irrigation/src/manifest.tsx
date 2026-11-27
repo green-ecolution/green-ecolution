@@ -11,6 +11,7 @@ import { treeSensorTarget } from './sensorTargets'
 
 export const irrigationManifest: ModuleManifest = {
   key: IRRIGATION,
+  order: 10,
   labelKey: 'irrigation:label',
   icon: Droplets,
   descriptionKey: 'irrigation:description',
@@ -82,3 +83,5 @@ export const irrigationManifest: ModuleManifest = {
   // the tree only adds thresholds and watering events.
   sensorInsights: lazy(() => import('./components/sensor/SensorSoilMoistureChart')),
 }
+
+export default irrigationManifest

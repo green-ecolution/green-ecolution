@@ -44,6 +44,7 @@ describe('CORE_ROUTE_PERMISSIONS', () => {
 describe('routePermissionsFor', () => {
   const probe: ModuleManifest = {
     key: 'probe',
+    order: 0,
     labelKey: 'irrigation:label',
     icon: () => null,
     descriptionKey: 'irrigation:label',
@@ -100,6 +101,7 @@ describe('routePermissionsFor', () => {
 describe('mapPermissionsFor', () => {
   const withMap = (key: string, permissions: ModuleMap['permissions']): ModuleManifest => ({
     key,
+    order: 0,
     labelKey: 'irrigation:label',
     icon: () => null,
     descriptionKey: 'irrigation:label',

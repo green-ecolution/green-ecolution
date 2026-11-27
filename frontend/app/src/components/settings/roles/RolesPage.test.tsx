@@ -39,6 +39,7 @@ const orgRoles: Role[] = [
 
 const probeManifest = (key: string): ModuleManifest => ({
   key,
+  order: 0,
   labelKey: `${key}:label` as ModuleManifest['labelKey'],
   icon: () => null,
   descriptionKey: `${key}:label` as ModuleManifest['labelKey'],

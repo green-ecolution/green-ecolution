@@ -43,6 +43,7 @@ export function probeTarget(
 export function probeTargetManifest(key: string, targets: ModuleTarget[]): ModuleManifest {
   return {
     key,
+    order: 0,
     labelKey: 'irrigation:label',
     icon: () => null,
     descriptionKey: 'irrigation:label',
