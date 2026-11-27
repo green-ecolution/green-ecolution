@@ -6,7 +6,7 @@ use bollard::{Docker, query_parameters::ListContainersOptionsBuilder};
 use super::{MANUAL_MIGRATION, migrate_fix};
 use crate::{
     doctor::{Check, Env, Finding, Fix, Severity, Trigger},
-    units::migrations::{applied, migration_versions, missing},
+    units::migrations::{applied, expected_versions, migration_dirs, missing},
 };
 
 pub fn behind(pending: &[i64]) -> Vec<Finding> {
@@ -35,7 +35,8 @@ impl Check for DevDbMigrations {
     }
 
     async fn diagnose(&self, env: &Env) -> Result<Vec<Finding>, String> {
-        let expected = migration_versions(&env.root.join("backend/migrations"))
+        let expected = migration_dirs(&env.root.join("backend"))
+            .and_then(|dirs| expected_versions(&dirs))
             .map_err(|err| err.to_string())?;
         let user = env
             .vars
