@@ -72,7 +72,7 @@ auch später vergeben, wie oben unter
 [Mitarbeitende verwalten](./settings-team.md#mitarbeitende-verwalten) beschrieben. Zur
 Auswahl stehen nur Rollen der gewählten Organisation.
 
-![Der Dialog Person hinzufügen mit ausgefüllten Angaben und zwei gewählten Rollen](../images/settings-members-add.png)
+![Der Dialog Person hinzufügen mit ausgefüllten Angaben und mehreren gewählten Rollen](../images/settings-members-add.png)
 
 Die Anwendung legt das Konto selbst an und vergibt ein Startpasswort. Du siehst es genau
 einmal im Dialog und kannst es dort kopieren; die Anwendung verschickt keine E-Mail.
@@ -105,7 +105,7 @@ Profil. Sobald eine weitere Person dazukommt, erscheint die gewohnte Liste mit d
 daneben. Suchst du oder filterst du nach Rolle, bleibt es bei der Meldung, dass nichts
 gefunden wurde.
 
-![Die Seite Mitarbeitende, solange nur die angemeldete Person in der Organisation ist](../images/settings-members-empty.png)
+![Die Seite Mitarbeitende einer Organisation, in der noch niemand ist](../images/settings-members-empty.png)
 
 ## Rollen und ihr Zuschnitt
 
