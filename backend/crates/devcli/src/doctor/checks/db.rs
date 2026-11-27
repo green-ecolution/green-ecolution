@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, path::Path};
 
 use async_trait::async_trait;
 use bollard::{Docker, query_parameters::ListContainersOptionsBuilder};
@@ -9,7 +9,7 @@ use crate::{
     units::migrations::{applied, expected_versions, migration_dirs, missing},
 };
 
-pub fn behind(pending: &[i64]) -> Vec<Finding> {
+pub fn behind(pending: &[i64], root: &Path) -> Vec<Finding> {
     let Some(newest) = pending.last() else {
         return Vec::new();
     };
@@ -22,7 +22,7 @@ pub fn behind(pending: &[i64]) -> Vec<Finding> {
         .detail(format!(
             "Newest missing migration: {newest}.\n{MANUAL_MIGRATION}"
         ))
-        .fix(migrate_fix()),
+        .fix(migrate_fix(root)),
     ]
 }
 
@@ -46,7 +46,7 @@ impl Check for DevDbMigrations {
         let applied = applied(&env.compose, &user, &database)
             .await
             .map_err(|err| format!("cannot read the applied migrations: {err}"))?;
-        Ok(behind(&missing(&expected, &applied)))
+        Ok(behind(&missing(&expected, &applied), &env.root))
     }
 
     fn reacts_to(&self, trigger: &Trigger<'_>) -> bool {
@@ -132,8 +132,9 @@ mod tests {
 
     #[test]
     fn a_dev_database_behind_is_fixed_by_rebuilding_the_migrate_binary() {
-        assert!(behind(&[]).is_empty());
-        let findings = behind(&[20260101000000, 20260202000000]);
+        let root = Path::new("/nowhere");
+        assert!(behind(&[], root).is_empty());
+        let findings = behind(&[20260101000000, 20260202000000], root);
         assert_eq!(findings[0].title, "dev database is 2 migration(s) behind");
         assert_eq!(findings[0].severity, Severity::Error);
         assert!(findings[0].detail.contains("20260202000000"));

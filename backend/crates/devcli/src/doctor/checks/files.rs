@@ -285,7 +285,7 @@ impl Check for MigrateBinary {
                 "A stale migrate binary reports \"Migrations applied\" without applying the new \
                  migration.\n{MANUAL_MIGRATION}"
             ))
-            .fix(migrate_fix()),
+            .fix(migrate_fix(&env.root)),
         ])
     }
 }
